@@ -9,4 +9,4 @@ with open("index.html", "r", encoding="utf-8") as f:
     html_kodu = f.read()
 
 # HTML'i Streamlit bileşeni olarak ekranda göster
-components.html(html_kodu, height=900, scrolling=True)
+components.html(html_kodu, height=3000, scrolling=True)
