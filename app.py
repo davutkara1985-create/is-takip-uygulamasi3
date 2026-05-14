@@ -9,4 +9,14 @@ with open("index.html", "r", encoding="utf-8") as f:
     html_kodu = f.read()
 
 # HTML'i Streamlit bileşeni olarak ekranda göster
-st.markdown(html_kodu, unsafe_allow_html=True)
+components.html(
+    html_kodu,
+    height=800,
+    scrolling=True
+)
+<style>
+html, body {
+    height: auto;
+    margin: 0;
+}
+</style>
