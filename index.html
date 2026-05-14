@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TÜRKAK İş Takip Sistemi</title>
+  <title>TÜRKAK İş Yönetim Sistemi</title>
   <style>
     :root {
       --red-950: #450a0a;
       --red-900: #7f1d1d;
       --red-800: #991b1b;
       --red-700: #b91c1c;
-      --red-600: #dc2626;@
+      --red-600: #dc2626;
       --red-100: #fee2e2;
       --red-50: #fff1f2;
       --green: #16a34a;
@@ -32,12 +32,19 @@
     }
 
     html {
+      width: 100%;
+      min-height: 100%;
       scroll-behavior: smooth;
+      background: var(--bg);
     }
 
     body {
       margin: 0;
+      padding: 0;
+      width: 100%;
       min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color: var(--ink);
       background:
@@ -153,7 +160,9 @@
     }
 
     .app-shell {
+      width: 100%;
       min-height: 100vh;
+      min-height: 100dvh;
     }
 
     .topbar {
@@ -271,8 +280,10 @@
     }
 
     .content {
-      width: min(1480px, calc(100% - 2rem));
-      margin: 1rem auto 4rem;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 1rem;
     }
 
     .page {
@@ -845,6 +856,52 @@
       font-weight: 900;
     }
 
+    .new-job-icon {
+      width: 46px;
+      min-width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .job-entry-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      align-content: start;
+      gap: 0;
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      border: 0;
+      border-radius: 0;
+      background: rgba(15, 23, 42, .58);
+      box-shadow: none;
+    }
+
+    .job-entry-panel .section-title-row {
+      width: min(1120px, 100%);
+      margin: 1rem auto 0;
+      padding: 1.1rem 1.2rem .4rem;
+      border: 1px solid rgba(226, 232, 240, .82);
+      border-bottom: 0;
+      border-radius: 22px 22px 0 0;
+      background: white;
+    }
+
+    .job-entry-panel .job-form {
+      width: min(1120px, 100%);
+      margin: 0 auto 1rem;
+      padding: 0 1.2rem 1.2rem;
+      border: 1px solid rgba(226, 232, 240, .82);
+      border-top: 0;
+      border-radius: 0 0 22px 22px;
+      background: white;
+    }
+
     .report-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1079,7 +1136,8 @@
 
     @media (max-width: 720px) {
       .content {
-        width: min(100% - 1rem, 1480px);
+        width: 100%;
+        padding: .5rem;
       }
 
       .hero-panel,
@@ -1133,12 +1191,12 @@
         </div>
         <div>
           <strong>TÜRKAK</strong>
-          <span>Kurumsal İletişim Müdürlüğü İş Takip Sistemi</span>
+          <span>Kurumsal İletişim Müdürlüğü İş Yönetim Sistemi</span>
         </div>
       </div>
 
-      <h1>KİM İş Takip Sistemi</h1>
-      <p class="muted">Kurumsal kullanım için düzenlenmiş iş takip ekranı.</p>
+      <h1>Birim İçi İş Takip Sistemi</h1>
+      <p class="muted">Görev Yönetim ve Takip Ekranı.</p>
 
       <form id="loginForm" class="login-form">
         <label>
@@ -1164,7 +1222,7 @@
         </div>
         <div>
           <strong>TÜRKAK</strong>
-          <span>İş Takip Sistemi</span>
+          <span>İş Yönetim Sistemi</span>
         </div>
       </div>
 
@@ -1197,12 +1255,12 @@
             <p class="muted">İşleri kaydedin, takvimde izleyin, gecikenleri ve onay bekleyenleri tek ekranda takip edin.</p>
           </div>
           <div class="hero-actions">
-            <button id="newJobFocusButton" class="btn btn-primary" type="button">YENİ İŞ KAYDI</button>
+            <button id="newJobFocusButton" class="btn btn-primary new-job-icon" type="button" title="Yeni iş kaydı" aria-label="Yeni iş kaydı">+</button>
             <button class="btn btn-secondary" data-open-filter="mine" type="button">Bana Atanan İşler</button>
           </div>
         </div>
 
-        <section id="jobFormPanel" class="form-panel">
+        <section id="jobFormPanel" class="form-panel job-entry-panel hidden">
           <div class="section-title-row">
             <div>
               <p class="eyebrow">Kayıt ve güncelleme</p>
@@ -2129,19 +2187,11 @@
     }
 
     function canSeeRow(user, job) {
-      if (!user || !job) return false;
-      if (job.privacyLevel === 'Sadece Yetkililer') {
-        return isPrivileged(user) || isParticipant(user, job);
-      }
-      return true;
+      return Boolean(user && job);
     }
 
     function canSeeDetail(user, job) {
-      if (!canSeeRow(user, job)) return false;
-      if (job.privacyLevel === 'Hassas') {
-        return isPrivileged(user) || isParticipant(user, job);
-      }
-      return true;
+      return Boolean(user && job);
     }
 
     function canEditJob(user, job) {
@@ -2150,8 +2200,10 @@
       return isParticipant(user, job);
     }
 
-    function canDeleteJob(user) {
-      return Boolean(user && ['Admin', 'Koordinatör'].includes(user.role));
+    function canDeleteJob(user, job) {
+      if (!user || !job) return false;
+      if (['Admin', 'Koordinatör', 'Müdür'].includes(user.role)) return true;
+      return job.createdBy === user.id;
     }
 
     function decorateJob(db, user, job, detailed = false) {
@@ -2174,7 +2226,7 @@
         dueInDays: daysBetween(today, job.targetEndDate),
         isOverdue: isOpenStatus(job.status) && job.targetEndDate < today,
         canEdit: canEditJob(user, job),
-        canDelete: canDeleteJob(user),
+        canDelete: canDeleteJob(user, job),
         limited
       };
 
@@ -2199,15 +2251,21 @@
 
     function addNotification(db, data) {
       if (!data.userId) return;
+
+      const recipient = userById(db, data.userId);
+      if (!recipient || recipient.active === false) return;
+
       if (data.key) {
-        if (db.notificationKeys.includes(data.key)) return;
-        db.notificationKeys.push(data.key);
+        const notificationExistsForKey = db.notifications.some(notification => notification.key === data.key);
+        if (db.notificationKeys.includes(data.key) && notificationExistsForKey) return;
+        if (!db.notificationKeys.includes(data.key)) db.notificationKeys.push(data.key);
       }
 
       db.notifications.push({
         id: uid('n'),
         userId: data.userId,
         jobId: data.jobId || '',
+        key: data.key || '',
         title: data.title,
         message: data.message,
         type: data.type || 'Bilgi',
@@ -2462,12 +2520,22 @@
       $$('.admin-only').forEach(element => element.classList.toggle('hidden', !isAdmin(state.user)));
     }
 
+    function openJobFormPanel() {
+      $('#jobFormPanel').classList.remove('hidden');
+      setTimeout(() => $('#title').focus(), 0);
+    }
+
+    function hideJobFormPanel() {
+      $('#jobFormPanel').classList.add('hidden');
+    }
+
     function showPage(name) {
       if (name === 'users' && !isAdmin(state.user)) {
         showToast('Kullanıcı yönetimi sadece Admin yetkisindedir.', 'error');
         name = 'dashboard';
       }
 
+      hideJobFormPanel();
       $$('.page').forEach(page => page.classList.toggle('active', page.id === name + 'Page'));
       $$('.nav-tab').forEach(button => button.classList.toggle('active', button.dataset.page === name));
 
@@ -2815,6 +2883,7 @@
       runReminderEngine(db);
       saveDb(db);
       resetJobForm();
+      hideJobFormPanel();
       showToast(job.jobNo + ' kaydedildi. Anasayfaya dönüldü.');
       showPage('dashboard');
     }
@@ -2935,6 +3004,7 @@
             <div class="action-buttons">
               <button class="icon-button" type="button" data-job-detail="${escapeHtml(job.id)}">Detay</button>
               ${job.canEdit ? '<button class="icon-button" type="button" data-edit-job="' + escapeHtml(job.id) + '">Düzenle</button>' : ''}
+              ${job.canDelete ? '<button class="icon-button" type="button" data-delete-job="' + escapeHtml(job.id) + '">Görevi Sil</button>' : ''}
             </div>
           </td>
         </tr>
@@ -2991,7 +3061,7 @@
       `;
       const actions = `
         ${job.canEdit ? '<button class="btn btn-primary" type="button" data-edit-job="' + escapeHtml(job.id) + '">Düzenle</button>' : ''}
-        ${job.canDelete ? '<button class="btn btn-secondary" type="button" data-delete-job="' + escapeHtml(job.id) + '">Sil</button>' : ''}
+        ${job.canDelete ? '<button class="btn btn-secondary" type="button" data-delete-job="' + escapeHtml(job.id) + '">Görevi Sil</button>' : ''}
         <button class="btn btn-light" type="button" data-modal-close>Kapat</button>
       `;
       openModal(job.jobNo + ' · ' + job.title, body, actions);
@@ -3012,27 +3082,33 @@
       closeModal();
       showPage('dashboard');
       fillJobForm(job);
-      $('#jobFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      openJobFormPanel();
     }
 
     function deleteJob(jobId) {
-      if (!canDeleteJob(state.user)) {
-        showToast('Silme yetkisi sadece Admin veya Koordinatör yetkisindedir.', 'error');
-        return;
-      }
-      const ok = confirm('Bu iş kaydı silinecek. Devam edilsin mi?');
-      if (!ok) return;
       const db = getDb();
       const index = db.jobs.findIndex(job => job.id === jobId);
       if (index === -1) {
         showToast('İş kaydı bulunamadı.', 'error');
         return;
       }
+
+      const job = db.jobs[index];
+      if (!canDeleteJob(state.user, job)) {
+        showToast('Bu işi sadece görevi oluşturan kullanıcı, Müdür, Koordinatör veya Admin silebilir.', 'error');
+        return;
+      }
+
+      const ok = confirm(job.jobNo + ' numaralı görev silinecek. Devam edilsin mi?');
+      if (!ok) return;
+
       db.jobs.splice(index, 1);
       db.notifications = db.notifications.filter(notification => notification.jobId !== jobId);
+      db.notificationKeys = db.notificationKeys.filter(key => !String(key).includes(jobId));
       saveDb(db);
       closeModal();
-      showToast('İş silindi. Anasayfaya dönüldü.');
+      hideJobFormPanel();
+      showToast('Görev silindi. Anasayfaya dönüldü.');
       showPage('dashboard');
     }
 
@@ -3510,8 +3586,7 @@
 
       $('#newJobFocusButton').addEventListener('click', () => {
         resetJobForm();
-        $('#jobFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        $('#title').focus();
+        openJobFormPanel();
       });
 
       $('#mainCategory').addEventListener('change', event => populateSubCategories(event.target.value));
@@ -3550,6 +3625,7 @@
         const homeButton = event.target.closest('[data-go-home]');
         if (homeButton) {
           closeModal();
+          hideJobFormPanel();
           showPage('dashboard');
           return;
         }
