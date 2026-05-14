@@ -47,7 +47,7 @@
     }
 
     button, input, select, textarea {
-      font: inherit;
+      font: arial nova;
     }
 
     button {
@@ -1134,7 +1134,7 @@
 
       <div class="demo-users">
         <strong>Demo kullanıcılar:</strong>
-        mudur, koordinator, admin, ayse, mehmet, elif, can, zeynep, burak, deniz
+        Müdür, Koordinatör, Admin, Onur KARADAYI, Uğur ONUR, Umut HALAZA, Davut KARA
         <br>
         <strong>Şifre:</strong> 123456
       </div>
@@ -1627,7 +1627,7 @@
     const PRIORITIES = ['Düşük', 'Normal', 'Yüksek', 'Acil'];
     const OUTPUT_TYPES = ['Yazı', 'Haber', 'Sosyal Medya Paylaşımı', 'Rapor', 'Tasarım', 'Etkinlik', 'Bülten', 'Bilgi Notu', 'Diğer'];
     const PRIVACY_LEVELS = ['Normal', 'Hassas', 'Sadece Yetkililer'];
-    const PRIVILEGED_ROLES = ['Mudur', 'Koordinator', 'Admin'];
+    const PRIVILEGED_ROLES = ['Müdür', 'Koordinatör', 'Admin'];
 
     const state = {
       user: null,
@@ -1765,18 +1765,14 @@
     function seedDb() {
       const year = new Date().getFullYear();
       const users = [
-        { id: 'u_mudur', username: 'mudur', password: '123456', fullName: 'Müdür', title: 'Kurumsal İletişim Müdürü', role: 'Mudur', active: true },
-        { id: 'u_koord', username: 'koordinator', password: '123456', fullName: 'Koordinatör', title: 'Koordinatör / Şef', role: 'Koordinator', active: true },
-        { id: 'u_admin', username: 'admin', password: '123456', fullName: 'Sistem Yöneticisi', title: 'Sistem Yöneticisi', role: 'Admin', active: true },
-        { id: 'u_ayse', username: 'ayse', password: '123456', fullName: 'Ayşe Yılmaz', title: 'Uzman', role: 'Personel', active: true },
-        { id: 'u_mehmet', username: 'mehmet', password: '123456', fullName: 'Mehmet Demir', title: 'Uzman Yardımcısı', role: 'Personel', active: true },
-        { id: 'u_elif', username: 'elif', password: '123456', fullName: 'Elif Kaya', title: 'Uzman', role: 'Personel', active: true },
-        { id: 'u_can', username: 'can', password: '123456', fullName: 'Can Arslan', title: 'Uzman', role: 'Personel', active: true },
-        { id: 'u_zeynep', username: 'zeynep', password: '123456', fullName: 'Zeynep Çelik', title: 'Uzman Yardımcısı', role: 'Personel', active: true },
-        { id: 'u_burak', username: 'burak', password: '123456', fullName: 'Burak Şahin', title: 'Grafik / Tasarım', role: 'Personel', active: true },
-        { id: 'u_deniz', username: 'deniz', password: '123456', fullName: 'Deniz Acar', title: 'Uzman', role: 'Personel', active: true }
+        { id: 'u_mudur', username: 'Müdür', password: '123456', fullName: 'Müdür', title: 'Kurumsal İletişim Müdürü', role: 'Müdür', active: true },
+        { id: 'u_koord', username: 'Koordinatör', password: '123456', fullName: 'Koordinatör', title: 'Koordinatör / Şef', role: 'Koordinatör', active: true },
+        { id: 'u_admin', username: 'Admin', password: '123456', fullName: 'Sistem Yöneticisi', title: 'Sistem Yöneticisi', role: 'Admin', active: true },
+        { id: 'u_onur', username: 'Onur KARADAYI', password: '123456', fullName: 'Onur KARADAYI', title: 'Uzman', role: 'Personel', active: true },
+        { id: 'u_ugur', username: 'Uğur ONUR', password: '123456', fullName: 'Uğur ONUR', title: 'Uzman Yardımcısı', role: 'Personel', active: true },
+        { id: 'u_umut', username: 'Umut HALAZA', password: '123456', fullName: 'Umut HALAZA', title: 'Uzman', role: 'Personel', active: true },
+        { id: 'u_davut', username: 'Davut KARA', password: '123456', fullName: 'Davut KARA', title: 'Uzman', role: 'Personel', active: true },
       ];
-
       const common = {
         createdBy: 'u_koord',
         updatedBy: 'u_koord',
