@@ -8,6 +8,16 @@
     :root {
       --red-950: #450a0a;
       --red-900: #7f1d1d;
+      --red-800: #991b1b;<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TÜRKAK İş Yönetim Sistemi</title>
+  <style>
+    :root {
+      --red-950: #450a0a;
+      --red-900: #7f1d1d;
       --red-800: #991b1b;
       --red-700: #b91c1c;
       --red-600: #dc2626;
@@ -1197,6 +1207,3697 @@
 
       <h1>Birim İçi İş Takip Sistemi</h1>
       <p class="muted">Görev Yönetim ve Takip Ekranı.</p>
+
+      <form id="loginForm" class="login-form">
+        <label>
+          Kullanıcı adı
+          <input id="loginUsername" autocomplete="username" required placeholder="örn. umut">
+        </label>
+
+        <label>
+          Şifre
+          <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Şifreniz">
+        </label>
+
+        <button class="btn btn-primary" type="submit">Giriş Yap</button>
+      </form>
+</div>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/main/turkak.png?raw=true" alt="TÜRKAK logosu">
+        </div>
+        <div>
+          <strong>TÜRKAK</strong>
+          <span>İş Yönetim Sistemi</span>
+        </div>
+      </div>
+
+      <nav class="nav-tabs" aria-label="Ana menü">
+        <button class="nav-tab active" data-page="dashboard" type="button">Anasayfa</button>
+        <button class="nav-tab" data-page="jobs" type="button">Genel İş Listesi</button>
+        <button class="nav-tab" data-page="reports" type="button">Raporlar</button>
+        <button class="nav-tab" data-page="profile" type="button">Profilim</button>
+        <button class="nav-tab admin-only hidden" data-page="users" type="button">Kullanıcı Yönetimi</button>
+        <button class="nav-tab" data-page="notifications" type="button">
+          Bildirimler <span id="unreadBadge" class="badge hidden">0</span>
+        </button>
+      </nav>
+
+      <div class="user-box">
+        <div>
+          <strong id="currentUserName">-</strong>
+          <span id="currentUserRole">-</span>
+        </div>
+        <button id="logoutButton" class="btn btn-light" type="button">Çıkış</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section id="dashboardPage" class="page active">
+        <div class="hero-panel">
+          <div>
+            <p class="eyebrow">Birim içi kullanım</p>
+            <h1>Anasayfa</h1>
+            <p class="muted">İşleri kaydedin, takvimde izleyin, gecikenleri ve onay bekleyenleri tek ekranda takip edin.</p>
+          </div>
+          <div class="hero-actions">
+            <button id="newJobFocusButton" class="btn btn-primary new-job-icon" type="button" title="Yeni iş kaydı" aria-label="Yeni iş kaydı">+</button>
+            <button class="btn btn-secondary" data-open-filter="mine" type="button">Bana Atanan İşler</button>
+          </div>
+        </div>
+
+        <section id="jobFormPanel" class="form-panel job-entry-panel hidden">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Kayıt ve güncelleme</p>
+              <h2 id="jobFormTitle">YENİ İŞ KAYDI</h2>
+            </div>
+            <button id="clearFormButton" class="btn btn-light" type="button">Formu Temizle</button>
+          </div>
+
+          <form id="jobForm" class="job-form">
+            <input id="jobId" type="hidden">
+
+            <div class="form-grid">
+              <label>
+                İş No
+                <input id="jobNo" readonly placeholder="Otomatik oluşur">
+              </label>
+
+              <label class="span-2">
+                İş Adı <span class="required">*</span>
+                <input id="title" required placeholder="Mayıs Ayı Sosyal Medya Planı Hazırlığı">
+              </label>
+
+              <label>
+                Ana Kategori <span class="required">*</span>
+                <select id="mainCategory" required></select>
+              </label>
+
+              <label>
+                Alt Kategori
+                <select id="subCategory"></select>
+              </label>
+
+              <label class="span-2">
+                İşin Açıklaması
+                <textarea id="description" rows="4" placeholder="İşin ne olduğu, beklenti ve kapsam"></textarea>
+              </label>
+
+              <label>
+                Talep Eden
+                <input id="requester" placeholder="Kişi / birim">
+              </label>
+
+              <label>
+                Sorumlu Personel <span class="required">*</span>
+                <select id="responsibleId" required></select>
+              </label>
+
+              <label>
+                Yardımcı Personel
+                <select id="helperIds" multiple size="4"></select>
+              </label>
+
+              <label>
+                Öncelik <span class="required">*</span>
+                <select id="priority" required></select>
+              </label>
+
+              <label>
+                Başlangıç Tarihi <span class="required">*</span>
+                <input id="startDate" type="date" required>
+              </label>
+
+              <label>
+                Hedef Bitiş Tarihi <span class="required">*</span>
+                <input id="targetEndDate" type="date" required>
+              </label>
+
+              <label>
+                Durum <span class="required">*</span>
+                <select id="status" required></select>
+              </label>
+
+              <label class="check-label">
+                <input id="approvalRequired" type="checkbox">
+                <span>Onay Gerekiyor mu?</span>
+              </label>
+
+              <label>
+                Dosya / Bağlantı
+                <input id="fileLink" placeholder="https:// veya dosya yolu">
+              </label>
+
+              <label>
+                Fiili Bitiş Tarihi
+                <input id="actualEndDate" type="date">
+              </label>
+
+              <label>
+                Gecikme Nedeni
+                <input id="delayReason" placeholder="Süresi geçen işlerde açıklama">
+              </label>
+
+              <label>
+                Sonraki Aksiyon
+                <input id="nextAction" placeholder="Müdür onayı beklenecek">
+              </label>
+
+              <label>
+                Son Güncelleme Notu
+                <input id="lastUpdateNote" placeholder="İşin güncel durumu">
+              </label>
+
+              <label>
+                Çıktı Türü
+                <select id="outputType"></select>
+              </label>
+
+              <label>
+                Gizlilik Düzeyi
+                <select id="privacyLevel"></select>
+              </label>
+
+              <label class="span-2">
+                Tamamlanma Notu
+                <textarea id="completionNote" rows="3" placeholder="İş kapatılırken kısa sonuç bilgisi"></textarea>
+              </label>
+
+              <label class="check-label">
+                <input id="showOnCalendar" type="checkbox" checked>
+                <span>Takvimde Gösterilsin mi?</span>
+              </label>
+
+              <label>
+                Takvim Tarihi
+                <input id="calendarDate" type="date">
+              </label>
+
+              <label>
+                Takvim Başlığı
+                <input id="calendarTitle" readonly placeholder="Ana kategori otomatik gelir">
+              </label>
+
+              <label class="span-2">
+                Takvim Notu
+                <input id="calendarNote" placeholder="Kısa ve genel not">
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Kaydet ve Anasayfaya Dön</button>
+              <button class="btn btn-light" data-go-home type="button">Anasayfaya DÖN</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="ticker-panel" aria-label="Güncel akış">
+          <strong>Güncel Akış</strong>
+          <div class="ticker-window">
+            <div id="activeTicker" class="ticker-track">Aktif işler yükleniyor...</div>
+          </div>
+        </section>
+
+        <section id="summaryCards" class="summary-grid" aria-label="İş özeti"></section>
+
+        <section class="dashboard-grid">
+          <div class="calendar-card">
+            <div class="section-title-row">
+              <div>
+                <p class="eyebrow">Aylık Takvim</p>
+                <h2 id="calendarTitleText">İş Takvimi</h2>
+              </div>
+              <div class="calendar-controls">
+                <button id="prevMonth" class="btn btn-light" type="button">‹</button>
+                <button id="todayMonth" class="btn btn-light" type="button">Bugün</button>
+                <button id="nextMonth" class="btn btn-light" type="button">›</button>
+              </div>
+            </div>
+
+            <div class="calendar-weekdays">
+              <span>Pzt</span><span>Sal</span><span>Çar</span><span>Per</span><span>Cum</span><span>Cmt</span><span>Paz</span>
+            </div>
+
+            <div id="calendarGrid" class="calendar-grid"></div>
+          </div>
+
+          <aside class="side-card">
+            <div>
+              <p class="eyebrow">Günün Özeti</p>
+              <h2 id="todayTitle">Bugün</h2>
+              <div id="todaySummary" class="today-summary"></div>
+            </div>
+
+            <div>
+              <div class="section-title-row small">
+                <h2>Bildirimler</h2>
+                <button class="link-button" data-page="notifications" type="button">Tümü</button>
+              </div>
+              <div id="notificationPreview" class="notification-list compact"></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="list-card">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Kişisel takip</p>
+              <h2>Bana Atanan ve Yaklaşan İşler</h2>
+            </div>
+            <button class="btn btn-secondary" data-open-filter="mine" type="button">Genel Listede Aç</button>
+          </div>
+          <div id="personalJobs" class="mini-job-list"></div>
+        </section>
+      </section>
+
+      <section id="jobsPage" class="page">
+        <div class="section-title-row page-head">
+          <div>
+            <p class="eyebrow">Liste ve filtreleme</p>
+            <h1>Genel İş Listesi</h1>
+          </div>
+          <div class="head-actions">
+            <button id="exportCsvButton" class="btn btn-secondary" type="button">CSV İndir</button>
+            <button class="btn btn-light" data-go-home type="button">Anasayfaya DÖN</button>
+          </div>
+        </div>
+
+        <form id="jobFilters" class="filters">
+          <label>
+            Arama
+            <input id="filterQ" placeholder="İş no, iş adı, kategori...">
+          </label>
+
+          <label>
+            Hızlı Filtre
+            <select id="filterType">
+              <option value="all">Tüm İşler</option>
+              <option value="open">Açık İşler</option>
+              <option value="mine">Bana Atanan</option>
+              <option value="week">Bu Hafta Bitecek</option>
+              <option value="overdue">Geciken İşler</option>
+              <option value="approval">Onay Bekleyenler</option>
+              <option value="revision">Revizyon Bekleyenler</option>
+              <option value="completed">Tamamlanan İşler</option>
+              <option value="today">Bugünkü İşler</option>
+            </select>
+          </label>
+
+          <label>
+            Durum
+            <select id="filterStatus"><option value="">Tümü</option></select>
+          </label>
+
+          <label>
+            Kategori
+            <select id="filterCategory"><option value="">Tümü</option></select>
+          </label>
+
+          <label>
+            Personel
+            <select id="filterAssigned"><option value="">Tümü</option></select>
+          </label>
+
+          <button class="btn btn-primary" type="submit">Filtrele</button>
+        </form>
+
+        <div class="table-wrap">
+          <table class="jobs-table">
+            <thead>
+              <tr>
+                <th>İş No</th>
+                <th>İş Adı</th>
+                <th>Kategori</th>
+                <th>Sorumlu</th>
+                <th>Hedef Tarih</th>
+                <th>Durum</th>
+                <th>Öncelik</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="jobsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reportsPage" class="page">
+        <div class="section-title-row page-head">
+          <div>
+            <p class="eyebrow">Yönetim görünümü</p>
+            <h1>Raporlar</h1>
+          </div>
+          <div class="head-actions">
+            <button id="exportReportButton" class="btn btn-secondary" type="button">Rapor CSV İndir</button>
+            <button class="btn btn-light" data-go-home type="button">Anasayfaya DÖN</button>
+          </div>
+        </div>
+
+        <div class="report-grid">
+          <article class="report-card">
+            <h2>Kategori Özeti</h2>
+            <div id="categoryReport" class="bar-list"></div>
+          </article>
+
+          <article class="report-card">
+            <h2>Durum Özeti</h2>
+            <div id="statusReport" class="bar-list"></div>
+          </article>
+
+          <article class="report-card wide">
+            <h2>İş Yükü Görünümü</h2>
+            <div id="workloadReport" class="workload-grid"></div>
+          </article>
+        </div>
+      </section>
+
+
+      <section id="profilePage" class="page">
+        <div class="section-title-row page-head">
+          <div>
+            <p class="eyebrow">Hesap bilgileri</p>
+            <h1>Profilim</h1>
+          </div>
+          <button class="btn btn-light" data-go-home type="button">Anasayfaya DÖN</button>
+        </div>
+
+        <section class="form-panel">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Profil</p>
+              <h2>Profil Bilgilerim</h2>
+            </div>
+          </div>
+          <form id="profileForm">
+            <div class="form-grid">
+              <label>
+                Kullanıcı adı
+                <input id="profileUsername" readonly>
+              </label>
+              <label>
+                Rol
+                <input id="profileRole" readonly>
+              </label>
+              <label class="span-2">
+                Ad Soyad <span class="required">*</span>
+                <input id="profileFullName" required>
+              </label>
+              <label>
+                Unvan
+                <input id="profileTitle" placeholder="Unvan">
+              </label>
+              <label>
+                E-posta
+                <input id="profileEmail" type="email" placeholder="ornek@turkak.org.tr">
+              </label>
+              <label>
+                Telefon
+                <input id="profilePhone" placeholder="Dahili / telefon">
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Profilimi Güncelle</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="form-panel">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Güvenlik</p>
+              <h2>Şifre Güncelle</h2>
+            </div>
+          </div>
+          <form id="passwordForm">
+            <div class="form-grid">
+              <label>
+                Mevcut Şifre <span class="required">*</span>
+                <input id="currentPassword" type="password" autocomplete="current-password" required>
+              </label>
+              <label>
+                Yeni Şifre <span class="required">*</span>
+                <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+              </label>
+              <label>
+                Yeni Şifre Tekrar <span class="required">*</span>
+                <input id="newPasswordAgain" type="password" autocomplete="new-password" minlength="6" required>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Şifreyi Güncelle</button>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <section id="usersPage" class="page">
+        <div class="section-title-row page-head">
+          <div>
+            <p class="eyebrow">Sistem yönetimi</p>
+            <h1>Kullanıcı Yönetimi</h1>
+          </div>
+          <button class="btn btn-light" data-go-home type="button">Anasayfaya DÖN</button>
+        </div>
+
+        <section class="form-panel">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Admin yetkisi</p>
+              <h2 id="adminUserFormTitle">Yeni Kullanıcı</h2>
+              <p class="table-note">Kullanıcı adı sadece isim olarak girilmelidir; soyad veya boşluk kullanmayın.</p>
+            </div>
+            <button id="clearUserFormButton" class="btn btn-light" type="button">Formu Temizle</button>
+          </div>
+
+          <form id="userAdminForm">
+            <input id="adminUserId" type="hidden">
+            <div class="form-grid">
+              <label>
+                Kullanıcı adı <span class="required">*</span>
+                <input id="adminUsername" required placeholder="örn. ayhan">
+              </label>
+              <label class="span-2">
+                Ad Soyad / Görünen Ad <span class="required">*</span>
+                <input id="adminFullName" required placeholder="Ad Soyad">
+              </label>
+              <label>
+                Rol <span class="required">*</span>
+                <select id="adminRole" required></select>
+              </label>
+              <label>
+                Unvan
+                <input id="adminTitle" placeholder="Unvan">
+              </label>
+              <label>
+                E-posta
+                <input id="adminEmail" type="email" placeholder="ornek@turkak.org.tr">
+              </label>
+              <label>
+                Telefon
+                <input id="adminPhone" placeholder="Dahili / telefon">
+              </label>
+              <label>
+                Şifre
+                <input id="adminPassword" type="password" autocomplete="new-password" placeholder="Yeni kullanıcıda zorunlu, güncellemede isteğe bağlı">
+              </label>
+              <label class="check-label">
+                <input id="adminActive" type="checkbox" checked>
+                <span>Aktif kullanıcı</span>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Kullanıcıyı Kaydet</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="list-card">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Kayıtlı kullanıcılar</p>
+              <h2>Kullanıcı Listesi</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="jobs-table user-table">
+              <thead>
+                <tr>
+                  <th>Kullanıcı adı</th>
+                  <th>Ad Soyad</th>
+                  <th>Rol</th>
+                  <th>Unvan</th>
+                  <th>İletişim</th>
+                  <th>Durum</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="notificationsPage" class="page">
+        <div class="section-title-row page-head">
+          <div>
+            <p class="eyebrow">Hatırlatma ve uyarılar</p>
+            <h1>Bildirimler</h1>
+          </div>
+          <button class="btn btn-light" data-go-home type="button">Anasayfaya DÖN</button>
+        </div>
+
+        <div id="notificationFullList" class="notification-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button id="modalClose" class="modal-close" type="button" aria-label="Kapat">×</button>
+      <h2 id="modalTitle">Detay</h2>
+      <div id="modalBody" class="modal-body"></div>
+      <div id="modalActions" class="modal-actions"></div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const APP_KEY = 'turkak_is_takip_chrome_v2';
+    const SESSION_KEY = 'turkak_is_takip_session_v2';
+    const INITIAL_PASSWORD = 'Turkak2026!';
+
+    const CATEGORIES = {
+      'Resmi Yazışma': [
+        'Kamu Kurumu Yazışmaları',
+        'Büyükelçi Karşılama Yazışmaları',
+        'UDK ve STK Yazışmaları'
+      ],
+      'Etkinlik / Organizasyon': [
+        'Etkinlik Planlama',
+        'Davet ve Protokol',
+        'Salon / Lojistik',
+        'Etkinlik Sonrası Raporlama'
+      ],
+      'Haber ve Sosyal Medya': [
+        'Aylık Sosyal Medya Planı',
+        'Haber ve Sosyal Medya Takibi',
+        'Planda Yer Almayan/Beklenen Paylaşımlar'
+      ],
+      'Mal ve Hizmet Alımı': [
+        'Teklif Toplama',
+        'Satın Alma Talebi',
+        'Muayene Kabul',
+        'Fatura / Ödeme Takibi'
+      ],
+      'Tasarım İşlemleri': [
+        'Afiş / Görsel Tasarım',
+        'Sunum Tasarımı',
+        'Kurumsal Kimlik Uygulaması',
+        'Revizyon Takibi'
+      ],
+      'Şikayet / İtiraz': [
+        'Şikayet İnceleme',
+        'İtiraz Değerlendirme',
+        'Cevap Hazırlığı',
+        'Kapanış Bildirimi'
+      ],
+      'İleti ve CİMER': [
+        'CİMER Başvurusu',
+        'İleti İnceleme',
+        'Cevap Taslağı',
+        'Kayıt Kapatma'
+      ],
+      'Akreditasyon Bülteni': [
+        'İçerik Toplama',
+        'Editoryal Kontrol',
+        'Tasarım / Mizanpaj',
+        'Yayın Hazırlığı'
+      ],
+      'Bilgi Notları': [
+        'Yönetim Bilgi Notu',
+        'Basın / Kamuoyu Bilgi Notu',
+        'Kısa Değerlendirme Notu'
+      ],
+      'İdari Çalışmalar ve Raporlamalar': [
+        'Aylık Faaliyet Raporu',
+        'Plan ve Bütçe Görüşmeleri',
+        'Stratejik Plan',
+        'Performans Programı',
+        'Yönetim Gözden Geçirme'
+      ],
+      'Bütçe İş ve İşlemleri': [
+        'Bütçe Hazırlık',
+        'Harcama Takibi',
+        'Ödenek / Talep İşlemleri',
+        'Raporlama'
+      ],
+      'Talep Takibi': [
+        'İç Talep',
+        'Dış Birim Talebi',
+        'Bilgi / Belge Talebi',
+        'Sonuç Takibi'
+      ]
+    };
+
+    const CATEGORY_COLORS = {
+      'Resmi Yazışma': '#1f3a5f',
+      'Haber ve Sosyal Medya': '#2563eb',
+      'Etkinlik / Organizasyon': '#7c3aed',
+      'Akreditasyon Bülteni': '#16a34a',
+      'Tasarım İşlemleri': '#f97316',
+      'İdari Çalışmalar ve Raporlamalar': '#64748b',
+      'Bütçe İş ve İşlemleri': '#92400e',
+      'Şikayet / İtiraz': '#dc2626',
+      'İleti ve CİMER': '#b91c1c',
+      'Talep Takibi': '#ca8a04',
+      'Mal ve Hizmet Alımı': '#0f766e',
+      'Bilgi Notları': '#4f46e5'
+    };
+
+    const STATUSES = [
+      'Yeni',
+      'Planlandı',
+      'Devam Ediyor',
+      'Beklemede',
+      'Revizyonda',
+      'Onayda',
+      'Tamamlandı',
+      'İptal / Askıda'
+    ];
+
+    const STATUS_COLORS = {
+      'Tamamlandı': '#16a34a',
+      'Onayda': '#2563eb',
+      'Revizyonda': '#f97316',
+      'Beklemede': '#64748b',
+      'Yeni': '#7f1d1d',
+      'Planlandı': '#9333ea',
+      'Devam Ediyor': '#dc2626',
+      'İptal / Askıda': '#334155'
+    };
+
+    const PRIORITIES = ['Düşük', 'Normal', 'Yüksek', 'Acil'];
+    const OUTPUT_TYPES = ['Yazı', 'Haber', 'Sosyal Medya Paylaşımı', 'Rapor', 'Tasarım', 'Etkinlik', 'Bülten', 'Bilgi Notu', 'Diğer'];
+    const PRIVACY_LEVELS = ['Normal', 'Hassas', 'Sadece Yetkililer'];
+    const ROLES = ['Personel', 'Müdür', 'Koordinatör', 'Admin'];
+    const PRIVILEGED_ROLES = ['Müdür', 'Koordinatör', 'Admin'];
+    const APPROVER_ROLES = ['Müdür', 'Koordinatör'];
+
+    const BASE_USERS = [
+      { id: 'u_mudur', username: 'Müdür', fullName: 'Müdür', title: 'Kurumsal İletişim Müdürü', role: 'Müdür' },
+      { id: 'u_admin', username: 'Admin', fullName: 'Admin', title: 'Sistem Yöneticisi', role: 'Admin' },
+      { id: 'u_koordinator', username: 'Koordinatör', fullName: 'Koordinatör', title: 'Koordinatör', role: 'Koordinatör' },
+      { id: 'u_umut', username: 'Umut', fullName: 'Umut Halaza', title: 'Personel', role: 'Personel' },
+      { id: 'u_davut', username: 'Davut', fullName: 'Davut Kara', title: 'Personel', role: 'Personel' },
+      { id: 'u_onur', username: 'Onur', fullName: 'Onur Karadayı', title: 'Personel', role: 'Personel' },
+      { id: 'u_ugur', username: 'Uğur', fullName: 'Uğur Onur', title: 'Personel', role: 'Personel' }
+    ];
+
+    const state = {
+      user: null,
+      calendarMonth: monthString(new Date()),
+      currentFilter: 'all',
+      lastJobs: []
+    };
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function uid(prefix) {
+      return prefix + '_' + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    function todayString(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    function monthString(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      return y + '-' + m;
+    }
+
+    function addDays(days, base = new Date()) {
+      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+      d.setDate(d.getDate() + days);
+      return todayString(d);
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      const parts = String(value).split('-').map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function daysBetween(fromDate, toDate) {
+      const from = parseDate(fromDate);
+      const to = parseDate(toDate);
+      if (!from || !to) return null;
+      return Math.round((to - from) / 86400000);
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const d = parseDate(value);
+      if (!d) return value;
+      return new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' }).format(d);
+    }
+
+    function formatDateTime(value) {
+      if (!value) return '-';
+      try {
+        return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+      } catch {
+        return value;
+      }
+    }
+
+    function monthLabel(ym) {
+      const parts = ym.split('-').map(Number);
+      return new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(new Date(parts[0], parts[1] - 1, 1));
+    }
+
+    function normalizeUsername(value) {
+      return String(value || '')
+        .trim()
+        .toLocaleLowerCase('tr-TR')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c');
+    }
+
+    function normalizeRole(role) {
+      const map = {
+        Coordinator: 'Koordinatör',
+        Manager: 'Müdür',
+        Administrator: 'Admin'
+      };
+      const normalized = map[role] || role;
+      return ROLES.includes(normalized) ? normalized : 'Personel';
+    }
+
+    function roleText(role) {
+      return {
+        Personel: 'Personel',
+        Koordinatör: 'Koordinatör',
+        Müdür: 'Müdür',
+        Admin: 'Sistem Yöneticisi'
+      }[role] || role || '-';
+    }
+
+    function isOpenStatus(status) {
+      return status !== 'Tamamlandı' && status !== 'İptal / Askıda';
+    }
+
+    function priorityClass(priority) {
+      if (priority === 'Acil') return 'priority-urgent';
+      if (priority === 'Yüksek') return 'priority-high';
+      if (priority === 'Düşük') return 'priority-low';
+      return 'priority-normal';
+    }
+
+    function getDb() {
+      const raw = localStorage.getItem(APP_KEY);
+      if (!raw) {
+        const seed = seedDb();
+        saveDb(seed);
+        return seed;
+      }
+
+      try {
+        const parsed = JSON.parse(raw);
+        const normalized = normalizeDb(parsed);
+        saveDb(normalized);
+        return normalized;
+      } catch {
+        const seed = seedDb();
+        saveDb(seed);
+        return seed;
+      }
+    }
+
+    function saveDb(db) {
+      localStorage.setItem(APP_KEY, JSON.stringify(db));
+    }
+
+    function seedDb() {
+      const now = new Date().toISOString();
+      const year = new Date().getFullYear();
+      const users = BASE_USERS.map(user => ({
+        ...user,
+        password: INITIAL_PASSWORD,
+        active: true,
+        email: '',
+        phone: '',
+        createdManually: false,
+        createdAt: now,
+        updatedAt: now,
+        updatedBy: 'system'
+      }));
+
+      return {
+        version: 2,
+        createdAt: now,
+        users,
+        jobs: [],
+        notifications: [],
+        notificationKeys: [],
+        lastJobSeq: { [year]: 0 }
+      };
+    }
+
+    function normalizeDb(db) {
+      const seed = seedDb();
+      if (!db || typeof db !== 'object') return seed;
+
+      db.version = 2;
+      db.users = Array.isArray(db.users) ? db.users : [];
+      db.jobs = Array.isArray(db.jobs) ? db.jobs : [];
+      db.notifications = Array.isArray(db.notifications) ? db.notifications : [];
+      db.notificationKeys = Array.isArray(db.notificationKeys) ? db.notificationKeys : [];
+      db.lastJobSeq = db.lastJobSeq && typeof db.lastJobSeq === 'object' ? db.lastJobSeq : {};
+
+      const now = new Date().toISOString();
+      const currentById = new Map(db.users.map(user => [user.id, user]));
+      const currentByUsername = new Map(db.users.map(user => [normalizeUsername(user.username), user]));
+      const users = [];
+      const usedNames = new Set();
+
+      for (const base of BASE_USERS) {
+        const existing = currentById.get(base.id) || currentByUsername.get(normalizeUsername(base.username)) || {};
+        users.push({
+          id: base.id,
+          username: base.username,
+          password: existing.password || INITIAL_PASSWORD,
+          fullName: base.fullName,
+          title: existing.title || base.title,
+          role: base.role,
+          active: existing.active !== false,
+          email: existing.email || '',
+          phone: existing.phone || '',
+          createdManually: false,
+          createdAt: existing.createdAt || db.createdAt || now,
+          updatedAt: existing.updatedAt || now,
+          updatedBy: existing.updatedBy || 'system'
+        });
+        usedNames.add(normalizeUsername(base.username));
+      }
+
+      for (const user of db.users) {
+        if (!user || !user.createdManually) continue;
+        const username = String(user.username || '').trim();
+        const key = normalizeUsername(username);
+        if (!username || usedNames.has(key)) continue;
+        users.push({
+          id: user.id || uid('u'),
+          username,
+          password: user.password || INITIAL_PASSWORD,
+          fullName: String(user.fullName || username).trim(),
+          title: user.title || '',
+          role: normalizeRole(user.role),
+          active: user.active !== false,
+          email: user.email || '',
+          phone: user.phone || '',
+          createdManually: true,
+          createdAt: user.createdAt || now,
+          updatedAt: user.updatedAt || now,
+          updatedBy: user.updatedBy || 'system'
+        });
+        usedNames.add(key);
+      }
+
+      db.users = users;
+      const validUserIds = new Set(users.map(user => user.id));
+      const fallbackUser = users.find(user => user.id === 'u_admin') || users[0];
+
+      db.jobs = db.jobs.map(job => ({
+        ...job,
+        helperIds: (Array.isArray(job.helperIds) ? job.helperIds : []).filter(id => validUserIds.has(id)),
+        responsibleId: validUserIds.has(job.responsibleId) ? job.responsibleId : fallbackUser.id,
+        createdBy: validUserIds.has(job.createdBy) ? job.createdBy : fallbackUser.id,
+        updatedBy: validUserIds.has(job.updatedBy) ? job.updatedBy : (validUserIds.has(job.createdBy) ? job.createdBy : fallbackUser.id),
+        privacyLevel: PRIVACY_LEVELS.includes(job.privacyLevel) ? job.privacyLevel : 'Normal',
+        status: STATUSES.includes(job.status) ? job.status : 'Yeni',
+        priority: PRIORITIES.includes(job.priority) ? job.priority : 'Normal',
+        mainCategory: CATEGORIES[job.mainCategory] ? job.mainCategory : Object.keys(CATEGORIES)[0],
+        calendarTitle: job.calendarTitle || job.mainCategory || '',
+        showOnCalendar: job.showOnCalendar !== false
+      }));
+
+      const validJobIds = new Set(db.jobs.map(job => job.id));
+      db.notifications = db.notifications.filter(notification =>
+        notification && validUserIds.has(notification.userId) && (!notification.jobId || validJobIds.has(notification.jobId))
+      );
+
+      const year = new Date().getFullYear();
+      const maxSeq = db.jobs.reduce((max, job) => {
+        const match = String(job.jobNo || '').match(/KIM-\d{4}-(\d+)/);
+        return match ? Math.max(max, Number(match[1])) : max;
+      }, 0);
+      db.lastJobSeq[year] = Math.max(Number(db.lastJobSeq[year] || 0), maxSeq);
+
+      return db;
+    }
+
+    function getCurrentUser() {
+      const userId = localStorage.getItem(SESSION_KEY);
+      if (!userId) return null;
+      return getDb().users.find(user => user.id === userId && user.active !== false) || null;
+    }
+
+    function userById(db, id) {
+      return db.users.find(user => user.id === id) || null;
+    }
+
+    function isPrivileged(user) {
+      return Boolean(user && PRIVILEGED_ROLES.includes(user.role));
+    }
+
+    function isAdmin(user) {
+      return Boolean(user && user.role === 'Admin');
+    }
+
+    function approverUsers(db) {
+      return db.users.filter(user => APPROVER_ROLES.includes(user.role) && user.active !== false);
+    }
+
+    function managementUsers(db) {
+      return db.users.filter(user => PRIVILEGED_ROLES.includes(user.role) && user.active !== false);
+    }
+
+    function isParticipant(user, job) {
+      return Boolean(user && job && (
+        job.createdBy === user.id ||
+        job.responsibleId === user.id ||
+        (job.helperIds || []).includes(user.id)
+      ));
+    }
+
+    function canSeeRow(user, job) {
+      return Boolean(user && job);
+    }
+
+    function canSeeDetail(user, job) {
+      return Boolean(user && job);
+    }
+
+    function canEditJob(user, job) {
+      if (!user || !job) return false;
+      if (isPrivileged(user)) return true;
+      return isParticipant(user, job);
+    }
+
+    function canDeleteJob(user, job) {
+      if (!user || !job) return false;
+      if (['Admin', 'Koordinatör', 'Müdür'].includes(user.role)) return true;
+      return job.createdBy === user.id;
+    }
+
+    function decorateJob(db, user, job, detailed = false) {
+      if (!canSeeRow(user, job)) return null;
+
+      const responsible = userById(db, job.responsibleId);
+      const helpers = (job.helperIds || []).map(id => userById(db, id)).filter(Boolean);
+      const today = todayString();
+      const fullDetail = canSeeDetail(user, job);
+      const limited = !fullDetail;
+
+      const decorated = {
+        ...job,
+        responsibleName: responsible ? responsible.fullName : '',
+        helperNames: helpers.map(item => item.fullName),
+        createdByName: userById(db, job.createdBy)?.fullName || '',
+        updatedByName: userById(db, job.updatedBy)?.fullName || '',
+        categoryColor: CATEGORY_COLORS[job.mainCategory] || '#991b1b',
+        statusColor: STATUS_COLORS[job.status] || '#475569',
+        dueInDays: daysBetween(today, job.targetEndDate),
+        isOverdue: isOpenStatus(job.status) && job.targetEndDate < today,
+        canEdit: canEditJob(user, job),
+        canDelete: canDeleteJob(user, job),
+        limited
+      };
+
+      if (detailed && limited) {
+        decorated.description = 'Bu iş hassas olarak işaretlenmiştir. Ayrıntı görüntüleme yetkiniz bulunmuyor.';
+        decorated.requester = 'Yetki gerektirir';
+        decorated.fileLink = '';
+        decorated.delayReason = '';
+        decorated.nextAction = 'Yetki gerektirir';
+        decorated.lastUpdateNote = 'Yetki gerektirir';
+        decorated.completionNote = 'Yetki gerektirir';
+      }
+
+      return decorated;
+    }
+
+    function visibleJobs(db, detailed = false) {
+      return db.jobs
+        .map(job => decorateJob(db, state.user, job, detailed))
+        .filter(Boolean);
+    }
+
+    function addNotification(db, data) {
+      if (!data.userId) return;
+
+      const recipient = userById(db, data.userId);
+      if (!recipient || recipient.active === false) return;
+
+      if (data.key) {
+        const notificationExistsForKey = db.notifications.some(notification => notification.key === data.key);
+        if (db.notificationKeys.includes(data.key) && notificationExistsForKey) return;
+        if (!db.notificationKeys.includes(data.key)) db.notificationKeys.push(data.key);
+      }
+
+      db.notifications.push({
+        id: uid('n'),
+        userId: data.userId,
+        jobId: data.jobId || '',
+        key: data.key || '',
+        title: data.title,
+        message: data.message,
+        type: data.type || 'Bilgi',
+        level: data.level || 'info',
+        read: false,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    function runReminderEngine(db) {
+      const today = todayString();
+      const todayDate = parseDate(today);
+      const tomorrow = new Date(todayDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const isMonday = todayDate.getDay() === 1;
+      const isLastDayOfMonth = tomorrow.getMonth() !== todayDate.getMonth();
+
+      for (const job of db.jobs) {
+        if (!isOpenStatus(job.status)) continue;
+
+        const due = daysBetween(today, job.targetEndDate);
+        const responsible = userById(db, job.responsibleId);
+
+        if (responsible && responsible.active !== false) {
+          addNotification(db, {
+            userId: responsible.id,
+            jobId: job.id,
+            title: 'Size yeni bir iş atandı',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Yeni Atama',
+            level: 'info',
+            key: 'assign:' + job.id + ':' + responsible.id
+          });
+        }
+
+        for (const helperId of job.helperIds || []) {
+          const helper = userById(db, helperId);
+          if (!helper || helper.active === false) continue;
+          addNotification(db, {
+            userId: helperId,
+            jobId: job.id,
+            title: 'Yardımcı personel olarak eklendiniz',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Yeni Atama',
+            level: 'info',
+            key: 'helper:' + job.id + ':' + helperId
+          });
+        }
+
+        if (due === 3 && responsible) {
+          addNotification(db, {
+            userId: responsible.id,
+            jobId: job.id,
+            title: 'Bitiş tarihi yaklaşıyor',
+            message: job.jobNo + ' için hedef bitiş tarihine 3 gün kaldı.',
+            type: 'Hatırlatma',
+            level: 'warning',
+            key: 'due3:' + today + ':' + job.id + ':' + responsible.id
+          });
+        }
+
+        if (due === 1 && responsible) {
+          addNotification(db, {
+            userId: responsible.id,
+            jobId: job.id,
+            title: 'Yarın tamamlanması bekleniyor',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Hatırlatma',
+            level: 'warning',
+            key: 'due1:' + today + ':' + job.id + ':' + responsible.id
+          });
+        }
+
+        if (typeof due === 'number' && due < 0) {
+          const recipients = new Set([job.responsibleId, ...managementUsers(db).map(user => user.id)]);
+          for (const userId of recipients) {
+            addNotification(db, {
+              userId,
+              jobId: job.id,
+              title: 'Geciken iş var',
+              message: job.jobNo + ' hedef bitiş tarihini geçti.',
+              type: 'Gecikme',
+              level: 'danger',
+              key: 'overdue:' + today + ':' + job.id + ':' + userId
+            });
+          }
+        }
+
+        if (job.status === 'Onayda') {
+          for (const approver of approverUsers(db)) {
+            addNotification(db, {
+              userId: approver.id,
+              jobId: job.id,
+              title: 'Onayınızı bekleyen iş var',
+              message: job.jobNo + ' - ' + job.title,
+              type: 'Onay',
+              level: 'info',
+              key: 'approval:' + job.id + ':' + approver.id
+            });
+          }
+        }
+
+        if (job.status === 'Revizyonda' && responsible) {
+          addNotification(db, {
+            userId: responsible.id,
+            jobId: job.id,
+            title: 'İş revizyon için geri gönderildi',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Revizyon',
+            level: 'warning',
+            key: 'revision:' + job.id + ':' + responsible.id
+          });
+        }
+      }
+
+      if (isMonday) {
+        const openCount = db.jobs.filter(job => isOpenStatus(job.status)).length;
+        const overdueCount = db.jobs.filter(job => isOpenStatus(job.status) && job.targetEndDate < today).length;
+
+        for (const user of managementUsers(db)) {
+          addNotification(db, {
+            userId: user.id,
+            title: 'Haftalık açık işler özeti',
+            message: 'Bu hafta başlangıcında ' + openCount + ' açık iş ve ' + overdueCount + ' geciken iş bulunuyor.',
+            type: 'Haftalık Özet',
+            level: overdueCount > 0 ? 'warning' : 'info',
+            key: 'weekly:' + today + ':' + user.id
+          });
+        }
+      }
+
+      if (isLastDayOfMonth) {
+        const month = today.slice(0, 7);
+        const completedThisMonth = db.jobs.filter(job => job.status === 'Tamamlandı' && job.actualEndDate && job.actualEndDate.startsWith(month)).length;
+
+        for (const user of managementUsers(db)) {
+          addNotification(db, {
+            userId: user.id,
+            title: 'Ay sonu faaliyet ve iş yükü özeti',
+            message: 'Bu ay tamamlanan iş sayısı: ' + completedThisMonth + '. Rapor ekranından ayrıntı alınabilir.',
+            type: 'Aylık Özet',
+            level: 'info',
+            key: 'monthly:' + today + ':' + user.id
+          });
+        }
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = $('#toast');
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.className = 'toast';
+      }, 3600);
+    }
+
+    function optionHtml(value, label = value, selected = '') {
+      return '<option value="' + escapeHtml(value) + '"' + (value === selected ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+    }
+
+    function roleOptions(selected = 'Personel') {
+      return ROLES.map(role => optionHtml(role, roleText(role), selected)).join('');
+    }
+
+    function fillSelects() {
+      $('#mainCategory').innerHTML = '<option value="">Seçiniz</option>' + Object.keys(CATEGORIES).map(category => optionHtml(category)).join('');
+      $('#filterCategory').innerHTML = '<option value="">Tümü</option>' + Object.keys(CATEGORIES).map(category => optionHtml(category)).join('');
+      $('#status').innerHTML = STATUSES.map(status => optionHtml(status, status, 'Yeni')).join('');
+      $('#filterStatus').innerHTML = '<option value="">Tümü</option>' + STATUSES.map(status => optionHtml(status)).join('');
+      $('#priority').innerHTML = PRIORITIES.map(priority => optionHtml(priority, priority, 'Normal')).join('');
+      $('#outputType').innerHTML = OUTPUT_TYPES.map(type => optionHtml(type, type, 'Diğer')).join('');
+      $('#privacyLevel').innerHTML = PRIVACY_LEVELS.map(level => optionHtml(level, level, 'Normal')).join('');
+      $('#adminRole').innerHTML = roleOptions('Personel');
+
+      const db = getDb();
+      const userOptions = db.users
+        .filter(user => user.active !== false)
+        .map(user => optionHtml(user.id, user.fullName + ' - ' + roleText(user.role)))
+        .join('');
+
+      $('#responsibleId').innerHTML = '<option value="">Seçiniz</option>' + userOptions;
+      $('#helperIds').innerHTML = userOptions;
+      $('#filterAssigned').innerHTML = '<option value="">Tümü</option>' + userOptions;
+
+      populateSubCategories('');
+      $('#startDate').value = todayString();
+      $('#calendarDate').value = todayString();
+    }
+
+    function populateSubCategories(mainCategory, selected = '') {
+      const subs = CATEGORIES[mainCategory] || [];
+      $('#subCategory').innerHTML = '<option value="">Seçiniz</option>' + subs.map(sub => optionHtml(sub, sub, selected)).join('');
+      $('#calendarTitle').value = mainCategory || '';
+    }
+
+    function showLogin() {
+      $('#loginScreen').classList.remove('hidden');
+      $('#appShell').classList.add('hidden');
+    }
+
+    function showApp() {
+      $('#loginScreen').classList.add('hidden');
+      $('#appShell').classList.remove('hidden');
+    }
+
+    function login(event) {
+      event.preventDefault();
+
+      const username = normalizeUsername($('#loginUsername').value);
+      const password = $('#loginPassword').value;
+      const db = getDb();
+      const user = db.users.find(item =>
+        normalizeUsername(item.username) === username &&
+        item.password === password &&
+        item.active !== false
+      );
+
+      if (!user) {
+        showToast('Kullanıcı adı veya şifre hatalı.', 'error');
+        return;
+      }
+
+      localStorage.setItem(SESSION_KEY, user.id);
+      state.user = user;
+
+      runReminderEngine(db);
+      saveDb(db);
+
+      fillSelects();
+      setUserHeader();
+      showApp();
+      showPage('dashboard');
+      showToast('Giriş başarılı. Anasayfa açıldı.');
+    }
+
+    function logout() {
+      localStorage.removeItem(SESSION_KEY);
+      state.user = null;
+      showLogin();
+    }
+
+    function setUserHeader() {
+      if (!state.user) return;
+      $('#currentUserName').textContent = state.user.fullName;
+      $('#currentUserRole').textContent = roleText(state.user.role);
+      updateNavVisibility();
+    }
+
+    function updateNavVisibility() {
+      $$('.admin-only').forEach(element => element.classList.toggle('hidden', !isAdmin(state.user)));
+    }
+
+    function openJobFormPanel() {
+      $('#jobFormPanel').classList.remove('hidden');
+      setTimeout(() => $('#title').focus(), 0);
+    }
+
+    function hideJobFormPanel() {
+      $('#jobFormPanel').classList.add('hidden');
+    }
+
+    function showPage(name) {
+      if (name === 'users' && !isAdmin(state.user)) {
+        showToast('Kullanıcı yönetimi sadece Admin yetkisindedir.', 'error');
+        name = 'dashboard';
+      }
+
+      hideJobFormPanel();
+      $$('.page').forEach(page => page.classList.toggle('active', page.id === name + 'Page'));
+      $$('.nav-tab').forEach(button => button.classList.toggle('active', button.dataset.page === name));
+
+      if (name === 'dashboard') refreshDashboard();
+      if (name === 'jobs') renderJobsTable();
+      if (name === 'reports') renderReports();
+      if (name === 'profile') renderProfilePage();
+      if (name === 'users') renderUsersPage();
+      if (name === 'notifications') renderNotificationPage();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function computeSummary(db) {
+      const jobs = visibleJobs(db, false);
+      const today = todayString();
+      const weekEnd = addDays(7);
+      const open = jobs.filter(job => isOpenStatus(job.status));
+      const week = open.filter(job => job.targetEndDate >= today && job.targetEndDate <= weekEnd);
+      const overdue = open.filter(job => job.targetEndDate < today);
+      const approval = jobs.filter(job => job.status === 'Onayda');
+      const completed = jobs.filter(job => job.status === 'Tamamlandı');
+      const todayJobs = jobs.filter(job => job.targetEndDate === today || job.calendarDate === today);
+      const mine = jobs.filter(job => job.responsibleId === state.user.id || (job.helperIds || []).includes(state.user.id));
+      const activeFlow = open
+        .slice(0, 20)
+        .map(job => job.jobNo + ' • ' + job.mainCategory + ' • ' + job.title + ' (' + job.status + ')');
+
+      return { open: open.length, week: week.length, overdue: overdue.length, approval: approval.length, completed: completed.length, todayJobs, mine, activeFlow, today };
+    }
+
+    function refreshDashboard() {
+      const db = getDb();
+      runReminderEngine(db);
+      saveDb(db);
+
+      const summary = computeSummary(db);
+      renderSummaryCards(summary);
+      renderTicker(summary);
+      renderCalendar();
+      renderToday(summary);
+      renderPersonalJobs(db);
+      renderNotificationPreview();
+    }
+
+    function renderSummaryCards(summary) {
+      const cards = [
+        { label: 'Açık İşler', count: summary.open, filter: 'open', hint: 'Devam eden toplam iş', tone: 'rgba(220,38,38,.12)' },
+        { label: 'Bu Hafta Bitecek', count: summary.week, filter: 'week', hint: 'Yaklaşan hedefler', tone: 'rgba(245,158,11,.18)' },
+        { label: 'Geciken İşler', count: summary.overdue, filter: 'overdue', hint: 'Hedef tarihi geçen işler', tone: 'rgba(239,68,68,.20)' },
+        { label: 'Onay Bekleyenler', count: summary.approval, filter: 'approval', hint: 'Müdür/koordinatör onayı', tone: 'rgba(37,99,235,.16)' },
+        { label: 'Tamamlanan İşler', count: summary.completed, filter: 'completed', hint: 'Kapanan işler', tone: 'rgba(22,163,74,.14)' }
+      ];
+
+      $('#summaryCards').innerHTML = cards.map(card => `
+        <button class="summary-card" style="--tone:${card.tone}" type="button" data-open-filter="${card.filter}">
+          <span class="count">${card.count}</span>
+          <span class="label">${escapeHtml(card.label)}</span>
+          <span class="hint">Tıklayınca genel iş listesi açılır · ${escapeHtml(card.hint)}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderTicker(summary) {
+      const items = summary.activeFlow.length ? summary.activeFlow : ['Aktif açık iş bulunmuyor.'];
+      $('#activeTicker').textContent = items.join('     •     ');
+    }
+
+    function renderToday(summary) {
+      $('#todayTitle').textContent = formatDate(summary.today);
+      const jobs = summary.todayJobs.slice(0, 8);
+
+      if (!jobs.length) {
+        $('#todaySummary').innerHTML = '<div class="empty-state">Bugün takvimde veya hedef tarihte görünen iş yok.</div>';
+        return;
+      }
+
+      $('#todaySummary').innerHTML = jobs.map(job => `
+        <button class="today-item" type="button" data-job-detail="${escapeHtml(job.id)}">
+          <strong>${escapeHtml(job.calendarTitle || job.mainCategory)} · ${escapeHtml(job.jobNo)}</strong>
+          <span>${escapeHtml(job.title)} · ${escapeHtml(job.status)}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderPersonalJobs(db) {
+      const jobs = visibleJobs(db, false)
+        .filter(job => isOpenStatus(job.status))
+        .filter(job => job.responsibleId === state.user.id || (job.helperIds || []).includes(state.user.id))
+        .sort((a, b) => String(a.targetEndDate).localeCompare(String(b.targetEndDate)))
+        .slice(0, 6);
+
+      if (!jobs.length) {
+        $('#personalJobs').innerHTML = '<div class="empty-state">Size atanmış açık iş bulunmuyor.</div>';
+        return;
+      }
+
+      $('#personalJobs').innerHTML = jobs.map(job => `
+        <button class="mini-job-item" type="button" data-job-detail="${escapeHtml(job.id)}">
+          <strong>${escapeHtml(job.jobNo)} · ${escapeHtml(job.title)}</strong>
+          <span>${escapeHtml(job.mainCategory)} / ${escapeHtml(job.subCategory || '-')}</span>
+          <div class="workload-stats">
+            <span style="background:${escapeHtml(job.statusColor)}; color:#fff">${escapeHtml(job.status)}</span>
+            <span>Hedef: ${formatDate(job.targetEndDate)}</span>
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function renderCalendar() {
+      const db = getDb();
+      const jobs = visibleJobs(db, false)
+        .filter(job => job.showOnCalendar && job.calendarDate && job.calendarDate.startsWith(state.calendarMonth));
+      const grouped = new Map();
+
+      for (const job of jobs) {
+        const key = job.calendarDate + '__' + job.mainCategory;
+        const existing = grouped.get(key) || {
+          date: job.calendarDate,
+          mainCategory: job.mainCategory,
+          title: job.calendarTitle || job.mainCategory,
+          count: 0,
+          color: job.categoryColor
+        };
+        existing.count += 1;
+        grouped.set(key, existing);
+      }
+
+      const itemsByDate = new Map();
+      for (const item of grouped.values()) {
+        if (!itemsByDate.has(item.date)) itemsByDate.set(item.date, []);
+        itemsByDate.get(item.date).push(item);
+      }
+
+      $('#calendarTitleText').textContent = 'İş Takvimi · ' + monthLabel(state.calendarMonth);
+      const [year, month] = state.calendarMonth.split('-').map(Number);
+      const firstDay = new Date(year, month - 1, 1);
+      const startOffset = (firstDay.getDay() + 6) % 7;
+      const start = new Date(year, month - 1, 1 - startOffset);
+      const today = todayString();
+      const cells = [];
+
+      for (let i = 0; i < 42; i += 1) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const ds = todayString(date);
+        const inMonth = date.getMonth() === month - 1;
+        const dayItems = itemsByDate.get(ds) || [];
+        const chips = dayItems.slice(0, 3).map(item => `
+          <button class="calendar-chip" type="button" style="background:${escapeHtml(item.color)}" data-calendar-date="${escapeHtml(item.date)}" data-calendar-category="${escapeHtml(item.mainCategory)}">
+            ${escapeHtml(item.title)}${item.count > 1 ? ' (' + item.count + ')' : ''}
+          </button>
+        `).join('');
+        const more = dayItems.length > 3 ? '<div class="more-chip">+' + (dayItems.length - 3) + ' başlık</div>' : '';
+        cells.push(`
+          <div class="calendar-day ${inMonth ? '' : 'other-month'} ${ds === today ? 'today' : ''}">
+            <div class="day-number">${date.getDate()}</div>
+            ${chips}
+            ${more}
+          </div>
+        `);
+      }
+
+      $('#calendarGrid').innerHTML = cells.join('');
+    }
+
+    function openCalendarGroup(date, category) {
+      const db = getDb();
+      const jobs = visibleJobs(db, false)
+        .filter(job => job.showOnCalendar && job.calendarDate === date && job.mainCategory === category);
+      const body = jobs.length ? `
+        <div class="calendar-popup-list">
+          ${jobs.map(job => `
+            <button class="calendar-popup-item" type="button" style="--item-color:${escapeHtml(job.categoryColor)}" data-job-detail="${escapeHtml(job.id)}">
+              <strong>${escapeHtml(job.calendarTitle || job.mainCategory)} · ${escapeHtml(job.jobNo)}</strong><br>
+              <span>${escapeHtml(job.title)}</span><br>
+              <small>${escapeHtml(job.status)} · Sorumlu: ${escapeHtml(job.responsibleName)} · Hedef: ${formatDate(job.targetEndDate)}</small>
+            </button>
+          `).join('')}
+        </div>
+      ` : '<div class="empty-state">Bu başlıkta görüntüleyebileceğiniz iş bulunmuyor.</div>';
+      openModal(formatDate(date) + ' · ' + category, body, '<button class="btn btn-light" data-modal-close type="button">Kapat</button>');
+    }
+
+    function collectJobForm() {
+      return {
+        title: $('#title').value.trim(),
+        mainCategory: $('#mainCategory').value,
+        subCategory: $('#subCategory').value,
+        description: $('#description').value.trim(),
+        requester: $('#requester').value.trim(),
+        responsibleId: $('#responsibleId').value,
+        helperIds: $$('#helperIds option:checked').map(option => option.value),
+        priority: $('#priority').value,
+        startDate: $('#startDate').value,
+        targetEndDate: $('#targetEndDate').value,
+        status: $('#status').value,
+        approvalRequired: $('#approvalRequired').checked,
+        fileLink: $('#fileLink').value.trim(),
+        actualEndDate: $('#actualEndDate').value,
+        delayReason: $('#delayReason').value.trim(),
+        nextAction: $('#nextAction').value.trim(),
+        lastUpdateNote: $('#lastUpdateNote').value.trim(),
+        outputType: $('#outputType').value,
+        privacyLevel: $('#privacyLevel').value,
+        completionNote: $('#completionNote').value.trim(),
+        showOnCalendar: $('#showOnCalendar').checked,
+        calendarDate: $('#calendarDate').value,
+        calendarTitle: $('#mainCategory').value,
+        calendarNote: $('#calendarNote').value.trim()
+      };
+    }
+
+    function validateJob(data) {
+      const errors = [];
+      if (!data.title) errors.push('İş adı zorunludur.');
+      if (!data.mainCategory) errors.push('Ana kategori zorunludur.');
+      if (!data.responsibleId) errors.push('Sorumlu personel zorunludur.');
+      if (!data.startDate) errors.push('Başlangıç tarihi zorunludur.');
+      if (!data.targetEndDate) errors.push('Hedef bitiş tarihi zorunludur.');
+      if (!data.status) errors.push('Durum zorunludur.');
+      if (data.startDate && data.targetEndDate && data.targetEndDate < data.startDate) errors.push('Hedef bitiş tarihi başlangıç tarihinden önce olamaz.');
+      if (data.actualEndDate && data.startDate && data.actualEndDate < data.startDate) errors.push('Fiili bitiş tarihi başlangıç tarihinden önce olamaz.');
+      if (data.showOnCalendar && !data.calendarDate) errors.push('Takvimde gösterilen işler için takvim tarihi zorunludur.');
+      return errors;
+    }
+
+    function nextJobNo(db) {
+      const year = new Date().getFullYear();
+      db.lastJobSeq[year] = Number(db.lastJobSeq[year] || 0) + 1;
+      return 'KIM-' + year + '-' + String(db.lastJobSeq[year]).padStart(3, '0');
+    }
+
+    function saveJob(event) {
+      event.preventDefault();
+      const payload = collectJobForm();
+      const errors = validateJob(payload);
+
+      if (errors.length) {
+        showToast(errors.join(' '), 'error');
+        return;
+      }
+
+      const db = getDb();
+      const id = $('#jobId').value;
+      let job;
+
+      if (payload.status === 'Tamamlandı' && !payload.actualEndDate) payload.actualEndDate = todayString();
+      if (!payload.showOnCalendar) {
+        payload.calendarDate = '';
+        payload.calendarTitle = '';
+        payload.calendarNote = '';
+      }
+
+      if (id) {
+        job = db.jobs.find(item => item.id === id);
+        if (!job) {
+          showToast('İş kaydı bulunamadı.', 'error');
+          return;
+        }
+        if (!canEditJob(state.user, job)) {
+          showToast('Bu işi güncelleme yetkiniz yok.', 'error');
+          return;
+        }
+
+        const oldResponsibleId = job.responsibleId;
+        const oldStatus = job.status;
+        const oldHelperIds = new Set(job.helperIds || []);
+
+        Object.assign(job, payload, { updatedAt: new Date().toISOString(), updatedBy: state.user.id });
+
+        if (oldResponsibleId !== job.responsibleId) {
+          addNotification(db, {
+            userId: job.responsibleId,
+            jobId: job.id,
+            title: 'Size yeni bir iş atandı',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Yeni Atama',
+            level: 'info',
+            key: 'changedResponsible:' + job.id + ':' + Date.now()
+          });
+        }
+
+        for (const helperId of job.helperIds || []) {
+          if (oldHelperIds.has(helperId)) continue;
+          addNotification(db, {
+            userId: helperId,
+            jobId: job.id,
+            title: 'Yardımcı personel olarak eklendiniz',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Yeni Atama',
+            level: 'info',
+            key: 'changedHelper:' + job.id + ':' + helperId + ':' + Date.now()
+          });
+        }
+
+        if (oldStatus !== job.status && job.status === 'Onayda') {
+          for (const approver of approverUsers(db)) {
+            addNotification(db, {
+              userId: approver.id,
+              jobId: job.id,
+              title: 'Onayınızı bekleyen iş var',
+              message: job.jobNo + ' - ' + job.title,
+              type: 'Onay',
+              level: 'info',
+              key: 'approvalChange:' + job.id + ':' + approver.id + ':' + Date.now()
+            });
+          }
+        }
+      } else {
+        job = {
+          ...payload,
+          id: uid('j'),
+          jobNo: nextJobNo(db),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: state.user.id,
+          updatedBy: state.user.id
+        };
+        db.jobs.push(job);
+
+        addNotification(db, {
+          userId: job.responsibleId,
+          jobId: job.id,
+          title: 'Size yeni bir iş atandı',
+          message: job.jobNo + ' - ' + job.title,
+          type: 'Yeni Atama',
+          level: 'info',
+          key: 'assign:' + job.id + ':' + job.responsibleId
+        });
+
+        for (const helperId of job.helperIds || []) {
+          addNotification(db, {
+            userId: helperId,
+            jobId: job.id,
+            title: 'Yardımcı personel olarak eklendiniz',
+            message: job.jobNo + ' - ' + job.title,
+            type: 'Yeni Atama',
+            level: 'info',
+            key: 'helper:' + job.id + ':' + helperId
+          });
+        }
+      }
+
+      runReminderEngine(db);
+      saveDb(db);
+      resetJobForm();
+      hideJobFormPanel();
+      showToast(job.jobNo + ' kaydedildi. Anasayfaya dönüldü.');
+      showPage('dashboard');
+    }
+
+    function resetJobForm() {
+      $('#jobForm').reset();
+      $('#jobId').value = '';
+      $('#jobNo').value = '';
+      $('#jobFormTitle').textContent = 'YENİ İŞ KAYDI';
+      $('#status').value = 'Yeni';
+      $('#priority').value = 'Normal';
+      $('#outputType').value = 'Diğer';
+      $('#privacyLevel').value = 'Normal';
+      $('#startDate').value = todayString();
+      $('#targetEndDate').value = '';
+      $('#actualEndDate').value = '';
+      $('#showOnCalendar').checked = true;
+      $('#calendarDate').value = todayString();
+      populateSubCategories('');
+    }
+
+    function fillJobForm(job) {
+      resetJobForm();
+      $('#jobFormTitle').textContent = job.jobNo + ' İŞ KAYDI GÜNCELLEME';
+      $('#jobId').value = job.id;
+      $('#jobNo').value = job.jobNo;
+      $('#title').value = job.title || '';
+      $('#mainCategory').value = job.mainCategory || '';
+      populateSubCategories(job.mainCategory || '', job.subCategory || '');
+      $('#description').value = job.description || '';
+      $('#requester').value = job.requester || '';
+      $('#responsibleId').value = job.responsibleId || '';
+      $$('#helperIds option').forEach(option => {
+        option.selected = (job.helperIds || []).includes(option.value);
+      });
+      $('#priority').value = job.priority || 'Normal';
+      $('#startDate').value = job.startDate || todayString();
+      $('#targetEndDate').value = job.targetEndDate || '';
+      $('#status').value = job.status || 'Yeni';
+      $('#approvalRequired').checked = Boolean(job.approvalRequired);
+      $('#fileLink').value = job.fileLink || '';
+      $('#actualEndDate').value = job.actualEndDate || '';
+      $('#delayReason').value = job.delayReason || '';
+      $('#nextAction').value = job.nextAction || '';
+      $('#lastUpdateNote').value = job.lastUpdateNote || '';
+      $('#outputType').value = job.outputType || 'Diğer';
+      $('#privacyLevel').value = job.privacyLevel || 'Normal';
+      $('#completionNote').value = job.completionNote || '';
+      $('#showOnCalendar').checked = Boolean(job.showOnCalendar);
+      $('#calendarDate').value = job.calendarDate || '';
+      $('#calendarTitle').value = job.calendarTitle || job.mainCategory || '';
+      $('#calendarNote').value = job.calendarNote || '';
+    }
+
+    function getFilteredJobs() {
+      const db = getDb();
+      let jobs = visibleJobs(db, true);
+      const today = todayString();
+      const weekEnd = addDays(7);
+      const filter = $('#filterType').value || 'all';
+      const q = $('#filterQ').value.trim().toLocaleLowerCase('tr-TR');
+      const status = $('#filterStatus').value;
+      const category = $('#filterCategory').value;
+      const assigned = $('#filterAssigned').value;
+
+      if (filter === 'open') jobs = jobs.filter(job => isOpenStatus(job.status));
+      if (filter === 'mine') jobs = jobs.filter(job => job.responsibleId === state.user.id || (job.helperIds || []).includes(state.user.id));
+      if (filter === 'week') jobs = jobs.filter(job => isOpenStatus(job.status) && job.targetEndDate >= today && job.targetEndDate <= weekEnd);
+      if (filter === 'overdue') jobs = jobs.filter(job => isOpenStatus(job.status) && job.targetEndDate < today);
+      if (filter === 'approval') jobs = jobs.filter(job => job.status === 'Onayda');
+      if (filter === 'revision') jobs = jobs.filter(job => job.status === 'Revizyonda');
+      if (filter === 'completed') jobs = jobs.filter(job => job.status === 'Tamamlandı');
+      if (filter === 'today') jobs = jobs.filter(job => job.targetEndDate === today || job.calendarDate === today);
+      if (status) jobs = jobs.filter(job => job.status === status);
+      if (category) jobs = jobs.filter(job => job.mainCategory === category);
+      if (assigned) jobs = jobs.filter(job => job.responsibleId === assigned || (job.helperIds || []).includes(assigned));
+
+      if (q) {
+        jobs = jobs.filter(job => [
+          job.jobNo,
+          job.title,
+          job.mainCategory,
+          job.subCategory,
+          job.description,
+          job.requester,
+          job.lastUpdateNote,
+          job.responsibleName,
+          (job.helperNames || []).join(' ')
+        ].join(' ').toLocaleLowerCase('tr-TR').includes(q));
+      }
+
+      jobs.sort((a, b) => {
+        if (a.isOverdue !== b.isOverdue) return a.isOverdue ? -1 : 1;
+        return String(a.targetEndDate).localeCompare(String(b.targetEndDate)) || String(a.jobNo).localeCompare(String(b.jobNo));
+      });
+
+      state.lastJobs = jobs;
+      return jobs;
+    }
+
+    function renderJobsTable() {
+      const jobs = getFilteredJobs();
+      if (!jobs.length) {
+        $('#jobsTableBody').innerHTML = '<tr><td colspan="8"><div class="empty-state">Filtreye uygun iş bulunamadı.</div></td></tr>';
+        return;
+      }
+
+      $('#jobsTableBody').innerHTML = jobs.map(job => `
+        <tr class="${job.isOverdue ? 'overdue-row' : ''}">
+          <td><strong>${escapeHtml(job.jobNo)}</strong></td>
+          <td>${escapeHtml(job.title)}${job.limited ? '<br><small>Hassas içerik: ayrıntılar kısıtlı</small>' : ''}</td>
+          <td>${escapeHtml(job.mainCategory)}<br><small>${escapeHtml(job.subCategory || '-')}</small></td>
+          <td>${escapeHtml(job.responsibleName || '-')}<br><small>${escapeHtml((job.helperNames || []).join(', ') || 'Yardımcı yok')}</small></td>
+          <td>${formatDate(job.targetEndDate)}${job.isOverdue ? '<br><small style="color:#b91c1c;font-weight:900">Gecikti</small>' : ''}</td>
+          <td><span class="status-pill" style="background:${escapeHtml(job.statusColor)}">${escapeHtml(job.status)}</span></td>
+          <td><span class="priority-pill ${priorityClass(job.priority)}">${escapeHtml(job.priority)}</span></td>
+          <td>
+            <div class="action-buttons">
+              <button class="icon-button" type="button" data-job-detail="${escapeHtml(job.id)}">Detay</button>
+              ${job.canEdit ? '<button class="icon-button" type="button" data-edit-job="' + escapeHtml(job.id) + '">Düzenle</button>' : ''}
+              ${job.canDelete ? '<button class="icon-button" type="button" data-delete-job="' + escapeHtml(job.id) + '">Görevi Sil</button>' : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function detailField(label, value, escape = true, extraClass = '') {
+      const content = escape ? escapeHtml(value) : value;
+      return '<div class="detail-field ' + extraClass + '"><span>' + escapeHtml(label) + '</span><strong>' + content + '</strong></div>';
+    }
+
+    function openJobDetail(jobId) {
+      const db = getDb();
+      const raw = db.jobs.find(job => job.id === jobId);
+      if (!raw || !canSeeRow(state.user, raw)) {
+        showToast('İş bulunamadı veya görüntüleme yetkiniz yok.', 'error');
+        return;
+      }
+
+      const job = decorateJob(db, state.user, raw, true);
+      const fileValue = job.fileLink
+        ? (job.fileLink.startsWith('http') ? '<a href="' + escapeHtml(job.fileLink) + '" target="_blank" rel="noopener">' + escapeHtml(job.fileLink) + '</a>' : escapeHtml(job.fileLink))
+        : '-';
+      const limitedWarning = job.limited ? '<div class="empty-state">Bu iş hassas olarak işaretlenmiştir. Bazı ayrıntılar yetkinize göre gizlenmiştir.</div>' : '';
+      const body = `
+        ${limitedWarning}
+        <div class="detail-grid">
+          ${detailField('İş No', job.jobNo)}
+          ${detailField('Durum', '<span class="status-pill" style="background:' + escapeHtml(job.statusColor) + '">' + escapeHtml(job.status) + '</span>', false)}
+          ${detailField('İş Adı', job.title, true, 'full')}
+          ${detailField('Ana Kategori', job.mainCategory)}
+          ${detailField('Alt Kategori', job.subCategory || '-')}
+          ${detailField('İşin Açıklaması', job.description || '-', true, 'full')}
+          ${detailField('Talep Eden', job.requester || '-')}
+          ${detailField('Sorumlu Personel', job.responsibleName || '-')}
+          ${detailField('Yardımcı Personel', (job.helperNames || []).join(', ') || '-')}
+          ${detailField('Öncelik', '<span class="priority-pill ' + priorityClass(job.priority) + '">' + escapeHtml(job.priority) + '</span>', false)}
+          ${detailField('Başlangıç Tarihi', formatDate(job.startDate))}
+          ${detailField('Hedef Bitiş Tarihi', formatDate(job.targetEndDate) + (job.isOverdue ? ' · Gecikti' : ''))}
+          ${detailField('Onay Gerekiyor mu?', job.approvalRequired ? 'Evet' : 'Hayır')}
+          ${detailField('Dosya / Bağlantı', fileValue, false)}
+          ${detailField('Fiili Bitiş Tarihi', formatDate(job.actualEndDate))}
+          ${detailField('Gecikme Nedeni', job.delayReason || '-')}
+          ${detailField('Sonraki Aksiyon', job.nextAction || '-', true, 'full')}
+          ${detailField('Son Güncelleme Notu', job.lastUpdateNote || '-', true, 'full')}
+          ${detailField('Çıktı Türü', job.outputType || '-')}
+          ${detailField('Gizlilik Düzeyi', '<span class="privacy-pill">' + escapeHtml(job.privacyLevel) + '</span>', false)}
+          ${detailField('Takvimde Gösterilsin mi?', job.showOnCalendar ? 'Evet' : 'Hayır')}
+          ${detailField('Takvim Tarihi / Başlığı', formatDate(job.calendarDate) + ' · ' + escapeHtml(job.calendarTitle || '-'))}
+          ${detailField('Takvim Notu', job.calendarNote || '-', true, 'full')}
+          ${detailField('Tamamlanma Notu', job.completionNote || '-', true, 'full')}
+          ${detailField('Son Güncelleme', formatDateTime(job.updatedAt) + ' · ' + (job.updatedByName || '-'))}
+        </div>
+      `;
+      const actions = `
+        ${job.canEdit ? '<button class="btn btn-primary" type="button" data-edit-job="' + escapeHtml(job.id) + '">Düzenle</button>' : ''}
+        ${job.canDelete ? '<button class="btn btn-secondary" type="button" data-delete-job="' + escapeHtml(job.id) + '">Görevi Sil</button>' : ''}
+        <button class="btn btn-light" type="button" data-modal-close>Kapat</button>
+      `;
+      openModal(job.jobNo + ' · ' + job.title, body, actions);
+    }
+
+    function editJob(jobId) {
+      const db = getDb();
+      const raw = db.jobs.find(job => job.id === jobId);
+      if (!raw) {
+        showToast('İş kaydı bulunamadı.', 'error');
+        return;
+      }
+      if (!canEditJob(state.user, raw)) {
+        showToast('Bu işi düzenleme yetkiniz yok.', 'error');
+        return;
+      }
+      const job = decorateJob(db, state.user, raw, true);
+      closeModal();
+      showPage('dashboard');
+      fillJobForm(job);
+      openJobFormPanel();
+    }
+
+    function deleteJob(jobId) {
+      const db = getDb();
+      const index = db.jobs.findIndex(job => job.id === jobId);
+      if (index === -1) {
+        showToast('İş kaydı bulunamadı.', 'error');
+        return;
+      }
+
+      const job = db.jobs[index];
+      if (!canDeleteJob(state.user, job)) {
+        showToast('Bu işi sadece görevi oluşturan kullanıcı, Müdür, Koordinatör veya Admin silebilir.', 'error');
+        return;
+      }
+
+      const ok = confirm(job.jobNo + ' numaralı görev silinecek. Devam edilsin mi?');
+      if (!ok) return;
+
+      db.jobs.splice(index, 1);
+      db.notifications = db.notifications.filter(notification => notification.jobId !== jobId);
+      db.notificationKeys = db.notificationKeys.filter(key => !String(key).includes(jobId));
+      saveDb(db);
+      closeModal();
+      hideJobFormPanel();
+      showToast('Görev silindi. Anasayfaya dönüldü.');
+      showPage('dashboard');
+    }
+
+    function getMyNotifications(db) {
+      return db.notifications
+        .filter(notification => notification.userId === state.user.id)
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    }
+
+    function updateUnreadBadge(notifications) {
+      const unread = notifications.filter(notification => !notification.read).length;
+      const badge = $('#unreadBadge');
+      if (unread > 0) {
+        badge.textContent = unread;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function renderNotificationItem(notification) {
+      return `
+        <article class="notification-item ${notification.read ? '' : 'unread'} notification-${escapeHtml(notification.level || 'info')}">
+          <strong>${escapeHtml(notification.title)}</strong>
+          <span>${escapeHtml(notification.message)}</span>
+          <span class="meta">${escapeHtml(notification.type)} · ${formatDateTime(notification.createdAt)}</span>
+          <div class="action-buttons">
+            ${notification.jobId ? '<button class="icon-button" type="button" data-job-detail="' + escapeHtml(notification.jobId) + '">İşi Aç</button>' : ''}
+            ${notification.read ? '' : '<button class="icon-button" type="button" data-read-notification="' + escapeHtml(notification.id) + '">Okundu</button>'}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderNotificationPreview() {
+      const db = getDb();
+      const notifications = getMyNotifications(db);
+      updateUnreadBadge(notifications);
+      const items = notifications.slice(0, 5);
+      if (!items.length) {
+        $('#notificationPreview').innerHTML = '<div class="empty-state">Bildirim bulunmuyor.</div>';
+        return;
+      }
+      $('#notificationPreview').innerHTML = items.map(renderNotificationItem).join('');
+    }
+
+    function renderNotificationPage() {
+      const db = getDb();
+      const notifications = getMyNotifications(db);
+      updateUnreadBadge(notifications);
+      if (!notifications.length) {
+        $('#notificationFullList').innerHTML = '<div class="empty-state">Bildirim bulunmuyor.</div>';
+        return;
+      }
+      $('#notificationFullList').innerHTML = notifications.map(renderNotificationItem).join('');
+    }
+
+    function markNotificationRead(notificationId) {
+      const db = getDb();
+      const item = db.notifications.find(notification => notification.id === notificationId && notification.userId === state.user.id);
+      if (!item) return;
+      item.read = true;
+      item.readAt = new Date().toISOString();
+      saveDb(db);
+      renderNotificationPreview();
+      if ($('#notificationsPage').classList.contains('active')) renderNotificationPage();
+    }
+
+    function renderReports() {
+      const db = getDb();
+      const jobs = visibleJobs(db, true);
+      const categories = Object.keys(CATEGORIES)
+        .map(category => ({
+          label: category,
+          total: jobs.filter(job => job.mainCategory === category).length,
+          open: jobs.filter(job => job.mainCategory === category && isOpenStatus(job.status)).length,
+          completed: jobs.filter(job => job.mainCategory === category && job.status === 'Tamamlandı').length,
+          color: CATEGORY_COLORS[category] || '#991b1b'
+        }))
+        .filter(item => item.total > 0);
+      const statuses = STATUSES
+        .map(status => ({
+          label: status,
+          total: jobs.filter(job => job.status === status).length,
+          color: STATUS_COLORS[status] || '#475569'
+        }))
+        .filter(item => item.total > 0);
+      const workload = db.users
+        .filter(user => user.active !== false)
+        .map(user => {
+          const assigned = jobs.filter(job => job.responsibleId === user.id || (job.helperIds || []).includes(user.id));
+          return {
+            label: user.fullName,
+            role: user.role,
+            total: assigned.length,
+            open: assigned.filter(job => isOpenStatus(job.status)).length,
+            overdue: assigned.filter(job => isOpenStatus(job.status) && job.targetEndDate < todayString()).length,
+            completed: assigned.filter(job => job.status === 'Tamamlandı').length
+          };
+        });
+      renderBarList('#categoryReport', categories, item => item.total, item => item.total + ' toplam · ' + item.open + ' açık · ' + item.completed + ' tamamlandı');
+      renderBarList('#statusReport', statuses, item => item.total, item => item.total + ' iş');
+      renderWorkload(workload);
+    }
+
+    function renderBarList(selector, items, valueFn, subTextFn) {
+      const target = $(selector);
+      if (!items.length) {
+        target.innerHTML = '<div class="empty-state">Raporlanacak veri yok.</div>';
+        return;
+      }
+      const max = Math.max(...items.map(valueFn), 1);
+      target.innerHTML = items.map(item => {
+        const value = valueFn(item);
+        const width = Math.max(4, Math.round((value / max) * 100));
+        return `
+          <div class="bar-row">
+            <div class="bar-row-head">
+              <span>${escapeHtml(item.label)}</span>
+              <span>${escapeHtml(subTextFn(item))}</span>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" style="width:${width}%; --bar-color:${escapeHtml(item.color || '#dc2626')}"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderWorkload(users) {
+      const target = $('#workloadReport');
+      if (!users.length) {
+        target.innerHTML = '<div class="empty-state">İş yükü verisi yok.</div>';
+        return;
+      }
+      target.innerHTML = users.map(user => `
+        <div class="workload-card">
+          <strong>${escapeHtml(user.label)}</strong>
+          <span class="muted">${escapeHtml(roleText(user.role))}</span>
+          <div class="workload-stats">
+            <span>${user.total} toplam</span>
+            <span>${user.open} açık</span>
+            <span>${user.overdue} geciken</span>
+            <span>${user.completed} tamamlanan</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function exportCsv() {
+      const jobs = getFilteredJobs();
+      const headers = [
+        'İş No', 'İş Adı', 'Ana Kategori', 'Alt Kategori', 'Talep Eden', 'Sorumlu', 'Yardımcı Personel',
+        'Öncelik', 'Başlangıç Tarihi', 'Hedef Bitiş Tarihi', 'Durum', 'Onay Gerekiyor mu?',
+        'Fiili Bitiş Tarihi', 'Gecikme Nedeni', 'Sonraki Aksiyon', 'Son Güncelleme Notu',
+        'Çıktı Türü', 'Gizlilik Düzeyi', 'Takvim Tarihi', 'Takvim Başlığı', 'Takvim Notu'
+      ];
+      const rows = jobs.map(job => [
+        job.jobNo,
+        job.title,
+        job.mainCategory,
+        job.subCategory,
+        job.requester,
+        job.responsibleName,
+        (job.helperNames || []).join(', '),
+        job.priority,
+        job.startDate,
+        job.targetEndDate,
+        job.status,
+        job.approvalRequired ? 'Evet' : 'Hayır',
+        job.actualEndDate,
+        job.delayReason,
+        job.nextAction,
+        job.lastUpdateNote,
+        job.outputType,
+        job.privacyLevel,
+        job.calendarDate,
+        job.calendarTitle,
+        job.calendarNote
+      ]);
+      downloadCsv('is-listesi-' + todayString() + '.csv', [headers, ...rows]);
+      showToast('CSV dosyası hazırlandı.');
+    }
+
+    function exportReportCsv() {
+      const db = getDb();
+      const jobs = visibleJobs(db, true);
+      const rows = [['Rapor Türü', 'Başlık', 'Toplam', 'Açık', 'Geciken', 'Tamamlanan']];
+      for (const category of Object.keys(CATEGORIES)) {
+        const categoryJobs = jobs.filter(job => job.mainCategory === category);
+        if (!categoryJobs.length) continue;
+        rows.push([
+          'Kategori',
+          category,
+          categoryJobs.length,
+          categoryJobs.filter(job => isOpenStatus(job.status)).length,
+          categoryJobs.filter(job => isOpenStatus(job.status) && job.targetEndDate < todayString()).length,
+          categoryJobs.filter(job => job.status === 'Tamamlandı').length
+        ]);
+      }
+      for (const status of STATUSES) {
+        const statusJobs = jobs.filter(job => job.status === status);
+        if (!statusJobs.length) continue;
+        rows.push(['Durum', status, statusJobs.length, '', '', '']);
+      }
+      for (const user of db.users.filter(item => item.active !== false)) {
+        const assigned = jobs.filter(job => job.responsibleId === user.id || (job.helperIds || []).includes(user.id));
+        rows.push([
+          'İş Yükü',
+          user.fullName,
+          assigned.length,
+          assigned.filter(job => isOpenStatus(job.status)).length,
+          assigned.filter(job => isOpenStatus(job.status) && job.targetEndDate < todayString()).length,
+          assigned.filter(job => job.status === 'Tamamlandı').length
+        ]);
+      }
+      downloadCsv('is-raporu-' + todayString() + '.csv', rows);
+      showToast('Rapor CSV dosyası hazırlandı.');
+    }
+
+    function downloadCsv(filename, rows) {
+      const csv = rows.map(row => row.map(csvEscape).join(';')).join('\r\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
+
+    function csvEscape(value) {
+      let text = String(value ?? '').replace(/\r?\n/g, ' ');
+      if (/^[=+\-@]/.test(text)) text = "'" + text;
+      if (/[;"\r\n]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
+      return text;
+    }
+
+    function renderProfilePage() {
+      const db = getDb();
+      const user = userById(db, state.user.id);
+      if (!user) return;
+      state.user = user;
+      $('#profileUsername').value = user.username || '';
+      $('#profileRole').value = roleText(user.role);
+      $('#profileFullName').value = user.fullName || '';
+      $('#profileTitle').value = user.title || '';
+      $('#profileEmail').value = user.email || '';
+      $('#profilePhone').value = user.phone || '';
+    }
+
+    function saveProfile(event) {
+      event.preventDefault();
+      const db = getDb();
+      const user = userById(db, state.user.id);
+      if (!user) {
+        showToast('Kullanıcı kaydı bulunamadı.', 'error');
+        return;
+      }
+      const fullName = $('#profileFullName').value.trim();
+      if (!fullName) {
+        showToast('Ad Soyad alanı zorunludur.', 'error');
+        return;
+      }
+      Object.assign(user, {
+        fullName,
+        title: $('#profileTitle').value.trim(),
+        email: $('#profileEmail').value.trim(),
+        phone: $('#profilePhone').value.trim(),
+        updatedAt: new Date().toISOString(),
+        updatedBy: user.id
+      });
+      saveDb(db);
+      state.user = user;
+      setUserHeader();
+      fillSelects();
+      showToast('Profil bilgileriniz güncellendi.');
+    }
+
+    function updatePassword(event) {
+      event.preventDefault();
+      const db = getDb();
+      const user = userById(db, state.user.id);
+      if (!user) return;
+      const currentPassword = $('#currentPassword').value;
+      const newPassword = $('#newPassword').value;
+      const newPasswordAgain = $('#newPasswordAgain').value;
+      if (currentPassword !== user.password) {
+        showToast('Mevcut şifre hatalı.', 'error');
+        return;
+      }
+      if (newPassword.length < 6) {
+        showToast('Yeni şifre en az 6 karakter olmalıdır.', 'error');
+        return;
+      }
+      if (newPassword !== newPasswordAgain) {
+        showToast('Yeni şifreler eşleşmiyor.', 'error');
+        return;
+      }
+      user.password = newPassword;
+      user.updatedAt = new Date().toISOString();
+      user.updatedBy = user.id;
+      saveDb(db);
+      $('#passwordForm').reset();
+      showToast('Şifreniz güncellendi.');
+    }
+
+    function renderUsersPage() {
+      if (!isAdmin(state.user)) return;
+      const db = getDb();
+      $('#adminRole').innerHTML = roleOptions($('#adminRole').value || 'Personel');
+      if (!db.users.length) {
+        $('#usersTableBody').innerHTML = '<tr><td colspan="7"><div class="empty-state">Kullanıcı bulunamadı.</div></td></tr>';
+        return;
+      }
+      $('#usersTableBody').innerHTML = db.users.map(user => `
+        <tr>
+          <td><strong>${escapeHtml(user.username)}</strong></td>
+          <td>${escapeHtml(user.fullName || '-')}</td>
+          <td>${escapeHtml(roleText(user.role))}</td>
+          <td>${escapeHtml(user.title || '-')}</td>
+          <td>${escapeHtml([user.email, user.phone].filter(Boolean).join(' / ') || '-')}</td>
+          <td>${user.active !== false ? 'Aktif' : 'Pasif'}</td>
+          <td><button class="icon-button" type="button" data-edit-user="${escapeHtml(user.id)}">Düzenle</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function resetAdminUserForm() {
+      $('#userAdminForm').reset();
+      $('#adminUserId').value = '';
+      $('#adminUserFormTitle').textContent = 'Yeni Kullanıcı';
+      $('#adminRole').innerHTML = roleOptions('Personel');
+      $('#adminRole').value = 'Personel';
+      $('#adminActive').checked = true;
+      $('#adminPassword').required = true;
+    }
+
+    function editUser(userId) {
+      if (!isAdmin(state.user)) return;
+      const db = getDb();
+      const user = userById(db, userId);
+      if (!user) {
+        showToast('Kullanıcı bulunamadı.', 'error');
+        return;
+      }
+      $('#adminUserId').value = user.id;
+      $('#adminUserFormTitle').textContent = user.fullName + ' Kullanıcı Güncelleme';
+      $('#adminUsername').value = user.username || '';
+      $('#adminFullName').value = user.fullName || '';
+      $('#adminRole').innerHTML = roleOptions(user.role || 'Personel');
+      $('#adminRole').value = user.role || 'Personel';
+      $('#adminTitle').value = user.title || '';
+      $('#adminEmail').value = user.email || '';
+      $('#adminPhone').value = user.phone || '';
+      $('#adminPassword').value = '';
+      $('#adminPassword').required = false;
+      $('#adminActive').checked = user.active !== false;
+      $('#userAdminForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function saveAdminUser(event) {
+      event.preventDefault();
+      if (!isAdmin(state.user)) {
+        showToast('Bu işlem sadece Admin yetkisindedir.', 'error');
+        return;
+      }
+
+      const db = getDb();
+      const id = $('#adminUserId').value;
+      const username = $('#adminUsername').value.trim();
+      const fullName = $('#adminFullName').value.trim();
+      const role = $('#adminRole').value;
+      const password = $('#adminPassword').value;
+      const active = $('#adminActive').checked;
+      const errors = [];
+
+      if (!username) errors.push('Kullanıcı adı zorunludur.');
+      if (/\s/.test(username)) errors.push('Kullanıcı adında boşluk olmamalıdır.');
+      if (!fullName) errors.push('Ad Soyad / Görünen Ad zorunludur.');
+      if (!ROLES.includes(role)) errors.push('Geçerli bir rol seçiniz.');
+      if (!id && password.length < 6) errors.push('Yeni kullanıcı için en az 6 karakterli şifre giriniz.');
+      if (password && password.length < 6) errors.push('Şifre en az 6 karakter olmalıdır.');
+
+      const duplicate = db.users.find(user => normalizeUsername(user.username) === normalizeUsername(username) && user.id !== id);
+      if (duplicate) errors.push('Bu kullanıcı adı zaten kayıtlı.');
+
+      if (id === state.user.id && (!active || role !== 'Admin')) {
+        errors.push('Admin kendi hesabını pasif yapamaz veya Admin rolünü kaldıramaz.');
+      }
+
+      if (errors.length) {
+        showToast(errors.join(' '), 'error');
+        return;
+      }
+
+      if (id) {
+        const user = userById(db, id);
+        if (!user) {
+          showToast('Kullanıcı bulunamadı.', 'error');
+          return;
+        }
+        Object.assign(user, {
+          username,
+          fullName,
+          role,
+          title: $('#adminTitle').value.trim(),
+          email: $('#adminEmail').value.trim(),
+          phone: $('#adminPhone').value.trim(),
+          active,
+          updatedAt: new Date().toISOString(),
+          updatedBy: state.user.id
+        });
+        if (password) user.password = password;
+        if (user.id === state.user.id) state.user = user;
+      } else {
+        db.users.push({
+          id: uid('u'),
+          username,
+          password,
+          fullName,
+          role,
+          title: $('#adminTitle').value.trim(),
+          email: $('#adminEmail').value.trim(),
+          phone: $('#adminPhone').value.trim(),
+          active,
+          createdManually: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          updatedBy: state.user.id
+        });
+      }
+
+      const normalized = normalizeDb(db);
+      saveDb(normalized);
+      state.user = userById(normalized, state.user.id) || state.user;
+      setUserHeader();
+      fillSelects();
+      resetAdminUserForm();
+      renderUsersPage();
+      showToast('Kullanıcı bilgileri kaydedildi.');
+    }
+
+    function openModal(title, bodyHtml, actionsHtml = '') {
+      $('#modalTitle').textContent = title;
+      $('#modalBody').innerHTML = bodyHtml;
+      $('#modalActions').innerHTML = actionsHtml;
+      $('#modalBackdrop').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      $('#modalBackdrop').classList.add('hidden');
+      $('#modalBody').innerHTML = '';
+      $('#modalActions').innerHTML = '';
+    }
+
+    function changeCalendarMonth(delta) {
+      const parts = state.calendarMonth.split('-').map(Number);
+      const date = new Date(parts[0], parts[1] - 1 + delta, 1);
+      state.calendarMonth = monthString(date);
+      renderCalendar();
+    }
+
+    function bindEvents() {
+      $('#loginForm').addEventListener('submit', login);
+      $('#logoutButton').addEventListener('click', logout);
+      $('#jobForm').addEventListener('submit', saveJob);
+      $('#clearFormButton').addEventListener('click', resetJobForm);
+      $('#profileForm').addEventListener('submit', saveProfile);
+      $('#passwordForm').addEventListener('submit', updatePassword);
+      $('#userAdminForm').addEventListener('submit', saveAdminUser);
+      $('#clearUserFormButton').addEventListener('click', resetAdminUserForm);
+
+      $('#newJobFocusButton').addEventListener('click', () => {
+        resetJobForm();
+        openJobFormPanel();
+      });
+
+      $('#mainCategory').addEventListener('change', event => populateSubCategories(event.target.value));
+      $('#targetEndDate').addEventListener('change', event => {
+        if (!$('#calendarDate').value) $('#calendarDate').value = event.target.value;
+      });
+      $('#status').addEventListener('change', event => {
+        if (event.target.value === 'Tamamlandı' && !$('#actualEndDate').value) $('#actualEndDate').value = todayString();
+      });
+
+      $('#jobFilters').addEventListener('submit', event => {
+        event.preventDefault();
+        renderJobsTable();
+      });
+
+      $('#exportCsvButton').addEventListener('click', exportCsv);
+      $('#exportReportButton').addEventListener('click', exportReportCsv);
+      $('#prevMonth').addEventListener('click', () => changeCalendarMonth(-1));
+      $('#nextMonth').addEventListener('click', () => changeCalendarMonth(1));
+      $('#todayMonth').addEventListener('click', () => {
+        state.calendarMonth = monthString(new Date());
+        renderCalendar();
+      });
+      $('#modalClose').addEventListener('click', closeModal);
+      $('#modalBackdrop').addEventListener('click', event => {
+        if (event.target === $('#modalBackdrop')) closeModal();
+      });
+
+      document.addEventListener('click', event => {
+        const pageButton = event.target.closest('[data-page]');
+        if (pageButton) {
+          showPage(pageButton.dataset.page);
+          return;
+        }
+
+        const homeButton = event.target.closest('[data-go-home]');
+        if (homeButton) {
+          closeModal();
+          hideJobFormPanel();
+          showPage('dashboard');
+          return;
+        }
+
+        const filterButton = event.target.closest('[data-open-filter]');
+        if (filterButton) {
+          $('#filterType').value = filterButton.dataset.openFilter;
+          showPage('jobs');
+          renderJobsTable();
+          return;
+        }
+
+        const calendarButton = event.target.closest('[data-calendar-date][data-calendar-category]');
+        if (calendarButton) {
+          openCalendarGroup(calendarButton.dataset.calendarDate, calendarButton.dataset.calendarCategory);
+          return;
+        }
+
+        const detailButton = event.target.closest('[data-job-detail]');
+        if (detailButton) {
+          openJobDetail(detailButton.dataset.jobDetail);
+          return;
+        }
+
+        const editButton = event.target.closest('[data-edit-job]');
+        if (editButton) {
+          editJob(editButton.dataset.editJob);
+          return;
+        }
+
+        const deleteButton = event.target.closest('[data-delete-job]');
+        if (deleteButton) {
+          deleteJob(deleteButton.dataset.deleteJob);
+          return;
+        }
+
+        const readButton = event.target.closest('[data-read-notification]');
+        if (readButton) {
+          markNotificationRead(readButton.dataset.readNotification);
+          return;
+        }
+
+        const editUserButton = event.target.closest('[data-edit-user]');
+        if (editUserButton) {
+          editUser(editUserButton.dataset.editUser);
+          return;
+        }
+
+        if (event.target.closest('[data-modal-close]')) closeModal();
+      });
+    }
+
+    function start() {
+      bindEvents();
+      const user = getCurrentUser();
+      if (!user) {
+        showLogin();
+        return;
+      }
+
+      state.user = user;
+      const db = getDb();
+      runReminderEngine(db);
+      saveDb(db);
+
+      fillSelects();
+      setUserHeader();
+      showApp();
+      showPage('dashboard');
+    }
+
+    document.addEventListener('DOMContentLoaded', start);
+  </script>
+</body>
+</html>
+      --red-600: #dc2626;
+      --red-100: #fee2e2;
+      --red-50: #fff1f2;
+      --green: #16a34a;
+      --blue: #2563eb;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --gray: #64748b;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --bg: #f7f8fb;
+      --white: #ffffff;
+      --shadow: 0 24px 60px rgba(15, 23, 42, .12);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      width: 100%;
+      min-height: 100%;
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(220, 38, 38, .18), transparent 30rem),
+        radial-gradient(circle at bottom right, rgba(127, 29, 29, .10), transparent 34rem),
+        linear-gradient(135deg, #ffffff 0%, #f7f8fb 46%, #fff5f5 100%);
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .eyebrow {
+      margin: 0 0 .35rem;
+      color: var(--red-700);
+      font-size: .75rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .required {
+      color: var(--red-700);
+    }
+
+    .toast {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 200;
+      display: none;
+      max-width: min(460px, calc(100% - 2rem));
+      border-radius: 16px;
+      background: #172033;
+      color: white;
+      padding: .9rem 1rem;
+      box-shadow: var(--shadow);
+      line-height: 1.45;
+    }
+
+    .toast.show {
+      display: block;
+      animation: fadeIn .18s ease;
+    }
+
+    .toast.error {
+      background: var(--red-800);
+    }
+
+    .toast.success {
+      background: #166534;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+
+    .login-card {
+      width: min(620px, 100%);
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid rgba(255, 255, 255, .86);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      padding: 2.2rem;
+      backdrop-filter: blur(18px);
+    }
+
+    .login-card h1 {
+      margin: 1.25rem 0 .45rem;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: -.05em;
+    }
+
+    .login-form {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+
+    .login-hint {
+      margin-top: 1rem;
+      border: 1px dashed #fecaca;
+      border-radius: 16px;
+      padding: .9rem;
+      color: var(--red-900);
+      background: #fff7f7;
+      line-height: 1.55;
+      font-size: .92rem;
+    }
+
+    .app-shell {
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      padding: .9rem 1.2rem;
+      color: white;
+      background: linear-gradient(135deg, var(--red-950), var(--red-700));
+      box-shadow: 0 18px 38px rgba(127, 29, 29, .22);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      color: white;
+    }
+
+    .brand.dark {
+      color: var(--ink);
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .94);
+      padding: .22rem;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+      overflow: hidden;
+    }
+
+    .brand.dark .brand-mark {
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 1.08rem;
+      letter-spacing: .08em;
+    }
+
+    .brand span {
+      display: block;
+      font-size: .78rem;
+      opacity: .9;
+    }
+
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      border: 1px solid rgba(255, 255, 255, .22);
+      background: rgba(255, 255, 255, .09);
+      color: white;
+      border-radius: 999px;
+      padding: .68rem .95rem;
+      transition: .18s ease;
+    }
+
+    .nav-tab:hover,
+    .nav-tab.active {
+      background: white;
+      color: var(--red-800);
+    }
+
+    .badge {
+      display: inline-flex;
+      min-width: 20px;
+      min-height: 20px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      margin-left: .25rem;
+      padding: 0 .35rem;
+      background: var(--red-100);
+      color: var(--red-800);
+      font-weight: 900;
+      font-size: .75rem;
+    }
+
+    .user-box {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      text-align: right;
+    }
+
+    .user-box span {
+      display: block;
+      opacity: .86;
+      font-size: .78rem;
+    }
+
+    .content {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn .2s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .panel,
+    .hero-panel,
+    .form-panel,
+    .ticker-panel,
+    .calendar-card,
+    .side-card,
+    .list-card,
+    .table-wrap,
+    .filters,
+    .report-card {
+      background: rgba(255, 255, 255, .93);
+      border: 1px solid rgba(226, 232, 240, .82);
+      border-radius: var(--radius);
+      box-shadow: 0 18px 48px rgba(15, 23, 42, .08);
+    }
+
+    .hero-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.4rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-panel::before {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -90px;
+      top: -150px;
+      border-radius: 50%;
+      background: rgba(220, 38, 38, .12);
+    }
+
+    .hero-panel h1,
+    .page-head h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 3vw, 2.75rem);
+      letter-spacing: -.04em;
+    }
+
+    .hero-actions,
+    .head-actions,
+    .calendar-controls,
+    .form-actions,
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 14px;
+      min-height: 42px;
+      padding: .7rem 1rem;
+      font-weight: 850;
+      text-decoration: none;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--red-800), var(--red-600));
+      color: white;
+      box-shadow: 0 12px 24px rgba(220, 38, 38, .22);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--red-800);
+      border: 1px solid #fecaca;
+    }
+
+    .btn-light {
+      background: rgba(255, 255, 255, .88);
+      color: var(--red-800);
+      border: 1px solid rgba(254, 202, 202, .9);
+    }
+
+    .topbar .btn-light {
+      background: rgba(255, 255, 255, .13);
+      color: white;
+      border-color: rgba(255, 255, 255, .26);
+    }
+
+    .topbar .btn-light:hover {
+      background: white;
+      color: var(--red-800);
+    }
+
+    .link-button {
+      border: none;
+      background: transparent;
+      color: var(--red-700);
+      font-weight: 900;
+      padding: .2rem;
+    }
+
+    label {
+      display: grid;
+      gap: .38rem;
+      color: #334155;
+      font-weight: 760;
+      font-size: .88rem;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      background: white;
+      color: var(--ink);
+      padding: .72rem .82rem;
+      outline: none;
+      transition: border .16s ease, box-shadow .16s ease;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 96px;
+    }
+
+    select[multiple] {
+      min-height: 116px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--red-600);
+      box-shadow: 0 0 0 4px rgba(220, 38, 38, .12);
+    }
+
+    input[readonly] {
+      background: #f8fafc;
+      color: var(--muted);
+    }
+
+    .form-panel {
+      margin-top: 1rem;
+      padding: 1.25rem;
+    }
+
+    .section-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title-row h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .section-title-row.small {
+      margin-bottom: .55rem;
+    }
+
+    .section-title-row.page-head {
+      margin: 0 0 1rem;
+      padding: 1rem 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .9rem;
+    }
+
+    .span-2 {
+      grid-column: span 2;
+    }
+
+    .check-label {
+      align-content: end;
+      grid-template-columns: auto 1fr !important;
+      align-items: center;
+      border: 1px solid #fecaca;
+      background: #fff7f7;
+      border-radius: 14px;
+      padding: .68rem .82rem;
+    }
+
+    .check-label input {
+      width: auto;
+      accent-color: var(--red-700);
+    }
+
+    .form-actions {
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+
+    .ticker-panel {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .9rem;
+      align-items: center;
+      padding: .85rem 1rem;
+      border-left: 6px solid var(--red-700);
+      overflow: hidden;
+    }
+
+    .ticker-panel strong {
+      color: var(--red-800);
+      white-space: nowrap;
+    }
+
+    .ticker-window {
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .ticker-track {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker 30s linear infinite;
+      color: #334155;
+    }
+
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .summary-card {
+      border: 1px solid #e2e8f0;
+      text-align: left;
+      background: rgba(255, 255, 255, .96);
+      border-radius: 22px;
+      padding: 1.05rem;
+      box-shadow: 0 16px 38px rgba(15, 23, 42, .08);
+      min-height: 118px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::after {
+      content: "";
+      position: absolute;
+      width: 84px;
+      height: 84px;
+      right: -25px;
+      top: -25px;
+      border-radius: 50%;
+      background: var(--tone, rgba(220, 38, 38, .12));
+    }
+
+    .summary-card .count {
+      display: block;
+      font-size: 2.25rem;
+      font-weight: 950;
+      color: var(--red-800);
+      line-height: 1;
+    }
+
+    .summary-card .label {
+      display: block;
+      margin-top: .4rem;
+      color: #334155;
+      font-weight: 900;
+    }
+
+    .summary-card .hint {
+      display: block;
+      margin-top: .35rem;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(360px, .85fr);
+      gap: 1rem;
+    }
+
+    .calendar-card,
+    .side-card,
+    .list-card,
+    .report-card {
+      padding: 1.2rem;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: .45rem;
+      margin-bottom: .45rem;
+      color: var(--muted);
+      font-weight: 900;
+      text-align: center;
+      font-size: .82rem;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: .45rem;
+    }
+
+    .calendar-day {
+      min-height: 128px;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      background: white;
+      padding: .5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+    }
+
+    .calendar-day.other-month {
+      opacity: .42;
+      background: #f8fafc;
+    }
+
+    .calendar-day.today {
+      outline: 3px solid rgba(220, 38, 38, .18);
+      border-color: #fecaca;
+    }
+
+    .day-number {
+      font-weight: 950;
+      color: #334155;
+      font-size: .85rem;
+    }
+
+    .calendar-chip {
+      border: none;
+      border-radius: 999px;
+      color: white;
+      padding: .32rem .5rem;
+      font-size: .75rem;
+      text-align: left;
+      line-height: 1.25;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, .14);
+    }
+
+    .more-chip {
+      background: #f1f5f9;
+      color: #475569;
+      border-radius: 999px;
+      padding: .25rem .45rem;
+      font-size: .74rem;
+      text-align: center;
+    }
+
+    .side-card {
+      display: grid;
+      gap: 1rem;
+      align-content: start;
+    }
+
+    .today-summary,
+    .notification-list {
+      display: grid;
+      gap: .7rem;
+    }
+
+    .notification-list.compact {
+      max-height: 360px;
+      overflow: auto;
+      padding-right: .15rem;
+    }
+
+    .today-item,
+    .notification-item,
+    .mini-job-item,
+    .calendar-popup-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: .78rem;
+      background: white;
+    }
+
+    .today-item,
+    .mini-job-item,
+    .calendar-popup-item {
+      text-align: left;
+      transition: .18s ease;
+    }
+
+    .today-item:hover,
+    .mini-job-item:hover,
+    .calendar-popup-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .09);
+    }
+
+    .today-item strong,
+    .mini-job-item strong {
+      display: block;
+    }
+
+    .today-item span,
+    .mini-job-item span {
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .notification-item {
+      display: grid;
+      gap: .35rem;
+      position: relative;
+    }
+
+    .notification-item.unread {
+      border-color: #fecaca;
+      background: #fff8f8;
+    }
+
+    .notification-item .meta {
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .notification-danger {
+      border-left: 5px solid #dc2626;
+    }
+
+    .notification-warning {
+      border-left: 5px solid #f59e0b;
+    }
+
+    .notification-info {
+      border-left: 5px solid #2563eb;
+    }
+
+    .list-card {
+      margin-top: 1rem;
+    }
+
+    .mini-job-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .8rem;
+    }
+
+    .status-pill,
+    .priority-pill,
+    .privacy-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      padding: .25rem .55rem;
+      border-radius: 999px;
+      font-size: .76rem;
+      font-weight: 900;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .priority-pill {
+      color: var(--red-900);
+      background: var(--red-100);
+    }
+
+    .priority-normal {
+      color: #334155;
+      background: #e2e8f0;
+    }
+
+    .priority-low {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .priority-high {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .priority-urgent {
+      color: #7f1d1d;
+      background: #fecaca;
+    }
+
+    .privacy-pill {
+      color: #334155;
+      background: #e2e8f0;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(4, minmax(150px, .8fr)) auto;
+      gap: .8rem;
+      align-items: end;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    .jobs-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1060px;
+    }
+
+    .jobs-table th,
+    .jobs-table td {
+      padding: .82rem .9rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .jobs-table th {
+      background: #fff7f7;
+      color: var(--red-900);
+      font-size: .82rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .jobs-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .overdue-row td {
+      background: #fff1f2;
+    }
+
+    .icon-button {
+      border: 1px solid #fecaca;
+      background: white;
+      color: var(--red-800);
+      border-radius: 10px;
+      padding: .42rem .55rem;
+      font-weight: 900;
+    }
+
+    .new-job-icon {
+      width: 46px;
+      min-width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .job-entry-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      align-content: start;
+      gap: 0;
+      margin: 0;
+      padding: 1rem;
+      overflow: auto;
+      border: 0;
+      border-radius: 0;
+      background: rgba(15, 23, 42, .58);
+      box-shadow: none;
+    }
+
+    .job-entry-panel .section-title-row {
+      width: min(1120px, 100%);
+      margin: 1rem auto 0;
+      padding: 1.1rem 1.2rem .4rem;
+      border: 1px solid rgba(226, 232, 240, .82);
+      border-bottom: 0;
+      border-radius: 22px 22px 0 0;
+      background: white;
+    }
+
+    .job-entry-panel .job-form {
+      width: min(1120px, 100%);
+      margin: 0 auto 1rem;
+      padding: 0 1.2rem 1.2rem;
+      border: 1px solid rgba(226, 232, 240, .82);
+      border-top: 0;
+      border-radius: 0 0 22px 22px;
+      background: white;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .report-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .report-card h2 {
+      margin: 0 0 1rem;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: .75rem;
+    }
+
+    .bar-row {
+      display: grid;
+      gap: .35rem;
+    }
+
+    .bar-row-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-weight: 850;
+    }
+
+    .bar-bg {
+      height: 12px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--bar-color, #dc2626);
+    }
+
+    .workload-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+    }
+
+    .workload-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: .9rem;
+      background: white;
+    }
+
+    .workload-card strong {
+      display: block;
+      margin-bottom: .2rem;
+    }
+
+    .workload-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin-top: .65rem;
+    }
+
+    .workload-stats span {
+      background: #f1f5f9;
+      color: #334155;
+      border-radius: 999px;
+      padding: .25rem .55rem;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      background: rgba(15, 23, 42, .58);
+      padding: 1rem;
+    }
+
+    .modal {
+      width: min(900px, 100%);
+      max-height: min(88vh, 920px);
+      overflow: auto;
+      background: white;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 1.35rem;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: .8rem;
+      right: .8rem;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #fecaca;
+      background: #fff7f7;
+      color: var(--red-800);
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    .modal h2 {
+      margin: 0 2.4rem 1rem 0;
+    }
+
+    .modal-body {
+      display: grid;
+      gap: .85rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .75rem;
+    }
+
+    .detail-field {
+      border: 1px solid #e2e8f0;
+      border-radius: 15px;
+      padding: .75rem;
+      background: #f8fafc;
+    }
+
+    .detail-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-field span {
+      display: block;
+      color: var(--muted);
+      font-size: .75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: .24rem;
+    }
+
+    .detail-field strong,
+    .detail-field p {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .calendar-popup-list {
+      display: grid;
+      gap: .6rem;
+    }
+
+    .calendar-popup-item {
+      border-left: 6px solid var(--item-color, #dc2626);
+    }
+
+    .empty-state {
+      border: 1px dashed #cbd5e1;
+      color: var(--muted);
+      background: #f8fafc;
+      border-radius: 18px;
+      padding: 1.1rem;
+      text-align: center;
+    }
+
+
+
+    .form-panel + .form-panel {
+      margin-top: 1rem;
+    }
+
+    .table-note {
+      margin: .4rem 0 1rem;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+
+    .user-table {
+      min-width: 920px;
+    }
+
+    @media (max-width: 1180px) {
+      .topbar {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .brand,
+      .user-box {
+        justify-content: center;
+        text-align: center;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mini-job-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .content {
+        width: 100%;
+        padding: .5rem;
+      }
+
+      .hero-panel,
+      .section-title-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .summary-grid,
+      .mini-job-list,
+      .form-grid,
+      .report-grid,
+      .workload-grid,
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .span-2 {
+        grid-column: span 1;
+      }
+
+      .calendar-day {
+        min-height: 108px;
+        padding: .35rem;
+      }
+
+      .calendar-chip {
+        font-size: .68rem;
+        padding: .25rem .38rem;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ticker-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="brand dark">
+        <div class="brand-mark">
+          <img src="https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/main/turkak.png?raw=true" alt="TÜRKAK logosu">
+        </div>
+        <div>
+          <strong>TÜRKAK</strong>
+          <span>Kurumsal İletişim Müdürlüğü İş Yönetim Sistemi</span>
+        </div>
+      </div>
+
+      <h1>Kurumsal İletişim Yönetimi Portalı</h1>
+      <p class="muted">Kurumsal İletişimde İzlenebilirlik, Süreçlerde Mükemmeliyet</p>
 
       <form id="loginForm" class="login-form">
         <label>
