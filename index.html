@@ -1496,7 +1496,7 @@
             <td><div class="btn-row"><button class="btn secondary small" onclick="App.saveAdminUser('${js(u.id)}')">Kaydet</button><button class="btn warning small" onclick="App.resetUserPassword('${js(u.id)}')">Şifre Sıfırla</button></div></td>
           </tr>`).join("");
         $("view").innerHTML = `
-          <div class="page-head"><div><h2>Kullanıcı Yönetimi</h2><p>Varsayılan kullanıcılar: Admin, Müdür, Koordinatör, Umut Halaza, Davut Kara, Onur Karadayı, Uğur Onur.</p></div><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+          <div class="page-head"><div><h2>Kullanıcı Yönetimi</h2><p>Organizasyon Şeması ve Sistem Kullanıcıları</p></div><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
           <div class="panel"><h3>Kullanıcılar</h3><div class="table-wrap"><table><thead><tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Rol</th><th>Unvan</th><th>E-posta</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>${rows}</tbody></table></div></div>
           <form class="panel" style="margin-top:16px" onsubmit="App.addUser(event)">
             <h3>Yeni Kullanıcı Ekle</h3>
