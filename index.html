@@ -1,951 +1,1674 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-  <title>TÜRKAK İş Takip Sistemi</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TÜRKAK Kurumsal İletişim Müdürlüğü</title>
   <style>
     :root {
-      --turkak-red: #e30613;
-      --turkak-red-dark: #a5000a;
-      --turkak-red-soft: #fff1f2;
-      --turkak-ink: #172033;
-      --red-950: #450a0a;
-      --red-900: #7f1d1d;
-      --red-800: #991b1b;
-      --red-700: #b91c1c;
-      --red-600: #e30613;
-      --red-100: #fee2e2;
-      --red-50: #fff1f2;
-      --green: #16a34a;
-      --blue: #2563eb;
-      --orange: #f97316;
-      --yellow: #eab308;
-      --gray: #64748b;
-      --ink: #172033;
-      --muted: #64748b;
-      --line: #e2e8f0;
-      --bg: #f7f8fb;
+      --turkak-red: #c8102e;
+      --turkak-dark-red: #8f0d21;
+      --turkak-light-red: #fff1f3;
       --white: #ffffff;
-      --shadow: 0 18px 42px rgba(15, 23, 42, .12);
-      --shadow-soft: 0 8px 20px rgba(15, 23, 42, .08);
-      --radius: 16px;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --soft: #f7f7f8;
+      --success: #15803d;
+      --warning: #b45309;
+      --danger: #b91c1c;
+      --info: #1d4ed8;
+      --radius: 18px;
+      --shadow: 0 14px 40px rgba(31, 41, 55, .12);
+      --shadow-soft: 0 8px 22px rgba(31, 41, 55, .08);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-      padding: 0;
-      scroll-behavior: smooth;
-      background: var(--bg);
-    }
-
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
     body {
-      width: 100%;
-      min-width: 100%;
-      min-height: 100vh;
-      min-height: 100dvh;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(135deg, #fff 0%, #fff 44%, #fff5f6 100%);
       color: var(--ink);
-      line-height: 1.5;
-      background:
-        radial-gradient(circle at top left, rgba(227, 6, 19, .08), transparent 28rem),
-        radial-gradient(circle at bottom right, rgba(23, 32, 51, .06), transparent 32rem),
-        linear-gradient(135deg, #ffffff 0%, #f7f8fb 52%, #fff5f5 100%);
+      overflow: hidden;
     }
 
-    /* Streamlit içinde HTML gömüldüğünde oluşan dış boşlukları azaltır. */
-    .stApp,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stAppViewBlockContainer"],
-    .block-container {
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; border: 0; }
+    a { color: var(--turkak-red); }
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .danger-text { color: var(--danger); }
+    .success-text { color: var(--success); }
+    .nowrap { white-space: nowrap; }
 
-    [data-testid="stHeader"],
-    [data-testid="stToolbar"],
-    #MainMenu,
-    footer[data-testid="stFooter"] {
-      display: none !important;
-      visibility: hidden !important;
-      height: 0 !important;
-    }
-
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .app-shell {
-      width: 100%;
+    .login-page {
       min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .login-screen {
-      width: 100%;
-      min-height: 100vh;
-      min-height: 100dvh;
       display: grid;
       place-items: center;
-      padding: clamp(1rem, 2vw, 2rem);
+      padding: 28px;
+      background:
+        radial-gradient(circle at 15% 18%, rgba(200,16,46,.13), transparent 28%),
+        radial-gradient(circle at 80% 75%, rgba(200,16,46,.10), transparent 30%),
+        linear-gradient(135deg, #fff, #fff8f9);
     }
 
     .login-card {
-      width: min(460px, 100%);
-      background: rgba(255, 255, 255, .96);
-      border: 1px solid rgba(226, 232, 240, .9);
-      border-radius: 26px;
-      padding: clamp(1.4rem, 3vw, 2.5rem);
-      box-shadow: var(--shadow);
-      text-align: center;
-      backdrop-filter: blur(14px);
-    }
-
-    .login-logo {
-      width: 96px;
-      height: 64px;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto 1rem;
-    }
-
-    .login-card h2 {
-      margin: 0 0 .45rem;
-      color: var(--turkak-red);
-      font-size: clamp(1.55rem, 4vw, 2rem);
-      letter-spacing: -.02em;
-    }
-
-    .login-card p {
-      margin: 0 0 1.8rem;
-      color: var(--muted);
-      font-size: .92rem;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      margin-bottom: .35rem;
-      color: var(--ink);
-      font-size: .86rem;
-      font-weight: 700;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      background: var(--white);
-      color: var(--ink);
-      padding: .72rem .85rem;
-      font-size: .95rem;
-      outline: none;
-      transition: border-color .18s ease, box-shadow .18s ease;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--turkak-red);
-      box-shadow: 0 0 0 4px rgba(227, 6, 19, .12);
-    }
-
-    .topbar {
-      width: 100%;
-      min-height: 72px;
+      width: min(1080px, 96vw);
+      min-height: 620px;
       display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: 1rem;
-      padding: .75rem clamp(1rem, 2vw, 1.6rem);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(255, 255, 255, .98);
-      border-bottom: 4px solid var(--turkak-red);
-      box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
-      backdrop-filter: blur(10px);
+      grid-template-columns: 1.05fr .95fr;
+      background: var(--white);
+      border-radius: 30px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(200, 16, 46, .15);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: .8rem;
-      min-width: 0;
-    }
-
-    .brand-mark {
-      width: 58px;
-      height: 46px;
-      object-fit: contain;
-      display: block;
-      flex: 0 0 auto;
-    }
-
-    .brand-text {
+    .login-hero {
+      padding: 52px;
+      color: var(--white);
+      background:
+        linear-gradient(145deg, rgba(200,16,46,.96), rgba(143,13,33,.98)),
+        repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 8px, transparent 8px 18px);
       display: flex;
       flex-direction: column;
-      min-width: 0;
-    }
-
-    .brand-text strong {
-      display: block;
-      color: var(--turkak-red);
-      font-size: 1.1rem;
-      font-weight: 900;
-      letter-spacing: .05em;
-      line-height: 1.1;
-    }
-
-    .brand-text span {
-      display: block;
-      color: var(--muted);
-      font-size: .76rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .nav-tabs {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: .45rem;
-      flex-wrap: wrap;
-    }
-
-    .nav-tab {
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--ink);
-      border-radius: 999px;
-      padding: .62rem .95rem;
-      font-size: .9rem;
-      font-weight: 800;
-      transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease;
-    }
-
-    .nav-tab:hover {
-      color: var(--turkak-red);
-      background: var(--turkak-red-soft);
-      border-color: #fecaca;
-    }
-
-    .nav-tab.active {
-      color: var(--white);
-      background: var(--turkak-red);
-      border-color: var(--turkak-red);
-      box-shadow: 0 8px 18px rgba(227, 6, 19, .18);
-    }
-
-    .user-area {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: .75rem;
-      min-width: 0;
-    }
-
-    .user-info {
-      text-align: right;
-      line-height: 1.15;
-      min-width: 0;
-    }
-
-    #currentUserName {
-      font-weight: 900;
-      font-size: .92rem;
-      white-space: nowrap;
-    }
-
-    #currentUserRole {
-      margin-top: .15rem;
-      color: var(--muted);
-      font-size: .75rem;
-      white-space: nowrap;
-    }
-
-    .content {
-      flex: 1;
-      width: 100%;
-      max-width: none;
-      margin: 0;
-      padding: clamp(1rem, 2vw, 1.5rem);
-    }
-
-    .page {
-      display: none;
-      width: 100%;
-      animation: fadeIn .2s ease-out;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .page-head {
-      display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.2rem;
     }
 
-    .page-head h1 {
-      margin: 0;
-      font-size: clamp(1.6rem, 3vw, 2.1rem);
-      letter-spacing: -.03em;
+    .logo-block { display: flex; align-items: center; gap: 14px; }
+    .logo-mark {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      background: var(--white);
+      box-shadow: 0 12px 24px rgba(0,0,0,.14);
+      flex: 0 0 auto;
     }
+    .logo-mark svg { width: 58px; height: 58px; }
+    .brand-title strong { display: block; font-size: 26px; letter-spacing: .5px; }
+    .brand-title span { font-size: 13px; opacity: .92; }
+    .login-hero h1 { font-size: clamp(34px, 4vw, 54px); line-height: 1.05; margin: 62px 0 20px; }
+    .login-hero p { max-width: 520px; line-height: 1.65; opacity: .94; }
+    .hero-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+    .hero-pill { border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 9px 12px; font-size: 13px; background: rgba(255,255,255,.10); }
 
-    .page-head p {
-      margin: .25rem 0 0;
-      color: var(--muted);
-    }
+    .login-form-wrap { padding: 54px; display: flex; flex-direction: column; justify-content: center; }
+    .login-form-wrap h2 { margin: 0 0 8px; font-size: 30px; }
+    .login-form-wrap p { margin: 0 0 28px; color: var(--muted); line-height: 1.5; }
 
-    .panel {
+    .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+    .field label { font-weight: 700; font-size: 13px; color: #374151; }
+    .field input, .field select, .field textarea {
       width: 100%;
-      background: rgba(255, 255, 255, .96);
-      border: 1px solid rgba(226, 232, 240, .95);
-      border-radius: var(--radius);
-      padding: clamp(1rem, 2vw, 1.5rem);
-      margin-bottom: 1.5rem;
-      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px 13px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
     }
+    .field textarea { min-height: 105px; resize: vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: rgba(200,16,46,.75);
+      box-shadow: 0 0 0 4px rgba(200,16,46,.10);
+    }
+    .field small { color: var(--muted); }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: .45rem;
-      min-height: 40px;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      padding: .62rem 1rem;
+      gap: 8px;
+      border-radius: 14px;
+      padding: 11px 15px;
+      background: var(--turkak-red);
+      color: #fff;
       font-weight: 800;
-      font-size: .9rem;
-      text-decoration: none;
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+      box-shadow: 0 9px 20px rgba(200,16,46,.22);
+      transition: transform .15s, box-shadow .15s, background .15s;
+    }
+    .btn:hover { transform: translateY(-1px); background: var(--turkak-dark-red); box-shadow: 0 12px 25px rgba(200,16,46,.26); }
+    .btn.secondary { background: #fff; color: var(--turkak-red); border: 1px solid rgba(200,16,46,.30); box-shadow: none; }
+    .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+    .btn.danger { background: var(--danger); }
+    .btn.success { background: var(--success); }
+    .btn.warning { background: var(--warning); }
+    .btn.small { padding: 8px 10px; border-radius: 11px; font-size: 12px; box-shadow: none; }
+    .btn.icon { width: 42px; height: 42px; padding: 0; border-radius: 14px; font-size: 20px; }
+    .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 286px 1fr;
+      background: #fff;
+    }
+
+    .sidebar {
+      min-width: 0;
+      border-right: 1px solid rgba(200,16,46,.15);
+      background: linear-gradient(180deg, #fff, #fff6f7);
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .side-brand { display: flex; align-items: center; gap: 12px; padding: 10px 8px 18px; border-bottom: 1px solid var(--line); }
+    .side-brand .logo-mark { width: 52px; height: 52px; border: 1px solid rgba(200,16,46,.18); box-shadow: var(--shadow-soft); }
+    .side-brand .logo-mark svg { width: 44px; height: 44px; }
+    .side-brand strong { display: block; font-size: 18px; }
+    .side-brand span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .nav { display: flex; flex-direction: column; gap: 7px; }
+    .nav button {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-radius: 14px;
+      padding: 12px 12px;
+      background: transparent;
+      color: #374151;
+      font-weight: 800;
+    }
+    .nav button:hover, .nav button.active { background: var(--turkak-red); color: #fff; }
+    .nav button .badge { background: rgba(200,16,46,.12); color: var(--turkak-red); padding: 2px 7px; border-radius: 999px; font-size: 11px; }
+    .nav button.active .badge, .nav button:hover .badge { background: rgba(255,255,255,.22); color: #fff; }
+    .side-footer {
+      margin-top: auto;
+      background: #fff;
+      border: 1px solid rgba(200,16,46,.14);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: var(--shadow-soft);
+    }
+    .side-footer strong { display: block; }
+    .side-footer span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .main {
+      min-width: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #f9fafb;
+    }
+    .topbar {
+      flex: 0 0 auto;
+      height: 76px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    .topbar h1 { margin: 0; font-size: 21px; }
+    .topbar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 7px 11px 7px 7px;
+    }
+    .avatar {
+      width: 34px; height: 34px;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--turkak-red);
+      font-weight: 900;
+    }
+    .view {
+      flex: 1 1 auto;
+      overflow: auto;
+      padding: 24px;
+    }
+
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .page-head h2 { margin: 0; font-size: 27px; }
+    .page-head p { margin: 6px 0 0; color: var(--muted); }
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 18px;
+    }
+
+    .cards { display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .stat-card {
+      border-radius: 18px;
+      padding: 17px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+      transition: transform .14s, border-color .14s;
+      text-align: left;
+    }
+    .stat-card:hover { transform: translateY(-2px); border-color: rgba(200,16,46,.35); }
+    .stat-card .label { color: var(--muted); font-weight: 800; font-size: 12px; }
+    .stat-card .num { font-size: 34px; font-weight: 950; margin-top: 8px; }
+    .stat-card .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .stat-card.red { background: linear-gradient(145deg, var(--turkak-red), var(--turkak-dark-red)); color: #fff; }
+    .stat-card.red .label, .stat-card.red .hint { color: rgba(255,255,255,.86); }
+
+    .marquee {
+      overflow: hidden;
+      border-radius: 16px;
+      background: linear-gradient(90deg, #1f2937, #3b0b14);
+      color: #fff;
+      margin: 0 0 16px;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .marquee span {
+      display: inline-block;
+      white-space: nowrap;
+      padding: 12px 0;
+      min-width: 100%;
+      animation: marquee 28s linear infinite;
+      font-weight: 800;
+    }
+    @keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, .8fr); gap: 16px; align-items: start; }
+    .calendar-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .calendar-head h3 { margin: 0; font-size: 20px; }
+    .weekdays, .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .weekday { text-align: center; color: var(--muted); font-weight: 900; font-size: 12px; }
+    .day {
+      min-height: 116px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 9px;
+      overflow: hidden;
+    }
+    .day.other { background: #f3f4f6; opacity: .7; }
+    .day.today { border-color: var(--turkak-red); box-shadow: inset 0 0 0 2px rgba(200,16,46,.10); }
+    .day-num { font-weight: 950; font-size: 13px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .cal-chip {
+      width: 100%;
+      display: block;
+      text-align: left;
+      padding: 6px 7px;
+      margin-top: 5px;
+      border-radius: 9px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-shadow: none;
+    }
+
+    .cat-resmi { background: #1e3a8a; }
+    .cat-haber { background: #2563eb; }
+    .cat-etkinlik { background: #7e22ce; }
+    .cat-bulten { background: #15803d; }
+    .cat-tasarim { background: #ea580c; }
+    .cat-idari { background: #4b5563; }
+    .cat-butce { background: #92400e; }
+    .cat-sikayet { background: #dc2626; }
+    .cat-cimer { background: #b91c1c; }
+    .cat-talep { background: #ca8a04; color: #111827; }
+    .cat-default { background: #475569; }
+
+    .summary-card + .summary-card { margin-top: 12px; }
+    .summary-card h3 { margin: 0 0 12px; }
+    .summary-list { display: flex; flex-direction: column; gap: 8px; }
+    .mini-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 13px;
+      background: #f9fafb;
+      border: 1px solid var(--line);
+    }
+    .mini-item strong { display: block; font-size: 13px; }
+    .mini-item span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .table-wrap { width: 100%; overflow: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 13px; }
+    th { background: #fff6f7; color: #374151; font-size: 12px; text-transform: uppercase; letter-spacing: .02em; }
+    tr:hover td { background: #fffafa; }
+
+    .filters { display: grid; grid-template-columns: 1.6fr repeat(4, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .filters .field { margin: 0; }
+    .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .form-grid .span-2 { grid-column: span 2; }
+    .form-grid .span-3 { grid-column: span 3; }
+    .form-actions { position: sticky; bottom: -24px; z-index: 2; margin: 18px -18px -18px; padding: 14px 18px; border-top: 1px solid var(--line); background: rgba(255,255,255,.94); backdrop-filter: blur(10px); border-radius: 0 0 var(--radius) var(--radius); }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-weight: 900;
+      font-size: 11px;
+      border: 1px solid transparent;
       white-space: nowrap;
     }
+    .status-yeni { color: #7f1d1d; background: #fee2e2; }
+    .status-planlandi { color: #854d0e; background: #fef3c7; }
+    .status-devam { color: #1d4ed8; background: #dbeafe; }
+    .status-beklemede { color: #374151; background: #e5e7eb; }
+    .status-revizyonda { color: #9a3412; background: #ffedd5; }
+    .status-onayda { color: #1e40af; background: #e0e7ff; }
+    .status-tamamlandi { color: #166534; background: #dcfce7; }
+    .status-iptal { color: #334155; background: #cbd5e1; }
+    .priority-dusuk { color: #166534; background: #dcfce7; }
+    .priority-normal { color: #1d4ed8; background: #dbeafe; }
+    .priority-yuksek { color: #9a3412; background: #ffedd5; }
+    .priority-acil { color: #991b1b; background: #fee2e2; }
 
-    .btn:hover {
-      transform: translateY(-1px);
-    }
+    .reports-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .bar-row { display: grid; grid-template-columns: 190px 1fr 48px; gap: 10px; align-items: center; margin: 10px 0; }
+    .bar-label { font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { height: 13px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: var(--turkak-red); min-width: 3px; }
+    .bar-num { text-align: right; color: var(--muted); font-weight: 900; }
 
-    .btn-primary {
-      background: var(--turkak-red);
-      color: var(--white);
-      border-color: var(--turkak-red);
-      box-shadow: 0 10px 22px rgba(227, 6, 19, .2);
-    }
-
-    .btn-primary:hover {
-      background: var(--turkak-red-dark);
-      border-color: var(--turkak-red-dark);
-    }
-
-    .btn-secondary {
-      background: var(--white);
-      color: var(--turkak-red);
-      border-color: #fecaca;
-    }
-
-    .btn-secondary:hover {
-      background: var(--turkak-red-soft);
-      border-color: var(--turkak-red);
-    }
-
-    .btn-small {
-      min-height: 34px;
-      padding: .42rem .7rem;
-      font-size: .82rem;
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(320px, .8fr);
-      gap: 1.2rem;
-      align-items: start;
-    }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: .45rem;
-    }
-
-    .calendar-day {
-      min-height: 104px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--white);
-      padding: .55rem;
-      transition: background .18s ease, border-color .18s ease;
-    }
-
-    .calendar-day.today {
-      background: var(--red-50);
-      border-color: #fecaca;
-      outline: 3px solid rgba(227, 6, 19, .10);
-    }
-
-    .calendar-day .day-num {
-      margin-bottom: .25rem;
-      color: var(--gray);
-      font-weight: 900;
-      font-size: .85rem;
-    }
-
-    .table-wrap {
-      width: 100%;
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--white);
-    }
-
-    table {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
-      font-size: .9rem;
-    }
-
-    th,
-    td {
-      padding: .82rem .9rem;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      background: var(--red-50);
-      color: var(--red-900);
-      font-size: .8rem;
-      font-weight: 900;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-    }
-
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .footer {
-      margin-top: auto;
-      padding: 1rem clamp(1rem, 2vw, 1.5rem);
-      text-align: center;
-      border-top: 1px solid var(--line);
-      background: rgba(255, 255, 255, .94);
-      color: var(--muted);
-      font-size: .8rem;
-    }
-
-    #toast {
+    .modal-backdrop {
       position: fixed;
-      right: 1rem;
-      bottom: 1rem;
-      z-index: 1000;
-      display: none;
-      max-width: min(460px, calc(100% - 2rem));
-      border-radius: 14px;
-      background: var(--ink);
-      color: var(--white);
-      padding: .9rem 1rem;
-      box-shadow: var(--shadow);
-      line-height: 1.45;
+      inset: 0;
+      background: rgba(17, 24, 39, .56);
+      display: grid;
+      place-items: center;
+      z-index: 60;
+      padding: 22px;
+    }
+    .modal {
+      width: min(980px, 96vw);
+      max-height: 88vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.28);
+    }
+    .modal header { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .modal header h3 { margin: 0; }
+    .modal .body { padding: 20px; overflow: auto; }
+    .modal footer { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .detail-box { padding: 11px; background: #f9fafb; border: 1px solid var(--line); border-radius: 13px; }
+    .detail-box b { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; margin-bottom: 5px; }
+    .detail-box span { white-space: pre-wrap; word-break: break-word; }
+    .detail-grid .span-2 { grid-column: span 2; }
+
+    .toast-area { position: fixed; right: 18px; bottom: 18px; z-index: 99; display: flex; flex-direction: column; gap: 10px; }
+    .toast {
+      width: min(440px, calc(100vw - 36px));
+      background: #111827;
+      color: #fff;
+      border-radius: 16px;
+      padding: 13px 14px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.25);
+      animation: toastIn .2s ease-out;
+    }
+    @keyframes toastIn { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    @media (max-width: 1180px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .form-grid, .reports-grid { grid-template-columns: 1fr; }
+      .form-grid .span-2, .form-grid .span-3 { grid-column: span 1; }
+      .filters { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 820px) {
+      body { overflow: auto; }
+      .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+      .sidebar { position: static; border-right: 0; border-bottom: 1px solid var(--line); }
+      .nav { display: grid; grid-template-columns: repeat(2, 1fr); }
+      .main { height: auto; min-height: 100vh; }
+      .topbar { height: auto; padding: 14px; align-items: flex-start; flex-direction: column; }
+      .view { padding: 14px; }
+      .login-card { grid-template-columns: 1fr; }
+      .login-hero, .login-form-wrap { padding: 30px; }
+      .cards, .filters { grid-template-columns: 1fr; }
+      .calendar, .weekdays { gap: 5px; }
+      .day { min-height: 92px; padding: 6px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .detail-grid .span-2 { grid-column: span 1; }
     }
 
-    #toast.show {
-      display: block;
-      animation: toastIn .22s ease-out;
-    }
-
-    #toast.error {
-      background: var(--turkak-red);
-    }
-
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 1024px) {
-      .topbar {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-
-      .brand,
-      .user-area {
-        justify-content: center;
-      }
-
-      .user-info {
-        text-align: center;
-      }
-
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .content {
-        padding: .75rem;
-      }
-
-      .page-head {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .calendar-grid {
-        gap: .25rem;
-      }
-
-      .calendar-day {
-        min-height: 86px;
-        padding: .38rem;
-      }
-
-      .btn {
-        width: 100%;
-      }
+    @media print {
+      .sidebar, .topbar, .btn, .form-actions, .filters, .marquee { display: none !important; }
+      body { overflow: visible; background: #fff; }
+      .app, .main, .view { display: block; height: auto; overflow: visible; padding: 0; }
+      .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
     }
   </style>
 </head>
 <body>
-  <div id="toast" aria-live="polite"></div>
+  <div id="toastArea" class="toast-area"></div>
 
-  <div class="app-shell">
-    <section id="loginScreen" class="login-screen">
-      <div class="login-card">
-        <img src="img/turkak.png" alt="TÜRKAK Logo" class="login-logo" onerror="this.style.display='none'">
-        <h2>İş Takip Sistemi</h2>
-        <p>Kurumsal kimlik standartlarına uygun birim içi takip ekranı.</p>
-
-        <form id="loginForm" autocomplete="on">
-          <div class="form-group">
-            <label for="loginUsername">Kullanıcı Adı</label>
-            <input type="text" id="loginUsername" autocomplete="username" placeholder="örn. umut" required>
+  <section id="loginPage" class="login-page">
+    <div class="login-card">
+      <div class="login-hero">
+        <div>
+          <div class="logo-block">
+            <div class="logo-mark" aria-label="TÜRKAK logosu">
+              <svg viewBox="0 0 100 100" role="img" aria-label="TÜRKAK">
+                <circle cx="50" cy="50" r="46" fill="#c8102e"></circle>
+                <circle cx="50" cy="50" r="32" fill="#ffffff"></circle>
+                <path d="M50 19 L57 41 L80 41 L61 54 L69 77 L50 63 L31 77 L39 54 L20 41 L43 41 Z" fill="#c8102e"></path>
+              </svg>
+            </div>
+            <div class="brand-title">
+              <strong>TÜRKAK</strong>
+              <span>Kurumsal İletişim Müdürlüğü</span>
+            </div>
           </div>
-          <div class="form-group" style="margin-bottom: 1.6rem;">
+          <h1>İş Yönetim Sistemi</h1>
+          <p>Kurumsal İletişimde İzlenebilirlik, Süreçlerde Mükemmeliyet</p>
+          <div class="hero-pills">
+            <span class="hero-pill">Dashboard</span>
+            <span class="hero-pill">İş Takvimi</span>
+            <span class="hero-pill">Bildirimler</span>
+            <span class="hero-pill">Raporlama</span>
+            <span class="hero-pill">localStorage</span>
+          </div>
+        </div>
+        <small>Veriler bu tarayıcının yerel depolama alanında tutulur. Harici veritabanı gerekmez.</small>
+      </div>
+      <div class="login-form-wrap">
+        <h2>Hesaba Giriş</h2>
+        <p>Girişten sonra sistem her zaman anasayfayı açar. İlk şifre: <b>Turkak2026!</b></p>
+        <form id="loginForm">
+          <div class="field">
+            <label for="loginUsername">Kullanıcı adı</label>
+            <input id="loginUsername" autocomplete="username" required placeholder="admin, mudur, umut.halaza..." />
+          </div>
+          <div class="field">
             <label for="loginPassword">Şifre</label>
-            <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••" required>
+            <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Şifrenizi girin" />
           </div>
-          <button type="submit" class="btn btn-primary" style="width: 100%;">Sisteme Giriş Yap</button>
+          <button class="btn" type="submit">Giriş Yap</button>
         </form>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <div id="appShell" class="app-shell hidden">
-      <header class="topbar">
-        <div class="brand">
-          <img src="img/turkak.png" alt="TÜRKAK Logo" class="brand-mark" onerror="this.style.display='none'">
-          <div class="brand-text">
-            <strong>TÜRKAK</strong>
-            <span>İş Takip Sistemi</span>
-          </div>
+  <section id="appPage" class="app hidden">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="logo-mark">
+          <svg viewBox="0 0 100 100" role="img" aria-label="TÜRKAK">
+            <circle cx="50" cy="50" r="46" fill="#c8102e"></circle>
+            <circle cx="50" cy="50" r="32" fill="#ffffff"></circle>
+            <path d="M50 19 L57 41 L80 41 L61 54 L69 77 L50 63 L31 77 L39 54 L20 41 L43 41 Z" fill="#c8102e"></path>
+          </svg>
         </div>
-
-        <nav class="nav-tabs" aria-label="Ana menü">
-          <button class="nav-tab active" data-page="dashboard" type="button">Anasayfa</button>
-          <button class="nav-tab" data-page="jobs" type="button">İş Listesi</button>
-          <button class="nav-tab" data-page="reports" type="button">Raporlar</button>
-          <button class="nav-tab admin-only hidden" data-page="users" type="button">Yönetim</button>
-        </nav>
-
-        <div class="user-area">
-          <div class="user-info">
-            <div id="currentUserName">-</div>
-            <div id="currentUserRole">-</div>
-          </div>
-          <button id="logoutButton" class="btn btn-secondary btn-small" type="button">Çıkış</button>
+        <div><strong>TÜRKAK</strong><span>İş Yönetim Sistemi</span></div>
+      </div>
+      <nav id="nav" class="nav"></nav>
+      <div class="side-footer">
+        <strong id="sideUserName">-</strong>
+        <span id="sideUserRole">-</span>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="topTitle">Anasayfa</h1>
+          <div id="topSub" class="sub">Günün özeti, takvim ve aktif işler</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn secondary small" onclick="App.showProfile()">Profil / Şifre</button>
+          <div class="user-chip"><span id="topAvatar" class="avatar">T</span><div><b id="topUserName">-</b><br><small id="topUserRole" class="muted">-</small></div></div>
+          <button class="btn ghost small" onclick="App.logout()">Çıkış</button>
         </div>
       </header>
+      <section id="view" class="view"></section>
+    </main>
+  </section>
 
-      <main class="content">
-        <section id="dashboardPage" class="page active">
-          <div class="page-head">
-            <div>
-              <h1>Hoş Geldiniz</h1>
-              <p>Biriminizdeki işlerin güncel durumu ve takvim görünümü.</p>
-            </div>
-            <button id="newJobButton" class="btn btn-primary" type="button">+ Yeni İş Kaydı</button>
-          </div>
-
-          <div class="dashboard-grid">
-            <div class="panel">
-              <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                <h3 style="font-size: 1rem; margin: 0;">İş Takvimi</h3>
-                <div style="display: flex; gap: .5rem; flex-wrap: wrap;">
-                  <button class="btn btn-secondary btn-small" type="button" id="prevCalendarButton">&lt;</button>
-                  <button class="btn btn-secondary btn-small" type="button" id="todayCalendarButton">Bugün</button>
-                  <button class="btn btn-secondary btn-small" type="button" id="nextCalendarButton">&gt;</button>
-                </div>
-              </div>
-              <div class="calendar-grid" id="calendarContainer"></div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-              <div class="panel" style="background: var(--turkak-red); color: white; border-color: var(--turkak-red);">
-                <h3 style="font-size: .92rem; margin: 0 0 .8rem; opacity: .95;">Geciken İşler</h3>
-                <div style="font-size: 2.5rem; font-weight: 900; line-height: 1;" id="overdueCount">0</div>
-                <p style="font-size: .82rem; opacity: .86; margin: .5rem 0 0;">Aksiyon alınması gereken iş sayısı.</p>
-              </div>
-              <div class="panel">
-                <h3 style="font-size: .92rem; margin: 0 0 1rem;">Son Bildirimler</h3>
-                <div id="notificationList" style="display: flex; flex-direction: column; gap: .75rem;">
-                  <p style="font-size: .85rem; color: var(--muted); margin: 0;">Henüz yeni bir bildirim yok.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="jobsPage" class="page">
-          <div class="page-head">
-            <div>
-              <h1>Genel İş Listesi</h1>
-              <p>Kayıtlı işlerin genel görünümü.</p>
-            </div>
-            <button class="btn btn-secondary" data-page="dashboard" type="button">Anasayfaya Dön</button>
-          </div>
-
-          <div class="panel">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>İş Adı</th>
-                    <th>Sorumlu</th>
-                    <th>Durum</th>
-                    <th>İşlem</th>
-                  </tr>
-                </thead>
-                <tbody id="jobsTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <section id="reportsPage" class="page">
-          <div class="page-head">
-            <div>
-              <h1>Raporlar</h1>
-              <p>İş kayıtlarına ait özet rapor görünümü.</p>
-            </div>
-            <button class="btn btn-secondary" data-page="dashboard" type="button">Anasayfaya Dön</button>
-          </div>
-          <div class="panel" id="reportsPanel">
-            <p style="margin: 0; color: var(--muted);">Rapor verileri yüklendiğinde bu alanda gösterilecektir.</p>
-          </div>
-        </section>
-
-        <section id="usersPage" class="page">
-          <div class="page-head">
-            <div>
-              <h1>Yönetim</h1>
-              <p>Kullanıcı yönetimi sadece yetkili kullanıcılar için görünür.</p>
-            </div>
-            <button class="btn btn-secondary" data-page="dashboard" type="button">Anasayfaya Dön</button>
-          </div>
-          <div class="panel">
-            <p style="margin: 0; color: var(--muted);">Yönetim işlemleri için yetkili kullanıcı girişi gereklidir.</p>
-          </div>
-        </section>
-      </main>
-
-      <footer class="footer">
-        <div>&copy; 2024 TÜRKAK Türk Akreditasyon Kurumu - Birim İçi İş Takip Sistemi v2.0</div>
-        <div style="margin-top: 4px; opacity: .72;">Bu sistem kurum içi bilgilendirme amaçlıdır.</div>
-      </footer>
+  <div id="modalBackdrop" class="modal-backdrop hidden" onclick="App.backdropClose(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header><h3 id="modalTitle"></h3><button class="btn ghost small" onclick="App.closeModal()">Kapat</button></header>
+      <div id="modalBody" class="body"></div>
+      <footer id="modalFooter"></footer>
     </div>
   </div>
 
   <script>
-    const state = {
-      user: null,
-      currentPage: 'dashboard',
-      currentMonthOffset: 0
-    };
+    const App = (() => {
+      const KEYS = {
+        users: "turkak_its_users_v1",
+        tasks: "turkak_its_tasks_v1",
+        notifications: "turkak_its_notifications_v1",
+        session: "turkak_its_session_v1"
+      };
 
-    const defaultDb = () => ({
-      users: [],
-      jobs: [],
-      notifications: []
-    });
+      const DEFAULT_PASSWORD = "Turkak2026!";
 
-    const getDb = () => {
-      try {
-        const db = localStorage.getItem('turkak_db');
-        const parsed = db ? JSON.parse(db) : defaultDb();
+      const CATEGORIES = {
+        "Resmi Yazışma": ["Kamu Kurumu Yazışmaları", "Büyükelçi Karşılama Yazışmaları", "UDK ve STK Yazışmaları"],
+        "Etkinlik / Organizasyon": ["Etkinlik Planlama", "Davet / Protokol", "Salon ve Lojistik", "Etkinlik Sonrası Raporlama"],
+        "Haber ve Sosyal Medya": ["Aylık Sosyal Medya Planı", "Haber ve Sosyal Medya Takibi", "Planda Yer Almayan/Beklenen Paylaşımlar"],
+        "Mal ve Hizmet Alımı": ["Satın Alma Talebi", "Teklif / Piyasa Araştırması", "Muayene ve Kabul", "Ödeme Evrakı"],
+        "Tasarım İşlemleri": ["Görsel Tasarım", "Video / Animasyon", "Baskı Hazırlığı", "Kurumsal Kimlik Kontrolü"],
+        "Şikayet / İtiraz": ["Şikayet İnceleme", "İtiraz Takibi", "Cevap Hazırlığı"],
+        "İleti ve CİMER": ["CİMER Başvurusu", "İleti Takibi", "Cevap Hazırlığı"],
+        "Akreditasyon Bülteni": ["İçerik Toplama", "Editöryal Kontrol", "Yayın Hazırlığı"],
+        "Bilgi Notları": ["Başkanlık Bilgi Notu", "Kurum İçi Bilgi Notu", "Dış Paydaş Bilgi Notu"],
+        "İdari Çalışmalar ve Raporlamalar": ["Aylık Faaliyet Raporu", "Plan ve Bütçe Görüşmeleri", "Stratejik Plan", "Performans Programı", "Yönetim Gözden Geçirme"],
+        "Bütçe İş ve İşlemleri": ["Bütçe Hazırlık", "Ödenek Takibi", "Harcama Raporu"],
+        "Talep Takibi": ["Birim Talebi", "Dış Paydaş Talebi", "Yönetim Talebi"]
+      };
+
+      const STATUS = ["Yeni", "Planlandı", "Devam Ediyor", "Beklemede", "Revizyonda", "Onayda", "Tamamlandı", "İptal / Askıda"];
+      const PRIORITIES = ["Düşük", "Normal", "Yüksek", "Acil"];
+      const OUTPUT_TYPES = ["Yazı", "Haber", "Sosyal medya paylaşımı", "Rapor", "Tasarım", "Etkinlik", "Bülten", "Bilgi notu", "Diğer"];
+      const CONFIDENTIALITY = ["Normal", "Hassas", "Sadece Yetkililer"];
+
+      const state = {
+        currentUser: null,
+        view: "dashboard",
+        calendarMonth: new Date(),
+        listType: "all",
+        selectedTaskId: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const store = {
+  get(key, fallback) {
+    try {
+      return JSON.parse(localStorage.getItem(key)) ?? fallback;
+    } catch (e) {
+      console.error("Veri okunamadı:", key, e);
+      return fallback;
+    }
+  },
+
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.error("Veri kaydedilemedi:", key, e);
+      toast("Tarayıcı depolama alanına kayıt yapılamadı. Depolama iznini veya kota durumunu kontrol edin.");
+      return false;
+    }
+  },
+
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (e) {
+      console.error("Veri silinemedi:", key, e);
+      return false;
+    }
+  }
+};;
+
+      function esc(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function js(value) {
+        return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, " ");
+      }
+
+      function today() { return toISO(new Date()); }
+      function toISO(date) {
+        const d = new Date(date);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 10);
+      }
+      function parseDate(value) {
+        if (!value) return null;
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      }
+      function formatDate(value) {
+        if (!value) return "-";
+        return parseDate(value).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      }
+      function dateTime() { return new Date().toISOString(); }
+      function diffDays(fromISO, toISODate) {
+        const a = parseDate(fromISO); const b = parseDate(toISODate);
+        if (!a || !b) return 9999;
+        return Math.round((b - a) / 86400000);
+      }
+      function addDays(isoDate, days) {
+        const d = parseDate(isoDate);
+        d.setDate(d.getDate() + days);
+        return toISO(d);
+      }
+      function initials(name) {
+        return String(name || "T").trim().split(/\s+/).map(x => x[0]).join("").slice(0, 2).toLocaleUpperCase("tr-TR");
+      }
+
+      async function sha256(text) {
+        if (window.crypto && crypto.subtle) {
+          const data = new TextEncoder().encode(text);
+          const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+          return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+        }
+        let h = 0;
+        for (let i = 0; i < text.length; i++) h = Math.imul(31, h) + text.charCodeAt(i) | 0;
+        return "fallback-" + String(h);
+      }
+
+      function defaultUsers(passwordHash) {
+        return [
+          { id: "u_admin", username: "admin", fullName: "Admin", role: "admin", title: "Sistem Yöneticisi", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_mudur", username: "mudur", fullName: "Müdür", role: "manager", title: "Müdür", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_koordinator", username: "koordinator", fullName: "Koordinatör", role: "coordinator", title: "Koordinatör", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_umut", username: "umut.halaza", fullName: "Umut Halaza", role: "staff", title: "Personel", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_davut", username: "davut.kara", fullName: "Davut Kara", role: "staff", title: "Personel", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_onur", username: "onur.karadayi", fullName: "Onur Karadayı", role: "staff", title: "Personel", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_ugur", username: "ugur.onur", fullName: "Uğur Onur", role: "staff", title: "Personel", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash }
+        ];
+      }
+
+      async function seed() {
+        if (!store.get(KEYS.users, []).length) store.set(KEYS.users, defaultUsers(await sha256(DEFAULT_PASSWORD)));
+        if (!localStorage.getItem(KEYS.tasks)) store.set(KEYS.tasks, []);
+        if (!localStorage.getItem(KEYS.notifications)) store.set(KEYS.notifications, []);
+      }
+
+      function getUsers() { return store.get(KEYS.users, []); }
+      function saveUsers(users) { store.set(KEYS.users, users); }
+      function getTasks() { return store.get(KEYS.tasks, []); }
+      function saveTasks(tasks) { store.set(KEYS.tasks, tasks); }
+      function getNotifications() { return store.get(KEYS.notifications, []); }
+      function saveNotifications(items) { store.set(KEYS.notifications, items); }
+      function userById(id) { return getUsers().find(u => u.id === id); }
+      function userName(id) { return userById(id)?.fullName || "-"; }
+      function roleName(role) {
+        return ({ admin: "Admin", manager: "Müdür", coordinator: "Koordinatör", staff: "Personel" })[role] || role;
+      }
+      function isPrivileged(user = state.currentUser) { return ["admin", "manager", "coordinator"].includes(user?.role); }
+      function activeUsers() { return getUsers().filter(u => u.active); }
+      function openStatuses() { return STATUS.filter(s => !["Tamamlandı", "İptal / Askıda"].includes(s)); }
+      function isOpen(task) { return !["Tamamlandı", "İptal / Askıda"].includes(task.status); }
+      function isOverdue(task) { return isOpen(task) && task.targetEndDate && diffDays(today(), task.targetEndDate) < 0; }
+      function isDueThisWeek(task) {
+        const d = diffDays(today(), task.targetEndDate);
+        return isOpen(task) && d >= 0 && d <= 7;
+      }
+      function isApproval(task) { return task.status === "Onayda" || task.approvalRequired === "Evet"; }
+      function isMine(task) {
+        const id = state.currentUser?.id;
+        return task.responsibleId === id || (task.helperIds || []).includes(id) || task.createdBy === id;
+      }
+      function canViewTask(task) {
+        if (!task) return false;
+        if (task.confidentiality !== "Sadece Yetkililer") return true;
+        return isPrivileged() || isMine(task);
+      }
+      function canEditTask(task) { return isPrivileged() || isMine(task); }
+      function canDeleteTask(task) { return isPrivileged() || task.createdBy === state.currentUser?.id; }
+
+      function categoryClass(category) {
+        const c = String(category || "").toLocaleLowerCase("tr-TR");
+        if (c.includes("resmi")) return "cat-resmi";
+        if (c.includes("haber")) return "cat-haber";
+        if (c.includes("etkinlik")) return "cat-etkinlik";
+        if (c.includes("bülten")) return "cat-bulten";
+        if (c.includes("tasarım")) return "cat-tasarim";
+        if (c.includes("idari")) return "cat-idari";
+        if (c.includes("bütçe")) return "cat-butce";
+        if (c.includes("şikayet")) return "cat-sikayet";
+        if (c.includes("cimer") || c.includes("ileti")) return "cat-cimer";
+        if (c.includes("talep")) return "cat-talep";
+        return "cat-default";
+      }
+      function statusClass(status) {
         return {
-          users: Array.isArray(parsed.users) ? parsed.users : [],
-          jobs: Array.isArray(parsed.jobs) ? parsed.jobs : [],
-          notifications: Array.isArray(parsed.notifications) ? parsed.notifications : []
-        };
-      } catch (error) {
-        console.error('DB okuma hatası:', error);
-        return defaultDb();
+          "Yeni": "status-yeni",
+          "Planlandı": "status-planlandi",
+          "Devam Ediyor": "status-devam",
+          "Beklemede": "status-beklemede",
+          "Revizyonda": "status-revizyonda",
+          "Onayda": "status-onayda",
+          "Tamamlandı": "status-tamamlandi",
+          "İptal / Askıda": "status-iptal"
+        }[status] || "status-beklemede";
       }
-    };
-
-    const saveDb = (db) => {
-      try {
-        localStorage.setItem('turkak_db', JSON.stringify(db));
-      } catch (error) {
-        console.error('DB yazma hatası:', error);
-        showToast('Veriler kaydedilirken hata oluştu.', true);
+      function priorityClass(priority) {
+        return {
+          "Düşük": "priority-dusuk",
+          "Normal": "priority-normal",
+          "Yüksek": "priority-yuksek",
+          "Acil": "priority-acil"
+        }[priority] || "priority-normal";
       }
-    };
+      function badge(text, cls) { return `<span class="badge-pill ${cls}">${esc(text)}</span>`; }
 
-    const safeText = (value) => String(value ?? '').replace(/[&<>"]/g, (char) => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;'
-    }[char]));
+      function nextWorkNo() {
+  const y = new Date().getFullYear();
+  const prefix = `KIM-${y}-`;
 
-    const showToast = (message, isError = false) => {
-      const toast = document.getElementById('toast');
-      if (!toast) return;
-      toast.textContent = message;
-      toast.classList.toggle('error', Boolean(isError));
-      toast.classList.add('show');
-      window.clearTimeout(showToast.timer);
-      showToast.timer = window.setTimeout(() => {
-        toast.classList.remove('show', 'error');
-      }, 3000);
-    };
+  const maxSeq = getTasks().reduce((max, task) => {
+    const workNo = String(task.workNo || "");
 
-    const showPage = (pageId) => {
-      const activePage = document.getElementById(pageId + 'Page');
-      if (!activePage) {
-        showToast('Sayfa bulunamadı.', true);
-        return;
+    if (!workNo.startsWith(prefix)) return max;
+
+    const seq = Number(workNo.slice(prefix.length));
+
+    return Number.isFinite(seq) ? Math.max(max, seq) : max;
+  }, 0);
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
       }
 
-      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-      activePage.classList.add('active');
-
-      document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.page === pageId);
-      });
-
-      state.currentPage = pageId;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      if (pageId === 'jobs') renderJobsTable();
-      if (pageId === 'reports') renderReports();
-    };
-
-    const renderCalendar = () => {
-      const container = document.getElementById('calendarContainer');
-      if (!container) return;
-
-      const now = new Date();
-      const viewDate = new Date(now.getFullYear(), now.getMonth() + state.currentMonthOffset, 1);
-      const year = viewDate.getFullYear();
-      const month = viewDate.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const firstWeekDay = (firstDay.getDay() + 6) % 7;
-      const startDate = new Date(year, month, 1 - firstWeekDay);
-      const todayKey = now.toISOString().slice(0, 10);
-
-      container.innerHTML = '';
-
-      for (let i = 0; i < 42; i += 1) {
-        const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
-        const key = date.toISOString().slice(0, 10);
-        const day = document.createElement('div');
-        day.className = 'calendar-day';
-        if (date.getMonth() !== month) day.style.opacity = '.42';
-        if (key === todayKey) day.classList.add('today');
-        day.innerHTML = `<div class="day-num">${date.getDate()}</div>`;
-        container.appendChild(day);
-      }
-    };
-
-    const renderJobsTable = () => {
-      const tbody = document.getElementById('jobsTableBody');
-      if (!tbody) return;
-
-      const db = getDb();
-      if (!db.jobs.length) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align: center; color: var(--muted); padding: 1.4rem;">
-              Henüz kayıtlı iş bulunmuyor.
-            </td>
-          </tr>`;
-        return;
+      function toast(message) {
+        const node = document.createElement("div");
+        node.className = "toast";
+        node.textContent = message;
+        $("toastArea").appendChild(node);
+        setTimeout(() => node.remove(), 4200);
       }
 
-      tbody.innerHTML = db.jobs.map((job, index) => `
-        <tr>
-          <td>${safeText(job.no || job.jobNo || index + 1)}</td>
-          <td>${safeText(job.title || job.name || '-')}</td>
-          <td>${safeText(job.responsible || job.responsibleName || '-')}</td>
-          <td>${safeText(job.status || '-')}</td>
-          <td><button class="btn btn-secondary btn-small" type="button" data-job-index="${index}">Detay</button></td>
-        </tr>
-      `).join('');
-    };
-
-    const renderReports = () => {
-      const panel = document.getElementById('reportsPanel');
-      if (!panel) return;
-
-      const db = getDb();
-      const total = db.jobs.length;
-      const open = db.jobs.filter(job => !String(job.status || '').toLowerCase().includes('tamam')).length;
-      const completed = total - open;
-
-      panel.innerHTML = `
-        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem;">
-          <div class="panel" style="margin: 0;"><strong>Toplam İş</strong><div style="font-size: 2rem; font-weight: 900; color: var(--turkak-red);">${total}</div></div>
-          <div class="panel" style="margin: 0;"><strong>Açık İş</strong><div style="font-size: 2rem; font-weight: 900; color: var(--turkak-red);">${open}</div></div>
-          <div class="panel" style="margin: 0;"><strong>Tamamlanan</strong><div style="font-size: 2rem; font-weight: 900; color: var(--turkak-red);">${completed}</div></div>
-        </div>`;
-    };
-
-    const updateUserArea = () => {
-      if (!state.user) return;
-      document.getElementById('currentUserName').textContent = state.user.name;
-      document.getElementById('currentUserRole').textContent = state.user.role;
-      document.querySelectorAll('.admin-only').forEach(element => {
-        element.classList.toggle('hidden', !state.user.isAdmin);
-      });
-    };
-
-    const initApp = () => {
-      const storedUser = localStorage.getItem('turkak_user');
-      if (!storedUser) return;
-
-      try {
-        state.user = JSON.parse(storedUser);
-      } catch (error) {
-        localStorage.removeItem('turkak_user');
-        console.error('Kullanıcı oturumu okunamadı:', error);
-        return;
-      }
-
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('appShell').classList.remove('hidden');
-      updateUserArea();
-      renderCalendar();
-      renderJobsTable();
-    };
-
-    const removeLeakedCodeBlocks = () => {
-      document.querySelectorAll('pre, code').forEach(element => {
-        const text = element.textContent || '';
-        if (text.includes('--turkak-red') || text.includes('--red-600') || text.includes('.topbar')) {
-          element.remove();
-        }
-      });
-
-      Array.from(document.body.childNodes).forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          const text = node.textContent || '';
-          if (text.includes('--turkak-red') || text.includes('--red-600') || text.includes('.topbar')) {
-            node.remove();
-          }
-        }
-      });
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      removeLeakedCodeBlocks();
-      initApp();
-
-      document.getElementById('loginForm').addEventListener('submit', (event) => {
+      async function login(event) {
         event.preventDefault();
-        const username = document.getElementById('loginUsername').value.trim();
-        if (!username) {
-          showToast('Kullanıcı adı giriniz.', true);
+        const username = $("loginUsername").value.trim().toLocaleLowerCase("tr-TR");
+        const password = $("loginPassword").value;
+        const users = getUsers();
+        const user = users.find(u => u.username.toLocaleLowerCase("tr-TR") === username);
+        if (!user || !user.active) return toast("Kullanıcı bulunamadı veya pasif durumda.");
+        if (user.passwordHash !== await sha256(password)) return toast("Kullanıcı adı veya şifre hatalı.");
+        state.currentUser = user;
+        store.set(KEYS.session, { userId: user.id, loginAt: dateTime() });
+        $("loginForm").reset();
+        generateAutomaticNotifications();
+        showApp();
+        showDashboard();
+        if (user.mustChangePassword) toast("Güvenlik için Profil / Şifre ekranından şifrenizi güncelleyin.");
+      }
+
+      function logout() {
+        localStorage.removeItem(KEYS.session);
+        state.currentUser = null;
+        $("appPage").classList.add("hidden");
+        $("loginPage").classList.remove("hidden");
+      }
+
+      function showApp() {
+        const freshUser = userById(state.currentUser.id);
+        state.currentUser = freshUser;
+        $("loginPage").classList.add("hidden");
+        $("appPage").classList.remove("hidden");
+        updateShell();
+      }
+
+      function updateShell() {
+        const u = state.currentUser;
+        $("sideUserName").textContent = u.fullName;
+        $("sideUserRole").textContent = roleName(u.role);
+        $("topUserName").textContent = u.fullName;
+        $("topUserRole").textContent = roleName(u.role);
+        $("topAvatar").textContent = initials(u.fullName);
+        renderNav();
+      }
+
+      function setTitle(title, sub) {
+        $("topTitle").textContent = title;
+        $("topSub").textContent = sub || "";
+        state.view = title;
+        renderNav();
+      }
+
+      function renderNav() {
+        const unread = getNotifications().filter(n => n.userId === state.currentUser?.id && !n.read).length;
+        const buttons = [
+          ["dashboard", "Anasayfa", "🏠", "showDashboard"],
+          ["tasks", "Genel İş Listesi", "📋", "showTaskList"],
+          ["new", "Yeni İş Kaydı", "＋", "showTaskForm"],
+          ["reports", "Raporlama", "📊", "showReports"],
+          ["profile", "Profil / Şifre", "👤", "showProfile"]
+        ];
+        if (state.currentUser?.role === "admin") buttons.push(["admin", "Kullanıcı Yönetimi", "⚙", "showAdmin"]);
+        $("nav").innerHTML = buttons.map(([key, label, icon, fn]) => {
+          const active = state.viewKey === key ? "active" : "";
+          const badgeHtml = key === "dashboard" && unread ? `<span class="badge">${unread}</span>` : "";
+          return `<button class="${active}" onclick="App.${fn}()"><span>${icon} ${label}</span>${badgeHtml}</button>`;
+        }).join("");
+      }
+
+      function visibleTasks() { return getTasks().filter(canViewTask); }
+      function taskCounts() {
+        const tasks = visibleTasks();
+        return {
+          all: tasks.length,
+          open: tasks.filter(isOpen).length,
+          week: tasks.filter(isDueThisWeek).length,
+          overdue: tasks.filter(isOverdue).length,
+          approval: tasks.filter(t => isOpen(t) && isApproval(t)).length,
+          completed: tasks.filter(t => t.status === "Tamamlandı").length,
+          mine: tasks.filter(isMine).length
+        };
+      }
+
+      function showDashboard() {
+        state.viewKey = "dashboard";
+        setTitle("Anasayfa", "Günün özeti, bildirimler, takvim ve aktif işler");
+        generateAutomaticNotifications();
+        const counts = taskCounts();
+        const openTasks = visibleTasks().filter(isOpen).sort((a,b) => String(a.targetEndDate).localeCompare(String(b.targetEndDate)));
+        const marquee = openTasks.length
+          ? openTasks.map(t => `${t.workNo} • ${t.title} • ${userName(t.responsibleId)} • ${formatDate(t.targetEndDate)}`).join("     ✦     ")
+          : "Açık iş bulunmuyor. Yeni iş kaydı için kırmızı + butonunu kullanabilirsiniz.";
+
+        $("view").innerHTML = `
+          <div class="page-head">
+            <div><h2>İş Yönetim Sistemi Paneli</h2><p>Tüm işler, takvim ve bildirimler tek ekrandan takip edilir.</p></div>
+            <button class="btn icon" title="Yeni İş Kaydı" onclick="App.showTaskForm()">＋</button>
+          </div>
+          <div class="cards">
+            <button class="stat-card red" onclick="App.showTaskList('open')"><div class="label">Açık işler</div><div class="num">${counts.open}</div><div class="hint">Tıklayınca genel liste açılır</div></button>
+            <button class="stat-card" onclick="App.showTaskList('week')"><div class="label">Bu hafta bitecek</div><div class="num">${counts.week}</div><div class="hint">7 gün içindeki işler</div></button>
+            <button class="stat-card" onclick="App.showTaskList('overdue')"><div class="label">Geciken işler</div><div class="num danger-text">${counts.overdue}</div><div class="hint">Hedef tarihi geçenler</div></button>
+            <button class="stat-card" onclick="App.showTaskList('approval')"><div class="label">Onay bekleyen</div><div class="num">${counts.approval}</div><div class="hint">Onayda veya onay gerekli</div></button>
+            <button class="stat-card" onclick="App.showTaskList('completed')"><div class="label">Tamamlanan</div><div class="num success-text">${counts.completed}</div><div class="hint">Kapanan işler</div></button>
+          </div>
+          <div class="marquee"><span>${esc(marquee)}</span></div>
+          <div class="dashboard-grid">
+            <div class="panel">${calendarHtml()}</div>
+            <div>
+              ${dailySummaryHtml()}
+              ${notificationsHtml()}
+            </div>
+          </div>
+          <div class="panel" style="margin-top:16px">
+            <div class="page-head" style="margin-bottom:10px"><div><h2 style="font-size:20px">Bana Atanan İşler</h2><p>Kendi sorumluluğunuzdaki ve yardımcı olduğunuz açık işler.</p></div><button class="btn secondary small" onclick="App.showTaskList('mine')">Tümünü gör</button></div>
+            ${miniTaskTable(openTasks.filter(isMine).slice(0, 8))}
+          </div>
+        `;
+      }
+
+      function dailySummaryHtml() {
+        const tasks = visibleTasks();
+        const todayTasks = tasks.filter(t => isOpen(t) && (t.calendarDate === today() || t.targetEndDate === today()));
+        const dueTomorrow = tasks.filter(t => isOpen(t) && diffDays(today(), t.targetEndDate) === 1);
+        const overdue = tasks.filter(isOverdue);
+        return `
+          <div class="panel summary-card">
+            <h3>Günün Özeti</h3>
+            <div class="summary-list">
+              <div class="mini-item"><div><strong>Bugün takvimde / hedefte</strong><span>${todayTasks.length} iş</span></div><button class="btn secondary small" onclick="App.showTaskList('today')">Aç</button></div>
+              <div class="mini-item"><div><strong>Yarın tamamlanacak</strong><span>${dueTomorrow.length} iş</span></div><button class="btn secondary small" onclick="App.showTaskList('tomorrow')">Aç</button></div>
+              <div class="mini-item"><div><strong>Gecikmiş açık iş</strong><span>${overdue.length} iş</span></div><button class="btn secondary small" onclick="App.showTaskList('overdue')">Aç</button></div>
+            </div>
+          </div>`;
+      }
+
+      function notificationsHtml() {
+        const list = getNotifications()
+          .filter(n => n.userId === state.currentUser.id)
+          .sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+          .slice(0, 12);
+        const body = list.length ? list.map(n => `
+          <div class="mini-item" style="background:${n.read ? '#f9fafb' : '#fff1f3'}">
+            <div><strong>${esc(n.title || 'Bildirim')}</strong><span>${esc(n.message)}<br>${new Date(n.createdAt).toLocaleString('tr-TR')}</span></div>
+            <div class="btn-row">
+              ${n.taskId ? `<button class="btn secondary small" onclick="App.openTaskDetail('${js(n.taskId)}')">İş</button>` : ""}
+              ${!n.read ? `<button class="btn ghost small" onclick="App.markNotification('${js(n.id)}')">Okundu</button>` : ""}
+            </div>
+          </div>`).join("") : `<p class="muted">Bildirim bulunmuyor.</p>`;
+        return `<div class="panel summary-card"><h3>Bildirimler</h3><div class="summary-list">${body}</div></div>`;
+      }
+
+      function markNotification(id) {
+        const items = getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
+        saveNotifications(items);
+        showDashboard();
+      }
+
+      function calendarHtml() {
+        const monthDate = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth(), 1);
+        const monthTitle = monthDate.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+        const year = monthDate.getFullYear();
+        const month = monthDate.getMonth();
+        const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysPrevMonth = new Date(year, month, 0).getDate();
+        const cells = [];
+        for (let i = 0; i < 42; i++) {
+          let dayNo, cellMonth = month, cls = "day";
+          if (i < firstDayIndex) { dayNo = daysPrevMonth - firstDayIndex + i + 1; cellMonth = month - 1; cls += " other"; }
+          else if (i >= firstDayIndex + daysInMonth) { dayNo = i - firstDayIndex - daysInMonth + 1; cellMonth = month + 1; cls += " other"; }
+          else { dayNo = i - firstDayIndex + 1; }
+          const dateObj = new Date(year, cellMonth, dayNo);
+          const iso = toISO(dateObj);
+          if (iso === today()) cls += " today";
+          const groups = calendarGroupsForDate(iso);
+          const chips = Object.entries(groups).map(([category, arr]) => {
+            const label = arr.length > 1 ? `${category} (${arr.length})` : category;
+            return `<button class="cal-chip ${categoryClass(category)}" title="${esc(label)}" onclick="App.openCalendarGroup('${js(iso)}','${js(category)}')">${esc(label)}</button>`;
+          }).join("");
+          cells.push(`<div class="${cls}"><div class="day-num"><span>${dayNo}</span>${iso === today() ? '<span>Bugün</span>' : ''}</div>${chips}</div>`);
+        }
+        return `
+          <div class="calendar-head">
+            <h3>İş Takvimi - ${esc(monthTitle)}</h3>
+            <div class="btn-row">
+              <button class="btn ghost small" onclick="App.moveMonth(-1)">‹ Önceki</button>
+              <button class="btn secondary small" onclick="App.thisMonth()">Bugün</button>
+              <button class="btn ghost small" onclick="App.moveMonth(1)">Sonraki ›</button>
+            </div>
+          </div>
+          <div class="weekdays">${["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(d => `<div class="weekday">${d}</div>`).join("")}</div>
+          <div class="calendar">${cells.join("")}</div>`;
+      }
+
+      function calendarGroupsForDate(iso) {
+        return visibleTasks()
+          .filter(t => t.showOnCalendar === "Evet" && t.calendarDate === iso)
+          .reduce((acc, task) => {
+            const key = task.calendarTitle || task.mainCategory || "Diğer";
+            acc[key] = acc[key] || [];
+            acc[key].push(task);
+            return acc;
+          }, {});
+      }
+
+      function moveMonth(delta) {
+        state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + delta, 1);
+        showDashboard();
+      }
+      function thisMonth() { state.calendarMonth = new Date(); showDashboard(); }
+
+      function openCalendarGroup(iso, category) {
+        const list = (calendarGroupsForDate(iso)[category] || []).sort((a,b) => String(a.targetEndDate).localeCompare(String(b.targetEndDate)));
+        const body = list.length ? list.map(task => `
+          <div class="mini-item">
+            <div>
+              <strong>${esc(task.workNo)} - ${esc(task.title)}</strong>
+              <span>${badge(task.status, statusClass(task.status))} ${badge(task.priority, priorityClass(task.priority))}<br>Sorumlu: ${esc(userName(task.responsibleId))} | Hedef: ${formatDate(task.targetEndDate)}<br>${esc(task.calendarNote || task.updateNote || '')}</span>
+            </div>
+            <div class="btn-row">
+              <button class="btn secondary small" onclick="App.openTaskDetail('${js(task.id)}')">Detay</button>
+              ${canEditTask(task) ? `<button class="btn ghost small" onclick="App.showTaskForm('${js(task.id)}')">Düzenle</button>` : ""}
+            </div>
+          </div>`).join("") : `<p>Bu gün için kayıt yok.</p>`;
+        openModal(`${formatDate(iso)} - ${category}`, body, `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`);
+      }
+
+      function miniTaskTable(tasks) {
+        if (!tasks.length) return `<p class="muted">Kayıt bulunmuyor.</p>`;
+        return `<div class="table-wrap"><table><thead><tr><th>İş No</th><th>İş Adı</th><th>Kategori</th><th>Sorumlu</th><th>Hedef</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>
+          ${tasks.map(task => `<tr>
+            <td>${esc(task.workNo)}</td><td><b>${esc(task.title)}</b></td><td>${esc(task.mainCategory)}<br><small class="muted">${esc(task.subCategory)}</small></td><td>${esc(userName(task.responsibleId))}</td><td>${formatDate(task.targetEndDate)}</td><td>${badge(task.status, statusClass(task.status))}</td>
+            <td><button class="btn secondary small" onclick="App.openTaskDetail('${js(task.id)}')">Detay</button></td>
+          </tr>`).join("")}
+        </tbody></table></div>`;
+      }
+
+      function showTaskList(type = "all") {
+        state.viewKey = "tasks";
+        state.listType = type;
+        setTitle("Genel İş Listesi", "Açık, geciken, tamamlanan ve onay bekleyen işler");
+        $("view").innerHTML = `
+          <div class="page-head">
+            <div><h2>${esc(listTitle(type))}</h2><p>Özet kartlarından gelen filtreler bu listede açılır.</p></div>
+            <div class="btn-row"><button class="btn secondary" onclick="App.exportCurrentListCsv()">CSV Dışa Aktar</button><button class="btn" onclick="App.showTaskForm()">＋ Yeni İş</button></div>
+          </div>
+          <div class="panel">
+            <div class="filters">
+              <div class="field"><label>Arama</label><input id="filterSearch" oninput="App.renderTaskRows()" placeholder="İş no, iş adı, açıklama, talep eden..." /></div>
+              <div class="field"><label>Durum</label><select id="filterStatus" onchange="App.renderTaskRows()"><option value="">Tümü</option>${STATUS.map(s => `<option>${esc(s)}</option>`).join("")}</select></div>
+              <div class="field"><label>Kategori</label><select id="filterCategory" onchange="App.renderTaskRows()"><option value="">Tümü</option>${Object.keys(CATEGORIES).map(c => `<option>${esc(c)}</option>`).join("")}</select></div>
+              <div class="field"><label>Personel</label><select id="filterPerson" onchange="App.renderTaskRows()"><option value="">Tümü</option>${activeUsers().map(u => `<option value="${esc(u.id)}">${esc(u.fullName)}</option>`).join("")}</select></div>
+              <div class="field"><label>Öncelik</label><select id="filterPriority" onchange="App.renderTaskRows()"><option value="">Tümü</option>${PRIORITIES.map(p => `<option>${esc(p)}</option>`).join("")}</select></div>
+            </div>
+            <div id="taskRows"></div>
+          </div>
+          <div style="margin-top:14px"><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+        `;
+        renderTaskRows();
+      }
+
+      function listTitle(type) {
+        return ({ all: "Tüm İşler", open: "Açık İşler", week: "Bu Hafta Bitecek İşler", overdue: "Geciken İşler", approval: "Onay Bekleyen İşler", completed: "Tamamlanan İşler", mine: "Bana Atanan İşler", today: "Bugün Takvimde / Hedefte Olan İşler", tomorrow: "Yarın Tamamlanacak İşler" })[type] || "Tüm İşler";
+      }
+
+      function baseFilteredTasks() {
+        let tasks = visibleTasks();
+        const t = state.listType;
+        if (t === "open") tasks = tasks.filter(isOpen);
+        if (t === "week") tasks = tasks.filter(isDueThisWeek);
+        if (t === "overdue") tasks = tasks.filter(isOverdue);
+        if (t === "approval") tasks = tasks.filter(x => isOpen(x) && isApproval(x));
+        if (t === "completed") tasks = tasks.filter(x => x.status === "Tamamlandı");
+        if (t === "mine") tasks = tasks.filter(isMine);
+        if (t === "today") tasks = tasks.filter(x => isOpen(x) && (x.calendarDate === today() || x.targetEndDate === today()));
+        if (t === "tomorrow") tasks = tasks.filter(x => isOpen(x) && diffDays(today(), x.targetEndDate) === 1);
+        const search = $("filterSearch")?.value.trim().toLocaleLowerCase("tr-TR") || "";
+        const status = $("filterStatus")?.value || "";
+        const category = $("filterCategory")?.value || "";
+        const person = $("filterPerson")?.value || "";
+        const priority = $("filterPriority")?.value || "";
+        if (search) tasks = tasks.filter(x => JSON.stringify(x).toLocaleLowerCase("tr-TR").includes(search));
+        if (status) tasks = tasks.filter(x => x.status === status);
+        if (category) tasks = tasks.filter(x => x.mainCategory === category);
+        if (person) tasks = tasks.filter(x => x.responsibleId === person || (x.helperIds || []).includes(person));
+        if (priority) tasks = tasks.filter(x => x.priority === priority);
+        return tasks.sort((a,b) => String(a.targetEndDate).localeCompare(String(b.targetEndDate)) || String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      }
+
+      function renderTaskRows() {
+        const tasks = baseFilteredTasks();
+        if (!$('taskRows')) return;
+        if (!tasks.length) {
+          $('taskRows').innerHTML = `<p class="muted">Bu filtrelere uygun iş bulunmuyor.</p>`;
           return;
         }
+        $('taskRows').innerHTML = `<div class="table-wrap"><table><thead><tr><th>İş No</th><th>İş Adı</th><th>Kategori</th><th>Sorumlu / Yardımcı</th><th>Tarih</th><th>Durum</th><th>Öncelik</th><th>İşlem</th></tr></thead><tbody>
+          ${tasks.map(task => `<tr>
+            <td><b>${esc(task.workNo)}</b></td>
+            <td><b>${esc(task.title)}</b><br><small class="muted">${esc(task.requester || '')}</small>${isOverdue(task) ? '<br><small class="danger-text"><b>Gecikmiş</b></small>' : ''}</td>
+            <td>${esc(task.mainCategory)}<br><small class="muted">${esc(task.subCategory || '')}</small></td>
+            <td>${esc(userName(task.responsibleId))}<br><small class="muted">${(task.helperIds || []).map(userName).map(esc).join(', ') || 'Yardımcı yok'}</small></td>
+            <td>Başlangıç: ${formatDate(task.startDate)}<br>Hedef: <b>${formatDate(task.targetEndDate)}</b>${task.actualEndDate ? `<br>Fiili: ${formatDate(task.actualEndDate)}` : ''}</td>
+            <td>${badge(task.status, statusClass(task.status))}</td>
+            <td>${badge(task.priority, priorityClass(task.priority))}</td>
+            <td><div class="btn-row"><button class="btn secondary small" onclick="App.openTaskDetail('${js(task.id)}')">Detay</button>${canEditTask(task) ? `<button class="btn ghost small" onclick="App.showTaskForm('${js(task.id)}')">Düzenle</button>` : ""}${canDeleteTask(task) ? `<button class="btn danger small" onclick="App.deleteTask('${js(task.id)}')">Görevi Sil</button>` : ""}</div></td>
+          </tr>`).join("")}
+        </tbody></table></div>`;
+      }
 
-        state.user = {
-          name: username,
-          role: username.toLocaleLowerCase('tr-TR') === 'admin' ? 'Admin' : 'Kullanıcı',
-          isAdmin: username.toLocaleLowerCase('tr-TR') === 'admin'
+      function categoryOptions(selected) {
+        return `<option value="">Seçiniz</option>` + Object.keys(CATEGORIES).map(c => `<option value="${esc(c)}" ${selected === c ? "selected" : ""}>${esc(c)}</option>`).join("");
+      }
+      function subCategoryOptions(category, selected) {
+        const values = CATEGORIES[category] || ["Genel"];
+        return values.map(c => `<option value="${esc(c)}" ${selected === c ? "selected" : ""}>${esc(c)}</option>`).join("");
+      }
+      function userOptions(selected, includeEmpty = false) {
+        return (includeEmpty ? `<option value="">Seçiniz</option>` : "") + activeUsers().map(u => `<option value="${esc(u.id)}" ${selected === u.id ? "selected" : ""}>${esc(u.fullName)} - ${roleName(u.role)}</option>`).join("");
+      }
+      function multiUserOptions(selectedIds = []) {
+        return activeUsers().map(u => `<option value="${esc(u.id)}" ${selectedIds.includes(u.id) ? "selected" : ""}>${esc(u.fullName)} - ${roleName(u.role)}</option>`).join("");
+      }
+
+      function showTaskForm(id = null) {
+        const editing = Boolean(id);
+        const old = editing ? getTasks().find(t => t.id === id) : null;
+        if (editing && !old) return toast("İş kaydı bulunamadı.");
+        if (editing && !canEditTask(old)) return toast("Bu işi düzenleme yetkiniz yok.");
+        const task = old || {
+          id: "",
+          workNo: nextWorkNo(),
+          title: "",
+          mainCategory: "",
+          subCategory: "",
+          description: "",
+          requester: "",
+          responsibleId: state.currentUser.id,
+          helperIds: [],
+          priority: "Normal",
+          startDate: today(),
+          targetEndDate: today(),
+          status: "Yeni",
+          approvalRequired: "Hayır",
+          fileLink: "",
+          actualEndDate: "",
+          delayReason: "",
+          nextAction: "",
+          updateNote: "",
+          outputType: "Yazı",
+          confidentiality: "Normal",
+          completionNote: "",
+          showOnCalendar: "Evet",
+          calendarDate: today(),
+          calendarTitle: "",
+          calendarNote: ""
         };
+        state.viewKey = "new";
+        setTitle(editing ? "İş Kaydını Düzenle" : "Yeni İş Kaydı", editing ? `${task.workNo} numaralı iş güncelleniyor` : "Ana sayfadaki + ikonundan açılan görev giriş ekranı");
+        $("view").innerHTML = `
+          <div class="page-head">
+            <div><h2>${editing ? 'İş Kaydını Düzenle' : 'YENİ İŞ KAYDI'}</h2><p>Tüm alanlar aktif çalışır. Kaydetme sonrası anasayfaya dönülür.</p></div>
+            <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+          </div>
+          <form id="taskForm" class="panel" onsubmit="App.saveTask(event, '${js(id || '')}')">
+            <div class="form-grid">
+              <div class="field"><label>İş No</label><input id="workNo" value="${esc(task.workNo)}" readonly /></div>
+              <div class="field span-2"><label>İş Adı *</label><input id="title" required maxlength="180" value="${esc(task.title)}" placeholder="Mayıs Ayı Sosyal Medya Planı Hazırlığı" /></div>
+              <div class="field"><label>Ana Kategori *</label><select id="mainCategory" required onchange="App.categoryChanged()">${categoryOptions(task.mainCategory)}</select></div>
+              <div class="field"><label>Alt Kategori *</label><select id="subCategory" required>${subCategoryOptions(task.mainCategory, task.subCategory)}</select></div>
+              <div class="field"><label>Çıktı Türü</label><select id="outputType">${OUTPUT_TYPES.map(x => `<option ${task.outputType === x ? 'selected' : ''}>${esc(x)}</option>`).join("")}</select></div>
+              <div class="field span-3"><label>İşin Açıklaması</label><textarea id="description" placeholder="İşin kapsamını, beklentisini ve açıklamasını yazın.">${esc(task.description)}</textarea></div>
+              <div class="field"><label>Talep Eden</label><input id="requester" value="${esc(task.requester)}" placeholder="Kişi / birim" /></div>
+              <div class="field"><label>Sorumlu Personel *</label><select id="responsibleId" required>${userOptions(task.responsibleId, true)}</select></div>
+              <div class="field"><label>Yardımcı Personel</label><select id="helperIds" multiple size="4">${multiUserOptions(task.helperIds || [])}</select><small>Ctrl / Cmd ile birden fazla seçim yapılabilir.</small></div>
+              <div class="field"><label>Öncelik</label><select id="priority">${PRIORITIES.map(x => `<option ${task.priority === x ? 'selected' : ''}>${esc(x)}</option>`).join("")}</select></div>
+              <div class="field"><label>Başlangıç Tarihi</label><input id="startDate" type="date" value="${esc(task.startDate)}" /></div>
+              <div class="field"><label>Hedef Bitiş Tarihi *</label><input id="targetEndDate" type="date" required value="${esc(task.targetEndDate)}" /></div>
+              <div class="field"><label>Durum</label><select id="status" onchange="App.statusChanged()">${STATUS.map(x => `<option ${task.status === x ? 'selected' : ''}>${esc(x)}</option>`).join("")}</select></div>
+              <div class="field"><label>Onay Gerekiyor mu?</label><select id="approvalRequired"><option ${task.approvalRequired === 'Hayır' ? 'selected' : ''}>Hayır</option><option ${task.approvalRequired === 'Evet' ? 'selected' : ''}>Evet</option></select></div>
+              <div class="field"><label>Dosya / Bağlantı</label><input id="fileLink" value="${esc(task.fileLink)}" placeholder="https://... veya dosya yolu" /></div>
+              <div class="field"><label>Fiili Bitiş Tarihi</label><input id="actualEndDate" type="date" value="${esc(task.actualEndDate)}" /></div>
+              <div class="field"><label>Gizlilik Düzeyi</label><select id="confidentiality">${CONFIDENTIALITY.map(x => `<option ${task.confidentiality === x ? 'selected' : ''}>${esc(x)}</option>`).join("")}</select></div>
+              <div class="field span-3"><label>Gecikme Nedeni</label><textarea id="delayReason" placeholder="Süresi geçen işler için açıklama.">${esc(task.delayReason)}</textarea></div>
+              <div class="field span-3"><label>Sonraki Aksiyon</label><textarea id="nextAction" placeholder="Müdür onayı beklenecek, ilgili birimden bilgi istenecek...">${esc(task.nextAction)}</textarea></div>
+              <div class="field span-3"><label>Son Güncelleme Notu</label><textarea id="updateNote" placeholder="Herkesin güncel durumu anlayacağı kısa not.">${esc(task.updateNote)}</textarea></div>
+              <div class="field span-3"><label>Tamamlanma Notu</label><textarea id="completionNote" placeholder="İş kapatılırken sonuç bilgisi.">${esc(task.completionNote)}</textarea></div>
+              <div class="field"><label>Takvimde Gösterilsin mi?</label><select id="showOnCalendar"><option ${task.showOnCalendar === 'Evet' ? 'selected' : ''}>Evet</option><option ${task.showOnCalendar === 'Hayır' ? 'selected' : ''}>Hayır</option></select></div>
+              <div class="field"><label>Takvim Tarihi</label><input id="calendarDate" type="date" value="${esc(task.calendarDate || task.targetEndDate || today())}" /></div>
+              <div class="field"><label>Takvim Başlığı</label><input id="calendarTitle" value="${esc(task.calendarTitle || task.mainCategory)}" placeholder="Otomatik ana kategori" /></div>
+              <div class="field span-3"><label>Takvim Notu</label><textarea id="calendarNote" placeholder="Takvim pop-up için kısa ve genel not.">${esc(task.calendarNote)}</textarea></div>
+            </div>
+            <div class="form-actions btn-row">
+              <button class="btn" type="submit">Kaydet ve Anasayfaya Dön</button>
+              <button class="btn ghost" type="button" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+              ${editing && canDeleteTask(task) ? `<button class="btn danger" type="button" onclick="App.deleteTask('${js(task.id)}')">Görevi Sil</button>` : ""}
+            </div>
+          </form>
+        `;
+      }
 
-        localStorage.setItem('turkak_user', JSON.stringify(state.user));
-        initApp();
-      });
+      function categoryChanged() {
+        const cat = $("mainCategory").value;
+        $("subCategory").innerHTML = subCategoryOptions(cat, "");
+        $("calendarTitle").value = cat;
+      }
+      function statusChanged() {
+        if ($("status").value === "Tamamlandı" && !$("actualEndDate").value) $("actualEndDate").value = today();
+      }
 
-      document.getElementById('logoutButton').addEventListener('click', () => {
-        localStorage.removeItem('turkak_user');
-        location.reload();
-      });
+      function readTaskForm(existing) {
+        const helperIds = Array.from($("helperIds").selectedOptions).map(o => o.value).filter(Boolean);
+        const responsibleId = $("responsibleId").value;
+        const cleanedHelpers = helperIds.filter(id => id !== responsibleId);
+        return {
+          ...(existing || {}),
+          workNo: $("workNo").value.trim(),
+          title: $("title").value.trim(),
+          mainCategory: $("mainCategory").value,
+          subCategory: $("subCategory").value,
+          description: $("description").value.trim(),
+          requester: $("requester").value.trim(),
+          responsibleId,
+          helperIds: cleanedHelpers,
+          priority: $("priority").value,
+          startDate: $("startDate").value,
+          targetEndDate: $("targetEndDate").value,
+          status: $("status").value,
+          approvalRequired: $("approvalRequired").value,
+          fileLink: $("fileLink").value.trim(),
+          actualEndDate: $("actualEndDate").value,
+          delayReason: $("delayReason").value.trim(),
+          nextAction: $("nextAction").value.trim(),
+          updateNote: $("updateNote").value.trim(),
+          outputType: $("outputType").value,
+          confidentiality: $("confidentiality").value,
+          completionNote: $("completionNote").value.trim(),
+          showOnCalendar: $("showOnCalendar").value,
+          calendarDate: $("calendarDate").value || $("targetEndDate").value,
+          calendarTitle: $("calendarTitle").value.trim() || $("mainCategory").value,
+          calendarNote: $("calendarNote").value.trim(),
+          updatedAt: dateTime(),
+          updatedBy: state.currentUser.id
+        };
+      }
 
-      document.querySelectorAll('[data-page]').forEach(button => {
-        button.addEventListener('click', () => showPage(button.dataset.page));
-      });
+      function saveTask(event, id) {
+        event.preventDefault();
+        let tasks = getTasks();
+        const existing = id ? tasks.find(t => t.id === id) : null;
+        if (id && (!existing || !canEditTask(existing))) return toast("Bu işlem için yetkiniz yok.");
+        const task = readTaskForm(existing);
+        if (!task.title || !task.mainCategory || !task.responsibleId || !task.targetEndDate) return toast("Zorunlu alanları doldurun.");
+        if (task.status === "Tamamlandı" && !task.actualEndDate) task.actualEndDate = today();
+        if (!id) {
+          task.id = "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+          task.createdAt = dateTime();
+          task.createdBy = state.currentUser.id;
+          tasks.push(task);
+          notifyAssignment(task, "Yeni iş atandı", `Size yeni bir iş atandı: ${task.workNo} - ${task.title}`, "created");
+        } else {
+          const before = { ...existing, helperIds: [...(existing.helperIds || [])] };
+          tasks = tasks.map(t => t.id === id ? task : t);
+          notifyChanges(before, task);
+        }
+        saveTasks(tasks);
+        generateAutomaticNotifications();
+        toast("İş kaydedildi. Anasayfaya dönüldü.");
+        showDashboard();
+      }
 
-      document.getElementById('newJobButton').addEventListener('click', () => {
-        showToast('Yeni iş kaydı alanı mevcut yapıda tanımlı değil. İş listesi sayfasına yönlendirildiniz.');
-        showPage('jobs');
-      });
+      function notifyChanges(before, after) {
+        const beforePeople = new Set([before.responsibleId, ...(before.helperIds || [])]);
+        const afterPeople = new Set([after.responsibleId, ...(after.helperIds || [])]);
+        const newlyAssigned = [...afterPeople].filter(id => !beforePeople.has(id));
+        if (newlyAssigned.length) addNotifications(newlyAssigned, after.id, "Yeni görevlendirme", `${after.workNo} - ${after.title} işine görevlendirildiniz.`, `assign-${after.id}-${after.updatedAt}`);
+        if (before.status !== after.status) {
+          if (after.status === "Onayda") notifyApprovers(after, "Onay bekleyen iş", `${after.workNo} - ${after.title} onayınızı bekliyor.`, `approval-${after.id}-${after.updatedAt}`);
+          if (after.status === "Revizyonda") addNotifications([after.responsibleId], after.id, "Revizyon istendi", `${after.workNo} - ${after.title} revizyon durumuna alındı.`, `revision-${after.id}-${after.updatedAt}`);
+          if (after.status === "Tamamlandı") addNotifications([after.createdBy, after.responsibleId], after.id, "İş tamamlandı", `${after.workNo} - ${after.title} tamamlandı.`, `done-${after.id}-${after.updatedAt}`);
+        }
+      }
 
-      document.getElementById('prevCalendarButton').addEventListener('click', () => {
-        state.currentMonthOffset -= 1;
-        renderCalendar();
-      });
+      function notifyAssignment(task, title, message, suffix) {
+        addNotifications([task.responsibleId, ...(task.helperIds || [])], task.id, title, message, `${suffix}-${task.id}`);
+        if (task.status === "Onayda" || task.approvalRequired === "Evet") notifyApprovers(task, "Onay bekleyen iş", `${task.workNo} - ${task.title} için onay bekleniyor.`, `approval-${task.id}`);
+      }
 
-      document.getElementById('todayCalendarButton').addEventListener('click', () => {
-        state.currentMonthOffset = 0;
-        renderCalendar();
-      });
+      function notifyApprovers(task, title, message, key) {
+        const ids = getUsers().filter(u => u.active && ["admin", "manager", "coordinator"].includes(u.role)).map(u => u.id);
+        addNotifications(ids, task.id, title, message, key);
+      }
 
-      document.getElementById('nextCalendarButton').addEventListener('click', () => {
-        state.currentMonthOffset += 1;
-        renderCalendar();
-      });
-    });
+      function addNotifications(userIds, taskId, title, message, key) {
+        const users = [...new Set(userIds.filter(Boolean))];
+        const items = getNotifications();
+        users.forEach(userId => {
+          const uniqueKey = `${userId}-${key}`;
+          if (!items.some(n => n.key === uniqueKey)) {
+            items.push({ id: "n_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), userId, taskId, title, message, key: uniqueKey, read: false, createdAt: dateTime() });
+          }
+        });
+        saveNotifications(items);
+      }
+
+      function generateAutomaticNotifications() {
+        const tasks = getTasks().filter(isOpen);
+        tasks.forEach(task => {
+          const d = diffDays(today(), task.targetEndDate);
+          const recipients = [task.responsibleId, ...(task.helperIds || [])];
+          if (d === 3) addNotifications(recipients, task.id, "Hedef tarih yaklaşıyor", `${task.workNo} - ${task.title} için hedef bitiş tarihine 3 gün kaldı.`, `due3-${task.id}-${today()}`);
+          if (d === 1) addNotifications(recipients, task.id, "Yarın tamamlanması bekleniyor", `${task.workNo} - ${task.title} yarın tamamlanmalı.`, `due1-${task.id}-${today()}`);
+          if (d < 0) {
+            const managers = getUsers().filter(u => u.active && ["admin", "manager", "coordinator"].includes(u.role)).map(u => u.id);
+            addNotifications([...recipients, ...managers], task.id, "Geciken iş", `${task.workNo} - ${task.title} hedef tarihini geçti.`, `late-${task.id}-${today()}`);
+          }
+          if (task.status === "Onayda") notifyApprovers(task, "Onay bekleyen iş", `${task.workNo} - ${task.title} onayda bekliyor.`, `approval-auto-${task.id}-${today()}`);
+        });
+        const now = new Date();
+        if (now.getDay() === 1) {
+          const ids = getUsers().filter(u => u.active && ["admin", "manager", "coordinator"].includes(u.role)).map(u => u.id);
+          addNotifications(ids, "", "Haftalık açık işler özeti", `Bu hafta sistemde ${tasks.length} açık iş bulunuyor.`, `weekly-${today()}`);
+        }
+        const tomorrowDate = new Date(now);
+        tomorrowDate.setDate(now.getDate() + 1);
+        if (tomorrowDate.getMonth() !== now.getMonth()) {
+          const ids = getUsers().filter(u => u.active && ["admin", "manager", "coordinator"].includes(u.role)).map(u => u.id);
+          addNotifications(ids, "", "Aylık faaliyet özeti", `Ay sonu itibarıyla ${getTasks().filter(t => t.status === "Tamamlandı").length} tamamlanmış iş kaydı bulunuyor.`, `month-${now.getFullYear()}-${now.getMonth()+1}`);
+        }
+      }
+
+      function openTaskDetail(id) {
+        const task = getTasks().find(t => t.id === id);
+        if (!task || !canViewTask(task)) return toast("Bu iş kaydını görüntüleme yetkiniz yok.");
+        const helpers = (task.helperIds || []).map(userName).join(", ") || "-";
+        const body = `
+          <div class="detail-grid">
+            ${detail("İş No", task.workNo)}
+            ${detail("İş Adı", task.title)}
+            ${detail("Ana Kategori", task.mainCategory)}
+            ${detail("Alt Kategori", task.subCategory)}
+            ${detail("Talep Eden", task.requester)}
+            ${detail("Sorumlu Personel", userName(task.responsibleId))}
+            ${detail("Yardımcı Personel", helpers)}
+            ${detail("Öncelik", task.priority)}
+            ${detail("Başlangıç Tarihi", formatDate(task.startDate))}
+            ${detail("Hedef Bitiş Tarihi", formatDate(task.targetEndDate))}
+            ${detail("Fiili Bitiş Tarihi", formatDate(task.actualEndDate))}
+            ${detail("Durum", task.status)}
+            ${detail("Onay Gerekiyor mu?", task.approvalRequired)}
+            ${detail("Çıktı Türü", task.outputType)}
+            ${detail("Gizlilik Düzeyi", task.confidentiality)}
+            ${detail("Dosya / Bağlantı", task.fileLink ? `<a href="${esc(task.fileLink)}" target="_blank" rel="noopener">${esc(task.fileLink)}</a>` : "-", false, true)}
+            ${detail("İşin Açıklaması", task.description, true)}
+            ${detail("Gecikme Nedeni", task.delayReason, true)}
+            ${detail("Sonraki Aksiyon", task.nextAction, true)}
+            ${detail("Son Güncelleme Notu", task.updateNote, true)}
+            ${detail("Tamamlanma Notu", task.completionNote, true)}
+            ${detail("Takvim Bilgisi", `${task.showOnCalendar} | ${formatDate(task.calendarDate)} | ${task.calendarTitle || task.mainCategory}`, true)}
+          </div>`;
+        const footer = `
+          ${canEditTask(task) ? `<button class="btn" onclick="App.closeModal(); App.showTaskForm('${js(task.id)}')">Düzenle</button>` : ""}
+          ${canDeleteTask(task) ? `<button class="btn danger" onclick="App.closeModal(); App.deleteTask('${js(task.id)}')">Görevi Sil</button>` : ""}
+          <button class="btn ghost" onclick="App.closeModal()">Kapat</button>`;
+        openModal(`${task.workNo} - İş Detayı`, body, footer);
+      }
+
+      function detail(label, value, wide = false, raw = false) {
+        const safeValue = raw ? (value || "-") : esc(value || "-");
+        return `<div class="detail-box ${wide ? 'span-2' : ''}"><b>${esc(label)}</b><span>${safeValue}</span></div>`;
+      }
+
+      function deleteTask(id) {
+        const task = getTasks().find(t => t.id === id);
+        if (!task) return toast("İş bulunamadı.");
+        if (!canDeleteTask(task)) return toast("Bu görevi silme yetkiniz yok.");
+        if (!confirm(`${task.workNo} - ${task.title} kaydı silinsin mi?`)) return;
+        saveTasks(getTasks().filter(t => t.id !== id));
+        addNotifications([task.createdBy, task.responsibleId, ...(task.helperIds || [])], "", "Görev silindi", `${task.workNo} - ${task.title} iş kaydı silindi.`, `delete-${task.id}-${Date.now()}`);
+        closeModal();
+        toast("Görev silindi. Anasayfaya dönüldü.");
+        showDashboard();
+      }
+
+      function showReports() {
+        state.viewKey = "reports";
+        setTitle("Gelişmiş Raporlama", "Kategori, durum ve personel bazlı iş yükü analizleri");
+        const tasks = visibleTasks();
+        const categoryData = countBy(tasks, t => t.mainCategory || "Diğer");
+        const statusData = countBy(tasks, t => t.status || "Belirsiz");
+        const personData = countBy(tasks.filter(isOpen), t => userName(t.responsibleId));
+        const priorityData = countBy(tasks.filter(isOpen), t => t.priority || "Normal");
+        $("view").innerHTML = `
+          <div class="page-head">
+            <div><h2>Raporlama ve Dışa Aktarma</h2><p>Grafiksel özetler localStorage verisinden anlık oluşturulur.</p></div>
+            <div class="btn-row"><button class="btn secondary" onclick="App.exportAllCsv()">Tüm İşleri CSV</button><button class="btn secondary" onclick="App.exportBackupJson()">JSON Yedek</button><button class="btn ghost" onclick="window.print()">Yazdır / PDF</button></div>
+          </div>
+          <div class="cards">
+            <div class="stat-card"><div class="label">Toplam iş</div><div class="num">${tasks.length}</div></div>
+            <div class="stat-card"><div class="label">Açık iş</div><div class="num">${tasks.filter(isOpen).length}</div></div>
+            <div class="stat-card"><div class="label">Geciken</div><div class="num danger-text">${tasks.filter(isOverdue).length}</div></div>
+            <div class="stat-card"><div class="label">Tamamlanan</div><div class="num success-text">${tasks.filter(t => t.status === 'Tamamlandı').length}</div></div>
+            <div class="stat-card"><div class="label">Onay bekleyen</div><div class="num">${tasks.filter(t => isOpen(t) && isApproval(t)).length}</div></div>
+          </div>
+          <div class="reports-grid">
+            <div class="panel"><h3>Kategori Bazlı Dağılım</h3>${barChart(categoryData)}</div>
+            <div class="panel"><h3>İş Durumları</h3>${barChart(statusData)}</div>
+            <div class="panel"><h3>Personel Bazlı Açık İş Yükü</h3>${barChart(personData)}</div>
+            <div class="panel"><h3>Öncelik Dağılımı</h3>${barChart(priorityData)}</div>
+          </div>
+          <div class="panel" style="margin-top:16px"><h3>Yedekten Geri Yükleme</h3><p class="muted">JSON yedek dosyasının içeriğini seçerek sistemi geri yükleyebilirsiniz. Mevcut verilerin üzerine yazar.</p><input type="file" id="restoreFile" accept="application/json" /> <button class="btn warning small" onclick="App.importBackupJson()">JSON Geri Yükle</button></div>
+          <div style="margin-top:14px"><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>`;
+      }
+
+      function countBy(items, getter) {
+        return items.reduce((acc, item) => {
+          const key = getter(item) || "Belirsiz";
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {});
+      }
+      function barChart(data) {
+        const entries = Object.entries(data).sort((a,b) => b[1] - a[1]);
+        if (!entries.length) return `<p class="muted">Veri bulunmuyor.</p>`;
+        const max = Math.max(...entries.map(x => x[1]), 1);
+        return entries.map(([label, value]) => `
+          <div class="bar-row"><div class="bar-label" title="${esc(label)}">${esc(label)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, Math.round(value / max * 100))}%"></div></div><div class="bar-num">${value}</div></div>
+        `).join("");
+      }
+
+      function exportFields() {
+        return [
+          ["workNo", "İş No"], ["title", "İş Adı"], ["mainCategory", "Ana Kategori"], ["subCategory", "Alt Kategori"], ["description", "İşin Açıklaması"], ["requester", "Talep Eden"],
+          ["responsibleName", "Sorumlu Personel"], ["helperNames", "Yardımcı Personel"], ["priority", "Öncelik"], ["startDate", "Başlangıç Tarihi"], ["targetEndDate", "Hedef Bitiş Tarihi"],
+          ["status", "Durum"], ["approvalRequired", "Onay Gerekiyor mu"], ["fileLink", "Dosya / Bağlantı"], ["actualEndDate", "Fiili Bitiş Tarihi"], ["delayReason", "Gecikme Nedeni"],
+          ["nextAction", "Sonraki Aksiyon"], ["updateNote", "Son Güncelleme Notu"], ["outputType", "Çıktı Türü"], ["confidentiality", "Gizlilik Düzeyi"], ["completionNote", "Tamamlanma Notu"],
+          ["showOnCalendar", "Takvimde Gösterilsin mi"], ["calendarDate", "Takvim Tarihi"], ["calendarTitle", "Takvim Başlığı"], ["calendarNote", "Takvim Notu"]
+        ];
+      }
+      function exportRows(tasks) {
+        return tasks.map(t => ({ ...t, responsibleName: userName(t.responsibleId), helperNames: (t.helperIds || []).map(userName).join(", ") }));
+      }
+      function csvCell(value) { return `"${String(value ?? "").replaceAll('"', '""')}"`; }
+      function exportCsv(tasks, filename) {
+        const fields = exportFields();
+        const rows = exportRows(tasks);
+        const csv = "\ufeff" + [fields.map(f => csvCell(f[1])).join(";"), ...rows.map(row => fields.map(f => csvCell(row[f[0]])).join(";"))].join("\n");
+        download(csv, filename, "text/csv;charset=utf-8");
+      }
+      function exportCurrentListCsv() { exportCsv(baseFilteredTasks(), `turkak-is-listesi-${today()}.csv`); }
+      function exportAllCsv() { exportCsv(visibleTasks(), `turkak-tum-isler-${today()}.csv`); }
+      function exportBackupJson() {
+        const data = { exportedAt: dateTime(), users: getUsers(), tasks: getTasks(), notifications: getNotifications() };
+        download(JSON.stringify(data, null, 2), `turkak-yedek-${today()}.json`, "application/json;charset=utf-8");
+      }
+      function importBackupJson() {
+        const file = $("restoreFile")?.files?.[0];
+        if (!file) return toast("Lütfen JSON yedek dosyası seçin.");
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const data = JSON.parse(reader.result);
+            if (!Array.isArray(data.users) || !Array.isArray(data.tasks)) throw new Error("Geçersiz dosya");
+            if (!confirm("Yedek geri yüklensin mi? Mevcut kullanıcı, iş ve bildirim verileri değişecektir.")) return;
+            saveUsers(data.users); saveTasks(data.tasks); saveNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+            state.currentUser = userById(state.currentUser.id) || getUsers()[0];
+            toast("Yedek geri yüklendi.");
+            showDashboard();
+          } catch (e) { toast("JSON yedek okunamadı: " + e.message); }
+        };
+        reader.readAsText(file, "utf-8");
+      }
+      function download(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      }
+
+      function showProfile() {
+        state.viewKey = "profile";
+        const u = userById(state.currentUser.id);
+        state.currentUser = u;
+        setTitle("Profil ve Şifre Güncelleme", "Kullanıcı bilgilerinizi ve şifrenizi güncelleyin");
+        $("view").innerHTML = `
+          <div class="page-head"><div><h2>Profil ve Şifre</h2><p>Profil güncellemesi sonrası sistem açık kalır.</p></div><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+          <form class="panel" onsubmit="App.saveProfile(event)">
+            <div class="form-grid">
+              <div class="field"><label>Kullanıcı Adı</label><input value="${esc(u.username)}" readonly /></div>
+              <div class="field"><label>Rol</label><input value="${esc(roleName(u.role))}" readonly /></div>
+              <div class="field"><label>Unvan</label><input id="profileTitle" value="${esc(u.title || '')}" /></div>
+              <div class="field"><label>Ad Soyad</label><input id="profileFullName" required value="${esc(u.fullName)}" /></div>
+              <div class="field"><label>E-posta</label><input id="profileEmail" type="email" value="${esc(u.email || '')}" /></div>
+              <div class="field"><label>Telefon</label><input id="profilePhone" value="${esc(u.phone || '')}" /></div>
+              <div class="field span-3"><label>Birim</label><input id="profileDepartment" value="${esc(u.department || '')}" /></div>
+              <div class="field"><label>Mevcut Şifre</label><input id="oldPassword" type="password" autocomplete="current-password" /></div>
+              <div class="field"><label>Yeni Şifre</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" /></div>
+              <div class="field"><label>Yeni Şifre Tekrar</label><input id="newPassword2" type="password" autocomplete="new-password" minlength="8" /></div>
+            </div>
+            <div class="form-actions btn-row"><button class="btn" type="submit">Profili Güncelle</button><button class="btn ghost" type="button" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+          </form>`;
+      }
+
+      async function saveProfile(event) {
+        event.preventDefault();
+        const users = getUsers();
+        const idx = users.findIndex(u => u.id === state.currentUser.id);
+        if (idx < 0) return toast("Kullanıcı bulunamadı.");
+        const user = users[idx];
+        const oldPass = $("oldPassword").value;
+        const newPass = $("newPassword").value;
+        const newPass2 = $("newPassword2").value;
+        if (newPass || newPass2 || oldPass) {
+          if (!oldPass) return toast("Şifre değiştirmek için mevcut şifreyi girin.");
+          if (user.passwordHash !== await sha256(oldPass)) return toast("Mevcut şifre hatalı.");
+          if (newPass.length < 8) return toast("Yeni şifre en az 8 karakter olmalıdır.");
+          if (newPass !== newPass2) return toast("Yeni şifreler eşleşmiyor.");
+          user.passwordHash = await sha256(newPass);
+          user.mustChangePassword = false;
+        }
+        user.fullName = $("profileFullName").value.trim();
+        user.title = $("profileTitle").value.trim();
+        user.email = $("profileEmail").value.trim();
+        user.phone = $("profilePhone").value.trim();
+        user.department = $("profileDepartment").value.trim();
+        users[idx] = user;
+        saveUsers(users);
+        state.currentUser = user;
+        updateShell();
+        toast("Profil güncellendi. Anasayfaya dönüldü.");
+        showDashboard();
+      }
+
+      function showAdmin() {
+        if (state.currentUser.role !== "admin") return toast("Bu ekran sadece admin içindir.");
+        state.viewKey = "admin";
+        setTitle("Kullanıcı Yönetimi", "Admin kullanıcı bilgilerini güncelleyebilir, kullanıcı ekleyebilir ve şifre sıfırlayabilir");
+        const rows = getUsers().map(u => `
+          <tr>
+            <td><input id="u_${u.id}_username" value="${esc(u.username)}" /></td>
+            <td><input id="u_${u.id}_fullName" value="${esc(u.fullName)}" /></td>
+            <td><select id="u_${u.id}_role"><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option><option value="manager" ${u.role === 'manager' ? 'selected' : ''}>Müdür</option><option value="coordinator" ${u.role === 'coordinator' ? 'selected' : ''}>Koordinatör</option><option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Personel</option></select></td>
+            <td><input id="u_${u.id}_title" value="${esc(u.title || '')}" /></td>
+            <td><input id="u_${u.id}_email" value="${esc(u.email || '')}" /></td>
+            <td><select id="u_${u.id}_active"><option value="true" ${u.active ? 'selected' : ''}>Aktif</option><option value="false" ${!u.active ? 'selected' : ''}>Pasif</option></select></td>
+            <td><div class="btn-row"><button class="btn secondary small" onclick="App.saveAdminUser('${js(u.id)}')">Kaydet</button><button class="btn warning small" onclick="App.resetUserPassword('${js(u.id)}')">Şifre Sıfırla</button></div></td>
+          </tr>`).join("");
+        $("view").innerHTML = `
+          <div class="page-head"><div><h2>Kullanıcı Yönetimi</h2><p>Varsayılan kullanıcılar: Admin, Müdür, Koordinatör, Umut Halaza, Davut Kara, Onur Karadayı, Uğur Onur.</p></div><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+          <div class="panel"><h3>Kullanıcılar</h3><div class="table-wrap"><table><thead><tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Rol</th><th>Unvan</th><th>E-posta</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+          <form class="panel" style="margin-top:16px" onsubmit="App.addUser(event)">
+            <h3>Yeni Kullanıcı Ekle</h3>
+            <div class="form-grid">
+              <div class="field"><label>Kullanıcı adı</label><input id="newUsername" required /></div>
+              <div class="field"><label>Ad Soyad</label><input id="newFullName" required /></div>
+              <div class="field"><label>Rol</label><select id="newRole"><option value="staff">Personel</option><option value="coordinator">Koordinatör</option><option value="manager">Müdür</option><option value="admin">Admin</option></select></div>
+              <div class="field"><label>Unvan</label><input id="newTitle" /></div>
+              <div class="field"><label>E-posta</label><input id="newEmail" type="email" /></div>
+              <div class="field"><label>Geçici şifre</label><input id="newPassword" value="${esc(DEFAULT_PASSWORD)}" /></div>
+            </div>
+            <div class="form-actions btn-row"><button class="btn" type="submit">Kullanıcı Ekle</button><button class="btn ghost" type="button" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+          </form>`;
+      }
+
+      function saveAdminUser(id) {
+        const users = getUsers();
+        const user = users.find(u => u.id === id);
+        if (!user) return toast("Kullanıcı bulunamadı.");
+        const username = $(`u_${id}_username`).value.trim();
+        if (!username) return toast("Kullanıcı adı boş olamaz.");
+        if (users.some(u => u.id !== id && u.username.toLocaleLowerCase("tr-TR") === username.toLocaleLowerCase("tr-TR"))) return toast("Bu kullanıcı adı zaten kullanılıyor.");
+        user.username = username;
+        user.fullName = $(`u_${id}_fullName`).value.trim();
+        user.role = $(`u_${id}_role`).value;
+        user.title = $(`u_${id}_title`).value.trim();
+        user.email = $(`u_${id}_email`).value.trim();
+        user.active = $(`u_${id}_active`).value === "true";
+        saveUsers(users);
+        if (state.currentUser.id === id) state.currentUser = user;
+        updateShell();
+        toast("Kullanıcı güncellendi.");
+        showAdmin();
+      }
+
+      async function resetUserPassword(id) {
+        const users = getUsers();
+        const user = users.find(u => u.id === id);
+        if (!user) return toast("Kullanıcı bulunamadı.");
+        if (!confirm(`${user.fullName} kullanıcısının şifresi ${DEFAULT_PASSWORD} olarak sıfırlansın mı?`)) return;
+        user.passwordHash = await sha256(DEFAULT_PASSWORD);
+        user.mustChangePassword = true;
+        saveUsers(users);
+        toast("Şifre sıfırlandı.");
+      }
+
+      async function addUser(event) {
+        event.preventDefault();
+        const users = getUsers();
+        const username = $("newUsername").value.trim();
+        if (users.some(u => u.username.toLocaleLowerCase("tr-TR") === username.toLocaleLowerCase("tr-TR"))) return toast("Bu kullanıcı adı zaten var.");
+        const user = {
+          id: "u_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          username,
+          fullName: $("newFullName").value.trim(),
+          role: $("newRole").value,
+          title: $("newTitle").value.trim(),
+          department: "Kurumsal İletişim Müdürlüğü",
+          email: $("newEmail").value.trim(),
+          phone: "",
+          active: true,
+          mustChangePassword: true,
+          passwordHash: await sha256($("newPassword").value || DEFAULT_PASSWORD)
+        };
+        users.push(user);
+        saveUsers(users);
+        toast("Kullanıcı eklendi.");
+        showAdmin();
+      }
+
+      function openModal(title, body, footer) {
+        $("modalTitle").innerHTML = esc(title);
+        $("modalBody").innerHTML = body;
+        $("modalFooter").innerHTML = footer || `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`;
+        $("modalBackdrop").classList.remove("hidden");
+      }
+      function closeModal() { $("modalBackdrop").classList.add("hidden"); }
+      function backdropClose(event) { if (event.target.id === "modalBackdrop") closeModal(); }
+
+function safeHref(value) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) return "";
+
+  try {
+    const url = new URL(raw, window.location.href);
+    const allowed = ["http:", "https:", "mailto:"];
+
+    return allowed.includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function fileLinkHtml(value) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) return "-";
+
+  const href = safeHref(raw);
+
+  if (!href) {
+    return esc(raw);
+  }
+
+  return `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(raw)}</a>`;
+}
+      async function init() {
+        await seed();
+        $("loginForm").addEventListener("submit", login);
+        const session = store.get(KEYS.session, null);
+        if (session?.userId) {
+          const user = userById(session.userId);
+          if (user && user.active) {
+            state.currentUser = user;
+            generateAutomaticNotifications();
+            showApp();
+            showDashboard();
+            return;
+          }
+        }
+        logout();
+      }
+
+      return {
+        init, login, logout,
+        showDashboard, showTaskList, showTaskForm, saveTask, deleteTask, openTaskDetail,
+        categoryChanged, statusChanged, renderTaskRows,
+        moveMonth, thisMonth, openCalendarGroup,
+        showReports, exportCurrentListCsv, exportAllCsv, exportBackupJson, importBackupJson,
+        showProfile, saveProfile,
+        showAdmin, saveAdminUser, resetUserPassword, addUser,
+        markNotification,
+        openModal, closeModal, backdropClose
+      };
+    })();
+
+    document.addEventListener("DOMContentLoaded", App.init);
   </script>
 </body>
 </html>
