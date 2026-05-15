@@ -684,16 +684,16 @@
         return task.responsibleId === id || (task.helperIds || []).includes(id) || task.createdBy === id;
       }
       function canViewTask(task) {
-        return Boolean(task);
-      }
+  return Boolean(task);
+}
 
-      function canEditTask(task) {
-        return Boolean(task) && task.createdBy === state.currentUser?.id;
-       }
+function canEditTask(task) {
+  return Boolean(task) && task.createdBy === state.currentUser?.id;
+}
 
-      function canDeleteTask(task) {
-        return Boolean(task) && task.createdBy === state.currentUser?.id;
-       }}
+function canDeleteTask(task) {
+  return Boolean(task) && task.createdBy === state.currentUser?.id;
+}
 
       function categoryClass(category) {
         const c = String(category || "").toLocaleLowerCase("tr-TR");
