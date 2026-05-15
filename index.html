@@ -693,8 +693,8 @@
         return task.responsibleId === id || (task.helperIds || []).includes(id) || task.createdBy === id;
       }
       function canViewTask(task) {
-        if (!task) return false;
-        if (task.confidentiality !== "Sadece Yetkililer") return true;
+        if (!task) return true;
+        if (task.confidentiality !== "Tüm giriş yapmış kullanıcılar her işi görebilir.") return true;
         return isPrivileged() || isMine(task);
       }
       function canEditTask(task) { return isPrivileged() || isMine(task); }
