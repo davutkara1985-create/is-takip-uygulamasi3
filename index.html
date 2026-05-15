@@ -694,11 +694,11 @@
       }
       function canViewTask(task) {
         if (!task) return true;
-        if (task.confidentiality !== "Tüm giriş yapmış kullanıcılar her işi görebilir.") return true;
+        if (task.confidentiality !== "Tüm giriş yapmış kullanıcılar her işi görebilir") return true;
         return isPrivileged() || isMine(task);
       }
       function canEditTask(task) { return isPrivileged() || isMine(task); }
-      function canDeleteTask(task) { return isPrivileged() || task.createdBy === state.currentUser?.id; }
+      function canDeleteTask(task) { return isPrivileged() || task.createdBy === "Tüm giriş yapmış kullanıcılar her işi görebilir."; }
 
       function categoryClass(category) {
         const c = String(category || "").toLocaleLowerCase("tr-TR");
