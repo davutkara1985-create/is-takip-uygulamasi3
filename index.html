@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TÜRKAK Kurumsal İletişim İş Takip Sistemi</title>
+  <title>TÜRKAK Kurumsal İletişim İş Yönetim Sistemi</title>
   <style>
     :root {
       --turkak-red: #c8102e;
@@ -514,7 +514,7 @@
             <path d="M50 19 L57 41 L80 41 L61 54 L69 77 L50 63 L31 77 L39 54 L20 41 L43 41 Z" fill="#c8102e"></path>
           </svg>
         </div>
-        <div><strong>TÜRKAK</strong><span>İş Takip Sistemi</span></div>
+        <div><strong>TÜRKAK</strong><span>İş Yönetim Sistemi</span></div>
       </div>
       <nav id="nav" class="nav"></nav>
       <div class="side-footer">
@@ -842,7 +842,7 @@
 
         $("view").innerHTML = `
           <div class="page-head">
-            <div><h2>Kurumsal İletişim İş Takip Paneli</h2><p>Tüm işler, takvim ve bildirimler tek ekrandan takip edilir.</p></div>
+            <div><h2>İş Yönetim Sistemi Paneli</h2><p>Takipte Disiplin, İletişimde Güven</p></div>
             <button class="btn icon" title="Yeni İş Kaydı" onclick="App.showTaskForm()">＋</button>
           </div>
           <div class="cards">
@@ -1342,7 +1342,7 @@
         const priorityData = countBy(tasks.filter(isOpen), t => t.priority || "Normal");
         $("view").innerHTML = `
           <div class="page-head">
-            <div><h2>Raporlama ve Dışa Aktarma</h2><p>Grafiksel özetler localStorage verisinden anlık oluşturulur.</p></div>
+            <div><h2>Raporlama ve Dışa Aktarma</h2><p> Veriye Dayalı Süreçler, İletişimi Güçlendirir</p></div>
             <div class="btn-row"><button class="btn secondary" onclick="App.exportAllCsv()">Tüm İşleri CSV</button><button class="btn secondary" onclick="App.exportBackupJson()">JSON Yedek</button><button class="btn ghost" onclick="window.print()">Yazdır / PDF</button></div>
           </div>
           <div class="cards">
@@ -1433,7 +1433,7 @@
         state.currentUser = u;
         setTitle("Profil ve Şifre Güncelleme", "Kullanıcı bilgilerinizi ve şifrenizi güncelleyin");
         $("view").innerHTML = `
-          <div class="page-head"><div><h2>Profil ve Şifre</h2><p>Profil güncellemesi sonrası sistem açık kalır.</p></div><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
+          <div class="page-head"><div><h2>Profil ve Şifre</h2><p>Kullanıcı bilgilerinizi ve şifrenizi güncelleyin</p></div><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
           <form class="panel" onsubmit="App.saveProfile(event)">
             <div class="form-grid">
               <div class="field"><label>Kullanıcı Adı</label><input value="${esc(u.username)}" readonly /></div>
@@ -1484,7 +1484,7 @@
       function showAdmin() {
         if (state.currentUser.role !== "admin") return toast("Bu ekran sadece admin içindir.");
         state.viewKey = "admin";
-        setTitle("Kullanıcı Yönetimi", "Admin kullanıcı bilgilerini güncelleyebilir, kullanıcı ekleyebilir ve şifre sıfırlayabilir");
+        setTitle("Kullanıcı Yönetimi", "Planlı Takip, Güçlü Kurumsal İtibarın Anahtarıdır");
         const rows = getUsers().map(u => `
           <tr>
             <td><input id="u_${u.id}_username" value="${esc(u.username)}" /></td>
