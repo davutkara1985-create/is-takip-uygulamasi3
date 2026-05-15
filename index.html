@@ -651,7 +651,8 @@
       function defaultUsers(passwordHash) {
         return [
           { id: "u_admin", username: "admin", fullName: "Admin", role: "admin", title: "Sistem Yöneticisi", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
-          { id: "u_mudur", username: "mudur", fullName: "Müdür", role: "manager", title: "Müdür", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_baskan", username: "yusuferen.akin", fullName: "Yusuf Eren Akın", role: "admin", title: "Sistem Yöneticisi", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
+          { id: "u_mudur", username: "asliceren.azgur", fullName: "Aslı Ceren Azgur İnanç", role: "manager", title: "Müdür", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
           { id: "u_koordinator", username: "koordinator", fullName: "Koordinatör", role: "coordinator", title: "Koordinatör", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
           { id: "u_umut", username: "umut.halaza", fullName: "Umut Halaza", role: "staff", title: "Personel", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
           { id: "u_davut", username: "davut.kara", fullName: "Davut Kara", role: "staff", title: "Personel", department: "Kurumsal İletişim Müdürlüğü", email: "", phone: "", active: true, mustChangePassword: true, passwordHash },
@@ -675,7 +676,7 @@
       function userById(id) { return getUsers().find(u => u.id === id); }
       function userName(id) { return userById(id)?.fullName || "-"; }
       function roleName(role) {
-        return ({ admin: "Admin", manager: "Müdür", coordinator: "Koordinatör", staff: "Personel" })[role] || role;
+        return ({ admin: "Admin", admin: "Sistem Yöneticisi", manager: "Müdür", coordinator: "Koordinatör", staff: "Personel" })[role] || role;
       }
       function isPrivileged(user = state.currentUser) { return ["admin", "manager", "coordinator"].includes(user?.role); }
       function activeUsers() { return getUsers().filter(u => u.active); }
