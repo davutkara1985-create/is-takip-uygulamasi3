@@ -912,11 +912,14 @@ function canDeleteTask(task) {
         setTimeout(() => node.remove(), 4200);
       }
 
-      async function login(event) {
-        event.preventDefault();
-        const username = $("loginUsername").value.trim().toLocaleLowerCase("tr-TR");
-        const password = $("loginPassword").value;
-        const users = getUsers();
+     async function login(event) {
+  event.preventDefault();
+
+  await pullSharedData();
+
+  const username = $("loginUsername").value.trim().toLocaleLowerCase("tr-TR");
+  const password = $("loginPassword").value;
+  const users = getUsers();
         const user = users.find(u => u.username.toLocaleLowerCase("tr-TR") === username);
         if (!user || !user.active) return toast("Kullanıcı bulunamadı veya pasif durumda.");
         if (user.passwordHash !== await sha256(password)) return toast("Kullanıcı adı veya şifre hatalı.");
@@ -1356,9 +1359,12 @@ function canDeleteTask(task) {
         };
       }
 
-      function saveTask(event, id) {
-        event.preventDefault();
-        let tasks = getTasks();
+      async function saveTask(event, id) {
+  event.preventDefault();
+
+  await pullSharedData();
+
+  let tasks = getTasks();
         const existing = id ? tasks.find(t => t.id === id) : null;
         if (id && (!existing || !canEditTask(existing))) return toast("Bu işlem için yetkiniz yok.");
         const task = readTaskForm(existing);
@@ -1376,9 +1382,12 @@ function canDeleteTask(task) {
           notifyChanges(before, task);
         }
         saveTasks(tasks);
-        generateAutomaticNotifications();
-        toast("İş kaydedildi. Anasayfaya dönüldü.");
-        showDashboard();
+generateAutomaticNotifications();
+
+await pushSharedData();
+
+toast("İş kaydedildi. Anasayfaya dönüldü.");
+showDashboard();
       }
 
       function notifyChanges(before, after) {
@@ -1482,18 +1491,29 @@ function canDeleteTask(task) {
         return `<div class="detail-box ${wide ? 'span-2' : ''}"><b>${esc(label)}</b><span>${safeValue}</span></div>`;
       }
 
-      function deleteTask(id) {
-        const task = getTasks().find(t => t.id === id);
+     async function deleteTask(id) {
+  await pullSharedData();
+
+  const task = getTasks().find(t => t.id === id);
         if (!task) return toast("İş bulunamadı.");
         if (!canDeleteTask(task)) return toast("Bu görevi silme yetkiniz yok.");
         if (!confirm(`${task.workNo} - ${task.title} kaydı silinsin mi?`)) return;
         saveTasks(getTasks().filter(t => t.id !== id));
-        addNotifications([task.createdBy, task.responsibleId, ...(task.helperIds || [])], "", "Görev silindi", `${task.workNo} - ${task.title} iş kaydı silindi.`, `delete-${task.id}-${Date.now()}`);
-        closeModal();
-        toast("Görev silindi. Anasayfaya dönüldü.");
-        showDashboard();
-      }
 
+addNotifications(
+  [task.createdBy, task.responsibleId, ...(task.helperIds || [])],
+  "",
+  "Görev silindi",
+  `${task.workNo} - ${task.title} iş kaydı silindi.`,
+  `delete-${task.id}-${Date.now()}`
+);
+
+await pushSharedData();
+
+closeModal();
+toast("Görev silindi. Anasayfaya dönüldü.");
+showDashboard();
+      }
       function showReports() {
         state.viewKey = "reports";
         setTitle("Gelişmiş Raporlama", "Kategori, durum ve personel bazlı iş yükü analizleri");
@@ -1739,9 +1759,13 @@ function canDeleteTask(task) {
       function backdropClose(event) { if (event.target.id === "modalBackdrop") closeModal(); }
 
       async function init() {
-        await seed();
-        $("loginForm").addEventListener("submit", login);
-        const session = store.get(KEYS.session, null);
+  await seed();
+
+  $("loginForm").addEventListener("submit", login);
+
+  startSharedRefresh();
+
+  const session = store.get(KEYS.session, null);
         if (session?.userId) {
           const user = userById(session.userId);
           if (user && user.active) {
