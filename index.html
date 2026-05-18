@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TÜRKAK Kurumsal İletişim İş Yönetim Sistemi</title>
-  <style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
     :root {
       --turkak-red: #c8102e;
       --turkak-dark-red: #8f0d21;
@@ -547,6 +548,10 @@
       };
 
       const DEFAULT_PASSWORD = "Turkak2026!";
+      const SUPABASE_URL = "https://xhhqoacsctktvjfkgrnh.supabase.co";
+const SUPABASE_ANON_KEY = " eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoaHFvYWNzY3RrdHZqZmtncm5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzg2MTIsImV4cCI6MjA5NDY1NDYxMn0.eUobrsOeb5zlis9XqZm_5T9ghXguXcLoImzT0tFMJp4";
+const SUPABASE_TABLE = "app_store";
+const SUPABASE_ROW_ID = "turkak_its_data";
 
       const CATEGORIES = {
         "Resmi Yazışma": ["Kamu Kurumu Yazışmaları", "Büyükelçi Karşılama Yazışmaları", "UDK ve STK Yazışmaları"],
@@ -584,7 +589,130 @@
         },
         set(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
       };
+      const sharedDb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let sharedSaveTimer = null;
+let sharedRefreshTimer = null;
+
+function localDataPayload() {
+  return {
+    users: store.get(KEYS.users, []),
+    tasks: store.get(KEYS.tasks, []),
+    notifications: store.get(KEYS.notifications, [])
+  };
+}
+
+function localDataSnapshot() {
+  return {
+    ...localDataPayload(),
+    updatedAt: dateTime()
+  };
+}
+
+async function pullSharedData(showError = true) {
+  try {
+    const { data, error } = await sharedDb
+      .from(SUPABASE_TABLE)
+      .select("data")
+      .eq("id", SUPABASE_ROW_ID)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data || !data.data) {
+      return false;
+    }
+
+    const payload = data.data || {};
+
+    if (Array.isArray(payload.users)) {
+      store.set(KEYS.users, payload.users);
+    }
+
+    if (Array.isArray(payload.tasks)) {
+      store.set(KEYS.tasks, payload.tasks);
+    }
+
+    if (Array.isArray(payload.notifications)) {
+      store.set(KEYS.notifications, payload.notifications);
+    }
+
+    return true;
+  } catch (e) {
+    console.error("Ortak veri okunamadı:", e);
+
+    if (showError) {
+      toast("Ortak veri okunamadı. Supabase bağlantısını ve tablo ayarlarını kontrol edin.");
+    }
+
+    return false;
+  }
+}
+
+async function pushSharedData(showError = true) {
+  try {
+    const payload = localDataSnapshot();
+
+    const { error } = await sharedDb
+      .from(SUPABASE_TABLE)
+      .upsert({
+        id: SUPABASE_ROW_ID,
+        data: payload,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: "id"
+      });
+
+    if (error) throw error;
+
+    return true;
+  } catch (e) {
+    console.error("Ortak veri yazılamadı:", e);
+
+    if (showError) {
+      toast("Ortak veri kaydedilemedi. Supabase RLS ve tablo izinlerini kontrol edin.");
+    }
+
+    return false;
+  }
+}
+
+function queueSharedSave() {
+  clearTimeout(sharedSaveTimer);
+  sharedSaveTimer = setTimeout(() => pushSharedData(false), 600);
+}
+
+function rerenderIfNeeded() {
+  if (!state.currentUser) return;
+
+  if (state.viewKey === "dashboard") {
+    showDashboard();
+  } else if (state.viewKey === "tasks") {
+    showTaskList(state.listType || "all");
+  } else if (state.viewKey === "reports") {
+    showReports();
+  }
+}
+
+function startSharedRefresh() {
+  if (sharedRefreshTimer) return;
+
+  sharedRefreshTimer = setInterval(async () => {
+    if (!state.currentUser) return;
+
+    if (["new", "profile", "admin"].includes(state.viewKey)) {
+      return;
+    }
+
+    const before = JSON.stringify(localDataPayload());
+    const ok = await pullSharedData(false);
+    const after = JSON.stringify(localDataPayload());
+
+    if (ok && before !== after) {
+      rerenderIfNeeded();
+    }
+  }, 15000);
+}
       function esc(value) {
         return String(value ?? "")
           .replaceAll("&", "&amp;")
@@ -653,17 +781,56 @@
       }
 
       async function seed() {
-        if (!store.get(KEYS.users, []).length) store.set(KEYS.users, defaultUsers(await sha256(DEFAULT_PASSWORD)));
-        if (!localStorage.getItem(KEYS.tasks)) store.set(KEYS.tasks, []);
-        if (!localStorage.getItem(KEYS.notifications)) store.set(KEYS.notifications, []);
-      }
+  const hasSharedData = await pullSharedData(false);
 
-      function getUsers() { return store.get(KEYS.users, []); }
-      function saveUsers(users) { store.set(KEYS.users, users); }
-      function getTasks() { return store.get(KEYS.tasks, []); }
-      function saveTasks(tasks) { store.set(KEYS.tasks, tasks); }
-      function getNotifications() { return store.get(KEYS.notifications, []); }
-      function saveNotifications(items) { store.set(KEYS.notifications, items); }
+  if (!hasSharedData) {
+    if (!store.get(KEYS.users, []).length) {
+      store.set(KEYS.users, defaultUsers(await sha256(DEFAULT_PASSWORD)));
+    }
+
+    if (!localStorage.getItem(KEYS.tasks)) {
+      store.set(KEYS.tasks, []);
+    }
+
+    if (!localStorage.getItem(KEYS.notifications)) {
+      store.set(KEYS.notifications, []);
+    }
+
+    await pushSharedData(false);
+    return;
+  }
+
+  if (!getUsers().length) {
+    store.set(KEYS.users, defaultUsers(await sha256(DEFAULT_PASSWORD)));
+    await pushSharedData(false);
+  }
+}
+function getUsers() {
+  return store.get(KEYS.users, []);
+}
+
+function saveUsers(users) {
+  store.set(KEYS.users, users);
+  queueSharedSave();
+}
+
+function getTasks() {
+  return store.get(KEYS.tasks, []);
+}
+
+function saveTasks(tasks) {
+  store.set(KEYS.tasks, tasks);
+  queueSharedSave();
+}
+
+function getNotifications() {
+  return store.get(KEYS.notifications, []);
+}
+
+function saveNotifications(items) {
+  store.set(KEYS.notifications, items);
+  queueSharedSave();
+}
       function userById(id) { return getUsers().find(u => u.id === id); }
       function userName(id) { return userById(id)?.fullName || "-"; }
       function roleName(role) {
