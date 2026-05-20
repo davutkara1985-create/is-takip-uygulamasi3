@@ -541,17 +541,21 @@
   <script>
     const App = (() => {
       const KEYS = {
-        users: "turkak_its_users_v1",
-        tasks: "turkak_its_tasks_v1",
-        notifications: "turkak_its_notifications_v1",
-        session: "turkak_its_session_v1"
-      };
-
+  users: "turkak_its_users_v1",
+  tasks: "turkak_its_tasks_v1",
+  notifications: "turkak_its_notifications_v1",
+  socialPosts: "turkak_its_social_posts_v1",
+  session: "turkak_its_session_v1"
+};
       const DEFAULT_PASSWORD = "Turkak2026!";
       const SUPABASE_URL = "https://xhhqoacsctktvjfkgrnh.supabase.co";
-const SUPABASE_ANON_KEY = " eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoaHFvYWNzY3RrdHZqZmtncm5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzg2MTIsImV4cCI6MjA5NDY1NDYxMn0.eUobrsOeb5zlis9XqZm_5T9ghXguXcLoImzT0tFMJp4";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoaHFvYWNzY3RrdHZqZmtncm5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzg2MTIsImV4cCI6MjA5NDY1NDYxMn0.eUobrsOeb5zlis9XqZm_5T9ghXguXcLoImzT0tFMJp4";
 const SUPABASE_TABLE = "app_store";
 const SUPABASE_ROW_ID = "turkak_its_data";
+
+const SOCIAL_CHANNELS = ["X (Twitter)", "Instagram", "LinkedIn", "Nsocial", "Bluesky"];
+const SOCIAL_STATUS = ["Taslak", "Planlandı", "Yayınlandı"];
+const YES_NO = ["Evet", "Hayır"];
 
       const CATEGORIES = {
         "Resmi Yazışma": ["Kamu Kurumu Yazışmaları", "Büyükelçi Karşılama Yazışmaları", "UDK ve STK Yazışmaları"],
@@ -598,7 +602,8 @@ function localDataPayload() {
   return {
     users: store.get(KEYS.users, []),
     tasks: store.get(KEYS.tasks, []),
-    notifications: store.get(KEYS.notifications, [])
+    notifications: store.get(KEYS.notifications, []),
+    socialPosts: store.get(KEYS.socialPosts, [])
   };
 }
 
@@ -636,7 +641,9 @@ async function pullSharedData(showError = true) {
     if (Array.isArray(payload.notifications)) {
       store.set(KEYS.notifications, payload.notifications);
     }
-
+    if (Array.isArray(payload.socialPosts)) {
+     store.set(KEYS.socialPosts, payload.socialPosts);
+    }
     return true;
   } catch (e) {
     console.error("Ortak veri okunamadı:", e);
@@ -689,6 +696,8 @@ function rerenderIfNeeded() {
     showDashboard();
   } else if (state.viewKey === "tasks") {
     showTaskList(state.listType || "all");
+  } else if (state.viewKey === "social") {
+    showSocialList(state.socialListType || "all");
   } else if (state.viewKey === "reports") {
     showReports();
   }
@@ -700,9 +709,9 @@ function startSharedRefresh() {
   sharedRefreshTimer = setInterval(async () => {
     if (!state.currentUser) return;
 
-    if (["new", "profile", "admin"].includes(state.viewKey)) {
-      return;
-    }
+    if (["new", "socialNew", "profile", "admin"].includes(state.viewKey)) {
+  return;
+}
 
     const before = JSON.stringify(localDataPayload());
     const ok = await pullSharedData(false);
@@ -795,7 +804,9 @@ function startSharedRefresh() {
     if (!localStorage.getItem(KEYS.notifications)) {
       store.set(KEYS.notifications, []);
     }
-
+if (!localStorage.getItem(KEYS.socialPosts)) {
+  store.set(KEYS.socialPosts, []);
+}
     await pushSharedData(false);
     return;
   }
@@ -829,6 +840,14 @@ function getNotifications() {
 
 function saveNotifications(items) {
   store.set(KEYS.notifications, items);
+  queueSharedSave();
+}
+function getSocialPosts() {
+  return store.get(KEYS.socialPosts, []);
+}
+
+function saveSocialPosts(items) {
+  store.set(KEYS.socialPosts, items);
   queueSharedSave();
 }
       function userById(id) { return getUsers().find(u => u.id === id); }
@@ -903,7 +922,64 @@ function canDeleteTask(task) {
         const tasksOfYear = getTasks().filter(t => String(t.workNo || "").includes(`KIM-${y}-`)).length + 1;
         return `KIM-${y}-${String(tasksOfYear).padStart(3, "0")}`;
       }
+function nextSocialNo() {
+  const y = new Date().getFullYear();
+  const prefix = `SMP-${y}-`;
 
+  const maxSeq = getSocialPosts().reduce((max, item) => {
+    const no = String(item.socialNo || "");
+    if (!no.startsWith(prefix)) return max;
+
+    const seq = Number(no.slice(prefix.length));
+    return Number.isFinite(seq) ? Math.max(max, seq) : max;
+  }, 0);
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+function socialStatusClass(status) {
+  return {
+    "Taslak": "status-beklemede",
+    "Planlandı": "status-planlandi",
+    "Yayınlandı": "status-tamamlandi"
+  }[status] || "status-beklemede";
+}
+
+function socialCalendarClass(status) {
+  return {
+    "Taslak": "cat-idari",
+    "Planlandı": "cat-haber",
+    "Yayınlandı": "cat-bulten"
+  }[status] || "cat-default";
+}
+
+function canEditSocialPost(item) {
+  return Boolean(item) && item.createdBy === state.currentUser?.id;
+}
+
+function canDeleteSocialPost(item) {
+  return Boolean(item) && item.createdBy === state.currentUser?.id;
+}
+
+function channelCheckboxes(selected = []) {
+  return SOCIAL_CHANNELS.map(channel => `
+    <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:9px;background:#fff">
+      <input type="checkbox" name="socialChannels" value="${esc(channel)}" ${selected.includes(channel) ? "checked" : ""}>
+      <span>${esc(channel)}</span>
+    </label>
+  `).join("");
+}
+
+function checkedSocialChannels() {
+  return Array.from(document.querySelectorAll('input[name="socialChannels"]:checked'))
+    .map(input => input.value);
+}
+
+function socialPostsForDate(iso) {
+  return getSocialPosts()
+    .filter(item => item.publishDate === iso)
+    .sort((a, b) => String(a.title).localeCompare(String(b.title), "tr"));
+}
       function toast(message) {
         const node = document.createElement("div");
         node.className = "toast";
@@ -967,12 +1043,14 @@ function canDeleteTask(task) {
       function renderNav() {
         const unread = getNotifications().filter(n => n.userId === state.currentUser?.id && !n.read).length;
         const buttons = [
-          ["dashboard", "Anasayfa", "🏠", "showDashboard"],
-          ["tasks", "Genel İş Listesi", "📋", "showTaskList"],
-          ["new", "Yeni İş Kaydı", "＋", "showTaskForm"],
-          ["reports", "Raporlama", "📊", "showReports"],
-          ["profile", "Profil / Şifre", "👤", "showProfile"]
-        ];
+  ["dashboard", "Anasayfa", "🏠", "showDashboard"],
+  ["tasks", "Genel İş Listesi", "📋", "showTaskList"],
+  ["new", "Yeni İş Kaydı", "＋", "showTaskForm"],
+  ["social", "Sosyal Medya Planı", "📣", "showSocialList"],
+  ["socialNew", "Yeni Sosyal Medya Paylaşım Kaydı", "＋", "showSocialForm"],
+  ["reports", "Raporlama", "📊", "showReports"],
+  ["profile", "Profil / Şifre", "👤", "showProfile"]
+];
         if (state.currentUser?.role === "admin") buttons.push(["admin", "Kullanıcı Yönetimi", "⚙", "showAdmin"]);
         $("nav").innerHTML = buttons.map(([key, label, icon, fn]) => {
           const active = state.viewKey === key ? "active" : "";
@@ -1019,13 +1097,18 @@ function canDeleteTask(task) {
           </div>
           <div class="marquee"><span>${esc(marquee)}</span></div>
           <div class="dashboard-grid">
-            <div class="panel">${calendarHtml()}</div>
-            <div>
-              ${dailySummaryHtml()}
-              ${notificationsHtml()}
-            </div>
-          </div>
-          <div class="panel" style="margin-top:16px">
+  <div class="panel">${calendarHtml()}</div>
+  <div>
+    ${dailySummaryHtml()}
+    ${notificationsHtml()}
+  </div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+  ${socialCalendarHtml()}
+</div>
+
+<div class="panel" style="margin-top:16px">
             <div class="page-head" style="margin-bottom:10px"><div><h2 style="font-size:20px">Bana Atanan İşler</h2><p>Kendi sorumluluğunuzdaki ve yardımcı olduğunuz açık işler.</p></div><button class="btn secondary small" onclick="App.showTaskList('mine')">Tümünü gör</button></div>
             ${miniTaskTable(openTasks.filter(isMine).slice(0, 8))}
           </div>
@@ -1139,7 +1222,521 @@ function canDeleteTask(task) {
           </div>`).join("") : `<p>Bu gün için kayıt yok.</p>`;
         openModal(`${formatDate(iso)} - ${category}`, body, `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`);
       }
+function socialCalendarHtml() {
+  const monthDate = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth(), 1);
+  const monthTitle = monthDate.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
 
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysPrevMonth = new Date(year, month, 0).getDate();
+
+  const cells = [];
+
+  for (let i = 0; i < 42; i++) {
+    let dayNo;
+    let cellMonth = month;
+    let cls = "day";
+
+    if (i < firstDayIndex) {
+      dayNo = daysPrevMonth - firstDayIndex + i + 1;
+      cellMonth = month - 1;
+      cls += " other";
+    } else if (i >= firstDayIndex + daysInMonth) {
+      dayNo = i - firstDayIndex - daysInMonth + 1;
+      cellMonth = month + 1;
+      cls += " other";
+    } else {
+      dayNo = i - firstDayIndex + 1;
+    }
+
+    const dateObj = new Date(year, cellMonth, dayNo);
+    const iso = toISO(dateObj);
+
+    if (iso === today()) cls += " today";
+
+    const posts = socialPostsForDate(iso);
+
+    const chips = posts.slice(0, 3).map(item => `
+      <button class="cal-chip ${socialCalendarClass(item.status)}" title="${esc(item.title)}" onclick="App.openSocialCalendarDay('${js(iso)}')">
+        ${esc(item.title)}
+      </button>
+    `).join("");
+
+    const more = posts.length > 3
+      ? `<button class="cal-chip cat-default" onclick="App.openSocialCalendarDay('${js(iso)}')">+${posts.length - 3} içerik</button>`
+      : "";
+
+    cells.push(`
+      <div class="${cls}">
+        <div class="day-num">
+          <span>${dayNo}</span>
+          ${iso === today() ? "<span>Bugün</span>" : ""}
+        </div>
+        ${chips}
+        ${more}
+      </div>
+    `);
+  }
+
+  return `
+    <div class="calendar-head">
+      <h3>Sosyal Medya Paylaşım Takvimi - ${esc(monthTitle)}</h3>
+      <div class="btn-row">
+        <button class="btn ghost small" onclick="App.moveMonth(-1)">‹ Önceki</button>
+        <button class="btn secondary small" onclick="App.thisMonth()">Bugün</button>
+        <button class="btn ghost small" onclick="App.moveMonth(1)">Sonraki ›</button>
+      </div>
+    </div>
+
+    <div class="weekdays">
+      ${["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(day => `<div class="weekday">${day}</div>`).join("")}
+    </div>
+
+    <div class="calendar">${cells.join("")}</div>
+  `;
+}
+
+function openSocialCalendarDay(iso) {
+  const list = socialPostsForDate(iso);
+
+  const body = list.length ? list.map(item => `
+    <div class="mini-item">
+      <div>
+        <strong>${esc(item.socialNo)} - ${esc(item.title)}</strong>
+        <span>
+          ${badge(item.status, socialStatusClass(item.status))}
+          <br>
+          Kanallar: ${(item.channels || []).map(esc).join(", ") || "-"}
+          <br>
+          Web: ${esc(item.publishOnWebsite)} | Slider: ${esc(item.showOnSlider)}
+          <br>
+          ${esc(item.shortDescription || "")}
+        </span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn secondary small" onclick="App.openSocialDetail('${js(item.id)}')">Detay</button>
+        ${canEditSocialPost(item) ? `<button class="btn ghost small" onclick="App.showSocialForm('${js(item.id)}')">Düzenle</button>` : ""}
+      </div>
+    </div>
+  `).join("") : `<p>Bu gün için sosyal medya paylaşım kaydı yok.</p>`;
+
+  openModal(`${formatDate(iso)} - Sosyal Medya Paylaşım Takvimi`, body, `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`);
+}
+
+function showSocialForm(id = null) {
+  const editing = Boolean(id);
+  const old = editing ? getSocialPosts().find(item => item.id === id) : null;
+
+  if (editing && !old) return toast("Sosyal medya paylaşım kaydı bulunamadı.");
+  if (editing && !canEditSocialPost(old)) return toast("Bu kaydı düzenleme yetkiniz yok.");
+
+  const item = old || {
+    id: "",
+    socialNo: nextSocialNo(),
+    title: "",
+    shortDescription: "",
+    detailContent: "",
+    mediaUrl: "",
+    publishDate: today(),
+    channels: [],
+    publishOnWebsite: "Evet",
+    showOnSlider: "Hayır",
+    status: "Taslak",
+    createdBy: state.currentUser.id,
+    createdAt: dateTime(),
+    updatedAt: dateTime()
+  };
+
+  state.viewKey = "socialNew";
+
+  setTitle(
+    editing ? "Sosyal Medya Paylaşım Kaydını Düzenle" : "Yeni Sosyal Medya Paylaşım Kaydı",
+    editing ? `${item.socialNo} numaralı içerik güncelleniyor` : "Aylık sosyal medya ve web sitesi içerik planı"
+  );
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>${editing ? "Sosyal Medya Paylaşım Kaydını Düzenle" : "YENİ SOSYAL MEDYA PAYLAŞIM KAYDI"}</h2>
+        <p>Sosyal medya kanalları, web sitesi haber alanı ve ana sayfa slider bilgileri tek merkezden takip edilir.</p>
+      </div>
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+
+    <form id="socialForm" class="panel" onsubmit="App.saveSocialPost(event, '${js(id || "")}')">
+      <div class="form-grid">
+        <div class="field">
+          <label>Kayıt No</label>
+          <input id="socialNo" value="${esc(item.socialNo)}" readonly>
+        </div>
+
+        <div class="field span-2">
+          <label>Başlık *</label>
+          <input id="socialTitle" required maxlength="180" value="${esc(item.title)}" placeholder="Örn. Mayıs Ayı Akreditasyon Gündemi">
+        </div>
+
+        <div class="field span-3">
+          <label>Kısa Açıklama</label>
+          <textarea id="socialShortDescription" placeholder="Sosyal medya ve web haber girişinde kullanılacak kısa açıklama.">${esc(item.shortDescription)}</textarea>
+        </div>
+
+        <div class="field span-3">
+          <label>Detaylı İçerik</label>
+          <textarea id="socialDetailContent" placeholder="Web sitesi haber metni, sosyal medya açıklama metni veya içerik notları.">${esc(item.detailContent)}</textarea>
+        </div>
+
+        <div class="field span-3">
+          <label>Görsel / Medya Bağlantısı</label>
+          <input id="socialMediaUrl" value="${esc(item.mediaUrl)}" placeholder="https://... veya ortak klasör dosya yolu">
+        </div>
+
+        <div class="field">
+          <label>Yayın Tarihi *</label>
+          <input id="socialPublishDate" type="date" required value="${esc(item.publishDate)}">
+        </div>
+
+        <div class="field">
+          <label>Yayın Durumu</label>
+          <select id="socialStatus">
+            ${SOCIAL_STATUS.map(status => `<option ${item.status === status ? "selected" : ""}>${esc(status)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Web Sitesinde Yayınlanacak mı?</label>
+          <select id="socialPublishOnWebsite">
+            ${YES_NO.map(value => `<option ${item.publishOnWebsite === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Ana Sayfa Slider’da Gösterilecek mi?</label>
+          <select id="socialShowOnSlider">
+            ${YES_NO.map(value => `<option ${item.showOnSlider === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field span-3">
+          <label>Paylaşılacak Sosyal Medya Kanalları</label>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px">
+            ${channelCheckboxes(item.channels || [])}
+          </div>
+          <small>Birden fazla kanal seçilebilir.</small>
+        </div>
+      </div>
+
+      <div class="form-actions btn-row">
+        <button class="btn" type="submit">Kaydet ve Listeye Dön</button>
+        <button class="btn ghost" type="button" onclick="App.showSocialList()">Sosyal Medya Planına DÖN</button>
+        ${editing && canDeleteSocialPost(item) ? `<button class="btn danger" type="button" onclick="App.deleteSocialPost('${js(item.id)}')">Kaydı Sil</button>` : ""}
+      </div>
+    </form>
+  `;
+}
+
+function readSocialForm(existing) {
+  return {
+    ...(existing || {}),
+    socialNo: $("socialNo").value.trim(),
+    title: $("socialTitle").value.trim(),
+    shortDescription: $("socialShortDescription").value.trim(),
+    detailContent: $("socialDetailContent").value.trim(),
+    mediaUrl: $("socialMediaUrl").value.trim(),
+    publishDate: $("socialPublishDate").value,
+    channels: checkedSocialChannels(),
+    publishOnWebsite: $("socialPublishOnWebsite").value,
+    showOnSlider: $("socialShowOnSlider").value,
+    status: $("socialStatus").value,
+    updatedAt: dateTime(),
+    updatedBy: state.currentUser.id
+  };
+}
+
+async function saveSocialPost(event, id) {
+  event.preventDefault();
+
+  await pullSharedData();
+
+  let items = getSocialPosts();
+  const existing = id ? items.find(item => item.id === id) : null;
+
+  if (id && (!existing || !canEditSocialPost(existing))) {
+    return toast("Bu işlem için yetkiniz yok.");
+  }
+
+  const item = readSocialForm(existing);
+
+  if (!item.title || !item.publishDate) {
+    return toast("Başlık ve yayın tarihi zorunludur.");
+  }
+
+  if (!item.channels.length && item.publishOnWebsite === "Hayır") {
+    return toast("En az bir sosyal medya kanalı seçin veya web sitesinde yayın seçeneğini Evet yapın.");
+  }
+
+  if (item.showOnSlider === "Evet" && item.publishOnWebsite !== "Evet") {
+    return toast("Slider seçeneği için web sitesinde yayınlanacak mı alanı Evet olmalıdır.");
+  }
+
+  if (!id) {
+    item.id = "sp_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    item.createdAt = dateTime();
+    item.createdBy = state.currentUser.id;
+    items.push(item);
+  } else {
+    items = items.map(x => x.id === id ? item : x);
+  }
+
+  saveSocialPosts(items);
+  await pushSharedData();
+
+  toast("Sosyal medya paylaşım kaydı kaydedildi.");
+  showSocialList();
+}
+
+function showSocialList(type = "all") {
+  state.viewKey = "social";
+  state.socialListType = type;
+
+  setTitle("Sosyal Medya Planı", "Aylık sosyal medya, web haber ve slider içerik takibi");
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Sosyal Medya ve Web İçerik Planı</h2>
+        <p>X, Instagram, LinkedIn, Nsocial, Bluesky, web haberleri ve slider içerikleri tek merkezden takip edilir.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="App.exportSocialCsv()">CSV Dışa Aktar</button>
+        <button class="btn" onclick="App.showSocialForm()">＋ Yeni Sosyal Medya Paylaşım Kaydı</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="filters">
+        <div class="field">
+          <label>Arama</label>
+          <input id="socialFilterSearch" oninput="App.renderSocialRows()" placeholder="Başlık, açıklama, içerik, kanal...">
+        </div>
+
+        <div class="field">
+          <label>Durum</label>
+          <select id="socialFilterStatus" onchange="App.renderSocialRows()">
+            <option value="">Tümü</option>
+            ${SOCIAL_STATUS.map(status => `<option>${esc(status)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Kanal</label>
+          <select id="socialFilterChannel" onchange="App.renderSocialRows()">
+            <option value="">Tümü</option>
+            ${SOCIAL_CHANNELS.map(channel => `<option>${esc(channel)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Web Sitesi</label>
+          <select id="socialFilterWebsite" onchange="App.renderSocialRows()">
+            <option value="">Tümü</option>
+            <option>Evet</option>
+            <option>Hayır</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Slider</label>
+          <select id="socialFilterSlider" onchange="App.renderSocialRows()">
+            <option value="">Tümü</option>
+            <option>Evet</option>
+            <option>Hayır</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="socialRows"></div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+
+  renderSocialRows();
+}
+
+function baseFilteredSocialPosts() {
+  let items = getSocialPosts();
+
+  const search = $("socialFilterSearch")?.value.trim().toLocaleLowerCase("tr-TR") || "";
+  const status = $("socialFilterStatus")?.value || "";
+  const channel = $("socialFilterChannel")?.value || "";
+  const website = $("socialFilterWebsite")?.value || "";
+  const slider = $("socialFilterSlider")?.value || "";
+
+  if (search) {
+    items = items.filter(item => JSON.stringify(item).toLocaleLowerCase("tr-TR").includes(search));
+  }
+
+  if (status) {
+    items = items.filter(item => item.status === status);
+  }
+
+  if (channel) {
+    items = items.filter(item => (item.channels || []).includes(channel));
+  }
+
+  if (website) {
+    items = items.filter(item => item.publishOnWebsite === website);
+  }
+
+  if (slider) {
+    items = items.filter(item => item.showOnSlider === slider);
+  }
+
+  return items.sort((a, b) =>
+    String(a.publishDate).localeCompare(String(b.publishDate)) ||
+    String(a.title).localeCompare(String(b.title), "tr")
+  );
+}
+
+function renderSocialRows() {
+  const items = baseFilteredSocialPosts();
+
+  if (!$("socialRows")) return;
+
+  if (!items.length) {
+    $("socialRows").innerHTML = `<p class="muted">Bu filtrelere uygun sosyal medya paylaşım kaydı bulunmuyor.</p>`;
+    return;
+  }
+
+  $("socialRows").innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kayıt No</th>
+            <th>Başlık</th>
+            <th>Yayın Tarihi</th>
+            <th>Kanallar</th>
+            <th>Web / Slider</th>
+            <th>Durum</th>
+            <th>Oluşturan</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => `
+            <tr>
+              <td><b>${esc(item.socialNo)}</b></td>
+              <td>
+                <b>${esc(item.title)}</b><br>
+                <small class="muted">${esc(item.shortDescription || "")}</small>
+              </td>
+              <td>${formatDate(item.publishDate)}</td>
+              <td>${(item.channels || []).map(esc).join("<br>") || "-"}</td>
+              <td>
+                Web: <b>${esc(item.publishOnWebsite)}</b><br>
+                Slider: <b>${esc(item.showOnSlider)}</b>
+              </td>
+              <td>${badge(item.status, socialStatusClass(item.status))}</td>
+              <td>${esc(userName(item.createdBy))}</td>
+              <td>
+                <div class="btn-row">
+                  <button class="btn secondary small" onclick="App.openSocialDetail('${js(item.id)}')">Detay</button>
+                  ${canEditSocialPost(item) ? `<button class="btn ghost small" onclick="App.showSocialForm('${js(item.id)}')">Düzenle</button>` : ""}
+                  ${canDeleteSocialPost(item) ? `<button class="btn danger small" onclick="App.deleteSocialPost('${js(item.id)}')">Sil</button>` : ""}
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openSocialDetail(id) {
+  const item = getSocialPosts().find(x => x.id === id);
+
+  if (!item) {
+    return toast("Sosyal medya paylaşım kaydı bulunamadı.");
+  }
+
+  const body = `
+    <div class="detail-grid">
+      ${detail("Kayıt No", item.socialNo)}
+      ${detail("Başlık", item.title)}
+      ${detail("Yayın Tarihi", formatDate(item.publishDate))}
+      ${detail("Durum", item.status)}
+      ${detail("Kanallar", (item.channels || []).join(", ") || "-", true)}
+      ${detail("Web Sitesinde Yayınlanacak mı?", item.publishOnWebsite)}
+      ${detail("Ana Sayfa Slider’da Gösterilecek mi?", item.showOnSlider)}
+      ${detail("Oluşturan", userName(item.createdBy))}
+      ${detail("Görsel / Medya", item.mediaUrl ? `<a href="${esc(item.mediaUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.mediaUrl)}</a>` : "-", true, true)}
+      ${detail("Kısa Açıklama", item.shortDescription, true)}
+      ${detail("Detaylı İçerik", item.detailContent, true)}
+    </div>
+  `;
+
+  const footer = `
+    ${canEditSocialPost(item) ? `<button class="btn" onclick="App.closeModal(); App.showSocialForm('${js(item.id)}')">Düzenle</button>` : ""}
+    ${canDeleteSocialPost(item) ? `<button class="btn danger" onclick="App.closeModal(); App.deleteSocialPost('${js(item.id)}')">Sil</button>` : ""}
+    <button class="btn ghost" onclick="App.closeModal()">Kapat</button>
+  `;
+
+  openModal(`${item.socialNo} - Sosyal Medya Paylaşım Detayı`, body, footer);
+}
+
+async function deleteSocialPost(id) {
+  await pullSharedData();
+
+  const item = getSocialPosts().find(x => x.id === id);
+
+  if (!item) return toast("Sosyal medya paylaşım kaydı bulunamadı.");
+  if (!canDeleteSocialPost(item)) return toast("Bu kaydı silme yetkiniz yok.");
+
+  if (!confirm(`${item.socialNo} - ${item.title} kaydı silinsin mi?`)) return;
+
+  saveSocialPosts(getSocialPosts().filter(x => x.id !== id));
+  await pushSharedData();
+
+  closeModal();
+  toast("Sosyal medya paylaşım kaydı silindi.");
+  showSocialList();
+}
+
+function exportSocialCsv() {
+  const fields = [
+    ["socialNo", "Kayıt No"],
+    ["title", "Başlık"],
+    ["shortDescription", "Kısa Açıklama"],
+    ["detailContent", "Detaylı İçerik"],
+    ["mediaUrl", "Görsel / Medya"],
+    ["publishDate", "Yayın Tarihi"],
+    ["channelsText", "Kanallar"],
+    ["publishOnWebsite", "Web Sitesinde Yayınlanacak mı"],
+    ["showOnSlider", "Ana Sayfa Slider"],
+    ["status", "Yayın Durumu"],
+    ["createdByName", "Oluşturan"]
+  ];
+
+  const rows = baseFilteredSocialPosts().map(item => ({
+    ...item,
+    channelsText: (item.channels || []).join(", "),
+    createdByName: userName(item.createdBy)
+  }));
+
+  const csv = "\ufeff" + [
+    fields.map(field => csvCell(field[1])).join(";"),
+    ...rows.map(row => fields.map(field => csvCell(row[field[0]])).join(";"))
+  ].join("\n");
+
+  download(csv, `turkak-sosyal-medya-plani-${today()}.csv`, "text/csv;charset=utf-8");
+}
       function miniTaskTable(tasks) {
         if (!tasks.length) return `<p class="muted">Kayıt bulunmuyor.</p>`;
         return `<div class="table-wrap"><table><thead><tr><th>İş No</th><th>İş Adı</th><th>Kategori</th><th>Sorumlu</th><th>Hedef</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>
@@ -1582,9 +2179,16 @@ showDashboard();
       function exportCurrentListCsv() { exportCsv(baseFilteredTasks(), `turkak-is-listesi-${today()}.csv`); }
       function exportAllCsv() { exportCsv(visibleTasks(), `turkak-tum-isler-${today()}.csv`); }
       function exportBackupJson() {
-        const data = { exportedAt: dateTime(), users: getUsers(), tasks: getTasks(), notifications: getNotifications() };
-        download(JSON.stringify(data, null, 2), `turkak-yedek-${today()}.json`, "application/json;charset=utf-8");
-      }
+  const data = {
+    exportedAt: dateTime(),
+    users: getUsers(),
+    tasks: getTasks(),
+    notifications: getNotifications(),
+    socialPosts: getSocialPosts()
+  };
+
+  download(JSON.stringify(data, null, 2), `turkak-yedek-${today()}.json`, "application/json;charset=utf-8");
+}
       function importBackupJson() {
         const file = $("restoreFile")?.files?.[0];
         if (!file) return toast("Lütfen JSON yedek dosyası seçin.");
@@ -1594,7 +2198,10 @@ showDashboard();
             const data = JSON.parse(reader.result);
             if (!Array.isArray(data.users) || !Array.isArray(data.tasks)) throw new Error("Geçersiz dosya");
             if (!confirm("Yedek geri yüklensin mi? Mevcut kullanıcı, iş ve bildirim verileri değişecektir.")) return;
-            saveUsers(data.users); saveTasks(data.tasks); saveNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+            saveUsers(data.users);
+saveTasks(data.tasks);
+saveNotifications(Array.isArray(data.notifications) ? data.notifications : []);
+saveSocialPosts(Array.isArray(data.socialPosts) ? data.socialPosts : []);
             state.currentUser = userById(state.currentUser.id) || getUsers()[0];
             toast("Yedek geri yüklendi.");
             showDashboard();
@@ -1780,16 +2387,52 @@ showDashboard();
       }
 
       return {
-        init, login, logout,
-        showDashboard, showTaskList, showTaskForm, saveTask, deleteTask, openTaskDetail,
-        categoryChanged, statusChanged, renderTaskRows,
-        moveMonth, thisMonth, openCalendarGroup,
-        showReports, exportCurrentListCsv, exportAllCsv, exportBackupJson, importBackupJson,
-        showProfile, saveProfile,
-        showAdmin, saveAdminUser, resetUserPassword, addUser,
-        markNotification,
-        openModal, closeModal, backdropClose
-      };
+  init, login, logout,
+
+  showDashboard,
+  showTaskList,
+  showTaskForm,
+  saveTask,
+  deleteTask,
+  openTaskDetail,
+
+  categoryChanged,
+  statusChanged,
+  renderTaskRows,
+
+  moveMonth,
+  thisMonth,
+  openCalendarGroup,
+
+  showSocialList,
+  showSocialForm,
+  saveSocialPost,
+  renderSocialRows,
+  openSocialDetail,
+  deleteSocialPost,
+  openSocialCalendarDay,
+  exportSocialCsv,
+
+  showReports,
+  exportCurrentListCsv,
+  exportAllCsv,
+  exportBackupJson,
+  importBackupJson,
+
+  showProfile,
+  saveProfile,
+
+  showAdmin,
+  saveAdminUser,
+  resetUserPassword,
+  addUser,
+
+  markNotification,
+
+  openModal,
+  closeModal,
+  backdropClose
+};
     })();
 
     document.addEventListener("DOMContentLoaded", App.init);
