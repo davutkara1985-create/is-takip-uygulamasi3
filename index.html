@@ -1162,22 +1162,7 @@ function socialPostsForDate(iso) {
     </div>
   `;
 }
-        const list = getNotifications()
-          .filter(n => n.userId === state.currentUser.id)
-          .sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)))
-          .slice(0, 12);
-        const body = list.length ? list.map(n => `
-          <div class="mini-item" style="background:${n.read ? '#f9fafb' : '#fff1f3'}">
-            <div><strong>${esc(n.title || 'Bildirim')}</strong><span>${esc(n.message)}<br>${new Date(n.createdAt).toLocaleString('tr-TR')}</span></div>
-            <div class="btn-row">
-              ${n.taskId ? `<button class="btn secondary small" onclick="App.openTaskDetail('${js(n.taskId)}')">İş</button>` : ""}
-              ${!n.read ? `<button class="btn ghost small" onclick="App.markNotification('${js(n.id)}')">Okundu</button>` : ""}
-            </div>
-          </div>`).join("") : `<p class="muted">Bildirim bulunmuyor.</p>`;
-        return `<div class="panel summary-card"><h3>Bildirimler</h3><div class="summary-list">${body}</div></div>`;
-      }
-
-      function markNotification(id) {
+        function markNotification(id) {
         const items = getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
         saveNotifications(items);
         showDashboard();
