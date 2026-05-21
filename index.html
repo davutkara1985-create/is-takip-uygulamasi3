@@ -757,10 +757,12 @@ function rerenderIfNeeded() {
   } else if (state.viewKey === "tasks") {
     showTaskList(state.listType || "all");
   } else if (state.viewKey === "social") {
-    showSocialList(state.socialListType || "all");
+  showSocialList(state.socialListType || "all");
+  } else if (state.viewKey === "socialPerformance") {
+  showSocialPerformance();
   } else if (state.viewKey === "reports") {
   showReports();
-} else if (state.viewKey === "contentAssistant") {
+  } else if (state.viewKey === "contentAssistant") {
   showContentAssistant();
 }
 }
@@ -1180,6 +1182,7 @@ function performanceTotals(items = getSocialPosts()) {
   ["new", "Yeni İş Kaydı", "＋", "showTaskForm"],
   ["socialNew", "Yeni Sosyal Medya Paylaşımı", "＋", "showSocialForm"],
   ["contentAssistant", "Kurumsal İçerik Asistanı", "✍️", "showContentAssistant"],
+  ["socialPerformance", "Sosyal Medya Performansı", "📈", "showSocialPerformance"]
   ["reports", "Raporlama", "📊", "showReports"],
   ["profile", "Profil / Şifre", "👤", "showProfile"]
 ];
@@ -2833,6 +2836,229 @@ function clearContentAssistant() {
   state.contentAssistant = null;
   if ($("contentAssistantResults")) $("contentAssistantResults").innerHTML = "";
 }
+  function socialPostsForChannelReport(channel) {
+  return getSocialPosts()
+    .filter(item => (item.channels || []).includes(channel))
+    .sort((a, b) =>
+      String(b.publishDate).localeCompare(String(a.publishDate)) ||
+      String(a.title).localeCompare(String(b.title), "tr")
+    );
+}
+
+function engagementRateFromTotals(totals) {
+  const denominator = metricNumber(totals.reach) || metricNumber(totals.impressions);
+
+  if (!denominator) {
+    return 0;
+  }
+
+  return Math.round((metricNumber(totals.interactions) / denominator) * 1000) / 10;
+}
+
+function socialPerformanceTable(items) {
+  if (!items.length) {
+    return `<p class="muted">Bu platform için performans kaydı bulunmuyor.</p>`;
+  }
+
+  return `
+    <div class="table-wrap">
+      <table style="min-width:1180px">
+        <thead>
+          <tr>
+            <th>Kayıt No</th>
+            <th>Başlık</th>
+            <th>Yayın Tarihi</th>
+            <th>Durum</th>
+            <th>Erişim</th>
+            <th>Gösterim</th>
+            <th>Görüntülenme</th>
+            <th>Beğeni</th>
+            <th>Paylaşım</th>
+            <th>Tıklama</th>
+            <th>Etkileşim Oranı</th>
+            <th>Performans Notu</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${items.map(item => `
+            <tr>
+              <td><b>${esc(item.socialNo)}</b></td>
+              <td>
+                <b>${esc(item.title)}</b><br>
+                <small class="muted">${esc(item.shortDescription || "")}</small>
+              </td>
+              <td>${formatDate(item.publishDate)}</td>
+              <td>${badge(item.status, socialStatusClass(item.status))}</td>
+              <td>${metricNumber(item.reach)}</td>
+              <td>${metricNumber(item.impressions)}</td>
+              <td>${metricNumber(item.views)}</td>
+              <td>${metricNumber(item.likes)}</td>
+              <td>${metricNumber(item.shares)}</td>
+              <td>${metricNumber(item.clicks)}</td>
+              <td><b>%${engagementRate(item)}</b></td>
+              <td>${esc(item.performanceNote || "-")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function socialChannelPerformancePanel(channel) {
+  const items = socialPostsForChannelReport(channel);
+  const totals = performanceTotals(items);
+  const rate = engagementRateFromTotals(totals);
+  const publishedCount = items.filter(item => item.status === "Yayınlandı").length;
+  const plannedCount = items.filter(item => item.status === "Planlandı").length;
+  const draftCount = items.filter(item => item.status === "Taslak").length;
+
+  return `
+    <div class="panel" style="margin-bottom:16px">
+      <div class="page-head" style="margin-bottom:12px">
+        <div>
+          <h2 style="font-size:22px">${esc(channel)}</h2>
+          <p>
+            Resmî hesap:
+            <b>${esc(OFFICIAL_SOCIAL_ACCOUNTS[channel] || "Tanımlanmadı")}</b>
+          </p>
+        </div>
+      </div>
+
+      <div class="cards" style="grid-template-columns:repeat(5,minmax(140px,1fr));margin-bottom:16px">
+        <div class="stat-card red">
+          <div class="label">İçerik</div>
+          <div class="num">${items.length}</div>
+          <div class="hint">Bu platformdaki kayıt</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Erişim</div>
+          <div class="num">${totals.reach}</div>
+          <div class="hint">Toplam erişim</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Gösterim</div>
+          <div class="num">${totals.impressions}</div>
+          <div class="hint">Toplam gösterim</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Görüntülenme</div>
+          <div class="num">${totals.views}</div>
+          <div class="hint">Toplam görüntülenme</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Etkileşim Oranı</div>
+          <div class="num">%${rate}</div>
+          <div class="hint">Etkileşim / erişim</div>
+        </div>
+      </div>
+
+      <div class="cards" style="grid-template-columns:repeat(5,minmax(140px,1fr));margin-bottom:16px">
+        <div class="stat-card">
+          <div class="label">Beğeni</div>
+          <div class="num">${totals.likes}</div>
+          <div class="hint">Toplam beğeni</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Paylaşım</div>
+          <div class="num">${totals.shares}</div>
+          <div class="hint">Toplam paylaşım</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Tıklama</div>
+          <div class="num">${totals.clicks}</div>
+          <div class="hint">Toplam tıklama</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Toplam Etkileşim</div>
+          <div class="num">${totals.interactions}</div>
+          <div class="hint">Beğeni + paylaşım + tıklama</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Durum</div>
+          <div class="num" style="font-size:20px">${publishedCount}/${plannedCount}/${draftCount}</div>
+          <div class="hint">Yayınlandı / Planlandı / Taslak</div>
+        </div>
+      </div>
+
+      ${socialPerformanceTable(items)}
+    </div>
+  `;
+}
+
+function showSocialPerformance() {
+  state.viewKey = "socialPerformance";
+
+  setTitle(
+    "Sosyal Medya Performansı",
+    "TÜRKAK resmî sosyal medya hesapları için platform bazlı performans raporları"
+  );
+
+  const allPosts = getSocialPosts();
+  const totalPerformance = performanceTotals(allPosts);
+  const totalRate = engagementRateFromTotals(totalPerformance);
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Sosyal Medya Performans Ölçümü</h2>
+        <p>X, Instagram, LinkedIn, Nsocial ve Bluesky için ayrı ayrı performans raporları.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="App.exportSocialCsv()">CSV Dışa Aktar</button>
+        <button class="btn ghost" onclick="App.showSocialList()">Sosyal Medya Planına DÖN</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="stat-card red">
+        <div class="label">Toplam içerik</div>
+        <div class="num">${allPosts.length}</div>
+        <div class="hint">Tüm sosyal medya kayıtları</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Toplam erişim</div>
+        <div class="num">${totalPerformance.reach}</div>
+        <div class="hint">Tüm platform kayıtları</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Toplam gösterim</div>
+        <div class="num">${totalPerformance.impressions}</div>
+        <div class="hint">Tüm platform kayıtları</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Toplam etkileşim</div>
+        <div class="num">${totalPerformance.interactions}</div>
+        <div class="hint">Beğeni + paylaşım + tıklama</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Genel etkileşim oranı</div>
+        <div class="num">%${totalRate}</div>
+        <div class="hint">Toplam etkileşim / erişim</div>
+      </div>
+    </div>
+
+    ${SOCIAL_CHANNELS.map(channel => socialChannelPerformancePanel(channel)).join("")}
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+}
   function showReports() {
   state.viewKey = "reports";
   setTitle("Gelişmiş Raporlama", "İşler ve sosyal medya içerikleri için raporlama ekranı");
@@ -2928,38 +3154,7 @@ function clearContentAssistant() {
       </div>
     </div>
 
-    <div class="cards" style="margin-top:12px;margin-bottom:0">
-    <div class="stat-card">
-      <div class="label">Toplam erişim</div>
-      <div class="num">${socialPerformance.reach}</div>
-      <div class="hint">Girilen tüm erişim verileri</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="label">Toplam gösterim</div>
-      <div class="num">${socialPerformance.impressions}</div>
-      <div class="hint">Girilen tüm gösterim verileri</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="label">Toplam görüntülenme</div>
-      <div class="num">${socialPerformance.views}</div>
-      <div class="hint">Video / içerik görüntülenmeleri</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="label">Toplam etkileşim</div>
-      <div class="num">${socialPerformance.interactions}</div>
-      <div class="hint">Beğeni + paylaşım + tıklama</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="label">Etkileşim oranı</div>
-      <div class="num">%${socialAverageEngagementRate}</div>
-      <div class="hint">Toplam etkileşim / erişim</div>
-    </div>
-  </div>
-</div>
+   <div class="reports-grid">
       <div class="panel">
         <h3>Kategori Bazlı Dağılım</h3>
         ${barChart(categoryData)}
@@ -3015,25 +3210,6 @@ function clearContentAssistant() {
         <div class="label">Web / Slider</div>
         <div class="num">${socialWebsite} / ${socialSlider}</div>
         <div class="hint">Web sitesi / slider</div>
-      </div>
-    </div>
- <div class="stat-card">
-          <div class="label">Toplam görüntülenme</div>
-          <div class="num">${socialPerformance.views}</div>
-          <div class="hint">Video / içerik görüntülenmeleri</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="label">Toplam etkileşim</div>
-          <div class="num">${socialPerformance.interactions}</div>
-          <div class="hint">Beğeni + paylaşım + tıklama</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="label">Etkileşim oranı</div>
-          <div class="num">%${socialAverageEngagementRate}</div>
-          <div class="hint">Toplam etkileşim / erişim</div>
-        </div>
       </div>
     </div>
     <div class="reports-grid">
@@ -3792,6 +3968,7 @@ openSocialDetail,
 deleteSocialPost,
 openSocialCalendarDay,
 exportSocialCsv,
+showSocialPerformance,
         
 showContentAssistant,
 generateContentWithAI,
