@@ -325,6 +325,11 @@
     .summary-card + .summary-card { margin-top: 12px; }
     .summary-card h3 { margin: 0 0 12px; }
     .summary-list { display: flex; flex-direction: column; gap: 8px; }
+    .notifications-list {
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
     .mini-item {
       display: flex;
       align-items: flex-start;
@@ -1132,6 +1137,31 @@ function socialPostsForDate(iso) {
       }
 
       function notificationsHtml() {
+  const list = getNotifications()
+    .filter(n => n.userId === state.currentUser.id)
+    .sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+    .slice(0, 5);
+
+  const body = list.length ? list.map(n => `
+    <div class="mini-item" style="background:${n.read ? '#f9fafb' : '#fff1f3'}">
+      <div>
+        <strong>${esc(n.title || 'Bildirim')}</strong>
+        <span>${esc(n.message)}<br>${new Date(n.createdAt).toLocaleString('tr-TR')}</span>
+      </div>
+      <div class="btn-row">
+        ${n.taskId ? `<button class="btn secondary small" onclick="App.openTaskDetail('${js(n.taskId)}')">İş</button>` : ""}
+        ${!n.read ? `<button class="btn ghost small" onclick="App.markNotification('${js(n.id)}')">Okundu</button>` : ""}
+      </div>
+    </div>
+  `).join("") : `<p class="muted">Bildirim bulunmuyor.</p>`;
+
+  return `
+    <div class="panel summary-card">
+      <h3>Bildirimler</h3>
+      <div class="summary-list notifications-list">${body}</div>
+    </div>
+  `;
+}
         const list = getNotifications()
           .filter(n => n.userId === state.currentUser.id)
           .sort((a,b) => String(b.createdAt).localeCompare(String(a.createdAt)))
