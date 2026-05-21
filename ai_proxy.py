@@ -169,7 +169,7 @@ def safe_json_parse(text: str) -> dict:
     }
 
 
-@app.post("http://127.0.0.1:8000/ai-content")
+@app.post("/ai-content")
 def ai_content(req: ContentRequest):
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY tanımlı değil.")
