@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TÜRKAK Kurumsal İletişim İş Yönetim Sistemi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
     :root {
       --turkak-red: #c8102e;
@@ -1580,9 +1581,11 @@ function showSocialList(type = "all") {
         <p>Dijitalde de Güvenin Adresi: TÜRKAK</p>
       </div>
       <div class="btn-row">
-        <button class="btn secondary" onclick="App.exportSocialCsv()">CSV Dışa Aktar</button>
-        <button class="btn" onclick="App.showSocialForm()">＋ Yeni Sosyal Medya Paylaşımı</button>
-      </div>
+  <button class="btn secondary" onclick="App.downloadExcelTemplate()">Boş Excel Şablonu</button>
+  <button class="btn secondary" onclick="App.openExcelImport()">Excel'den Toplu Yükle</button>
+  <button class="btn secondary" onclick="App.exportSocialCsv()">CSV Dışa Aktar</button>
+  <button class="btn" onclick="App.showSocialForm()">＋ Yeni Sosyal Medya Paylaşımı</button>
+</div>
     </div>
 
     <div class="panel">
@@ -1821,14 +1824,12 @@ function exportSocialCsv() {
         </tbody></table></div>`;
       }
 
-      function showTaskList(type = "all") {
-        state.viewKey = "tasks";
-        state.listType = type;
-        setTitle("Genel İş Listesi", "Açık, geciken, tamamlanan ve onay bekleyen işler");
-        $("view").innerHTML = `
-          <div class="page-head">
-            <div><h2>${esc(listTitle(type))}</h2><p>Özet kartlarından gelen filtreler bu listede açılır.</p></div>
-            <div class="btn-row"><button class="btn secondary" onclick="App.exportCurrentListCsv()">CSV Dışa Aktar</button><button class="btn" onclick="App.showTaskForm()">＋ Yeni İş</button></div>
+      <div class="btn-row">
+  <button class="btn secondary" onclick="App.downloadExcelTemplate()">Boş Excel Şablonu</button>
+  <button class="btn secondary" onclick="App.openExcelImport()">Excel'den Toplu Yükle</button>
+  <button class="btn secondary" onclick="App.exportCurrentListCsv()">CSV Dışa Aktar</button>
+  <button class="btn" onclick="App.showTaskForm()">＋ Yeni İş</button>
+</div>
           </div>
           <div class="panel">
             <div class="filters">
@@ -2422,6 +2423,452 @@ showDashboard();
 
   download(JSON.stringify(data, null, 2), `turkak-yedek-${today()}.json`, "application/json;charset=utf-8");
 }
+    function downloadExcelTemplate() {
+  if (!window.XLSX) {
+    return toast("Excel kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.");
+  }
+
+  const taskHeaders = [
+    "İş Adı*",
+    "Ana Kategori*",
+    "Alt Kategori*",
+    "İşin Açıklaması",
+    "Talep Eden",
+    "Sorumlu Personel*",
+    "Yardımcı Personel",
+    "Öncelik",
+    "Başlangıç Tarihi",
+    "Hedef Bitiş Tarihi*",
+    "Durum",
+    "Onay Gerekiyor mu",
+    "Dosya / Bağlantı",
+    "Fiili Bitiş Tarihi",
+    "Gecikme Nedeni",
+    "Sonraki Aksiyon",
+    "Son Güncelleme Notu",
+    "Çıktı Türü",
+    "Gizlilik Düzeyi",
+    "Tamamlanma Notu",
+    "Takvimde Gösterilsin mi",
+    "Takvim Tarihi",
+    "Takvim Başlığı",
+    "Takvim Notu"
+  ];
+
+  const socialHeaders = [
+    "Başlık*",
+    "Kısa Açıklama",
+    "Detaylı İçerik",
+    "Görsel / Medya Bağlantısı",
+    "Yayın Tarihi*",
+    "Kanallar",
+    "Web Sitesinde Yayınlanacak mı",
+    "Ana Sayfa Slider’da Gösterilecek mi",
+    "Yayın Durumu"
+  ];
+
+  const guideRows = [
+    ["Alan", "Açıklama"],
+    ["Tarih formatı", "GG.AA.YYYY veya YYYY-AA-GG yazabilirsiniz. Örnek: 25.05.2026"],
+    ["Sorumlu Personel", "Kullanıcı adı veya ad soyad yazılabilir. Örnek: davut.kara veya Davut Kara"],
+    ["Yardımcı Personel", "Birden fazla kişi için virgül kullanın. Örnek: Umut Halaza, Onur Karadayı"],
+    ["Öncelik", PRIORITIES.join(", ")],
+    ["İş Durumu", STATUS.join(", ")],
+    ["Çıktı Türü", OUTPUT_TYPES.join(", ")],
+    ["Gizlilik Düzeyi", CONFIDENTIALITY.join(", ")],
+    ["Evet/Hayır alanları", YES_NO.join(", ")],
+    ["Sosyal Medya Kanalları", SOCIAL_CHANNELS.join(", ")],
+    ["Sosyal Medya Yayın Durumu", SOCIAL_STATUS.join(", ")],
+    ["Takvim", "İşler için Takvimde Gösterilsin mi = Evet olursa Takvim Tarihi alanına göre iş takviminde görünür."],
+    ["Sosyal medya takvimi", "Sosyal medya kayıtları Yayın Tarihi alanına göre Sosyal Medya Paylaşım Takvimi’nde görünür."]
+  ];
+
+  const wb = XLSX.utils.book_new();
+
+  const taskSheet = XLSX.utils.aoa_to_sheet([taskHeaders]);
+  const socialSheet = XLSX.utils.aoa_to_sheet([socialHeaders]);
+  const guideSheet = XLSX.utils.aoa_to_sheet(guideRows);
+
+  XLSX.utils.book_append_sheet(wb, taskSheet, "Isler");
+  XLSX.utils.book_append_sheet(wb, socialSheet, "SosyalMedya");
+  XLSX.utils.book_append_sheet(wb, guideSheet, "Kilavuz");
+
+  XLSX.writeFile(wb, `turkak-toplu-yukleme-sablonu-${today()}.xlsx`);
+}
+
+function openExcelImport() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".xlsx,.xls";
+  input.onchange = importExcelFile;
+  input.click();
+}
+
+function excelText(row, key) {
+  return String(row[key] ?? "").trim();
+}
+
+function excelHasContent(row) {
+  return Object.values(row || {}).some(value => String(value ?? "").trim());
+}
+
+function parseExcelDateValue(value) {
+  if (!value) return "";
+
+  if (value instanceof Date && !isNaN(value)) {
+    return toISO(value);
+  }
+
+  if (typeof value === "number" && window.XLSX?.SSF) {
+    const parsed = XLSX.SSF.parse_date_code(value);
+    if (parsed) {
+      return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
+    }
+  }
+
+  const text = String(value).trim();
+  if (!text) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return text;
+  }
+
+  const trDate = text.match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})$/);
+  if (trDate) {
+    const day = trDate[1].padStart(2, "0");
+    const month = trDate[2].padStart(2, "0");
+    const year = trDate[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  const parsedDate = new Date(text);
+  if (!isNaN(parsedDate)) {
+    return toISO(parsedDate);
+  }
+
+  return "";
+}
+
+function normalizeExcelChoice(value, allowed, fallback) {
+  const text = String(value ?? "").trim();
+  if (!text) return fallback;
+
+  const found = allowed.find(item =>
+    item.toLocaleLowerCase("tr-TR") === text.toLocaleLowerCase("tr-TR")
+  );
+
+  return found || fallback;
+}
+
+function userIdFromExcel(value, required = false) {
+  const text = String(value ?? "").trim();
+
+  if (!text && !required) {
+    return "";
+  }
+
+  if (!text && required) {
+    return state.currentUser.id;
+  }
+
+  const lowered = text.toLocaleLowerCase("tr-TR");
+
+  const found = getUsers().find(user =>
+    user.active &&
+    (
+      String(user.id).toLocaleLowerCase("tr-TR") === lowered ||
+      String(user.username).toLocaleLowerCase("tr-TR") === lowered ||
+      String(user.fullName).toLocaleLowerCase("tr-TR") === lowered
+    )
+  );
+
+  return found ? found.id : null;
+}
+
+function helperIdsFromExcel(value, responsibleId) {
+  const text = String(value ?? "").trim();
+  if (!text) return [];
+
+  return [...new Set(
+    text
+      .split(/[,;\n]/)
+      .map(name => userIdFromExcel(name, false))
+      .filter(Boolean)
+      .filter(id => id !== responsibleId)
+  )];
+}
+
+function splitSocialChannels(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return [];
+
+  return [...new Set(
+    text
+      .split(/[,;\n]/)
+      .map(channel => channel.trim())
+      .map(channel => {
+        const found = SOCIAL_CHANNELS.find(item =>
+          item.toLocaleLowerCase("tr-TR") === channel.toLocaleLowerCase("tr-TR")
+        );
+        return found || "";
+      })
+      .filter(Boolean)
+  )];
+}
+
+function nextWorkNoForList(tasks) {
+  const y = new Date().getFullYear();
+  const prefix = `KIM-${y}-`;
+
+  const maxSeq = tasks.reduce((max, task) => {
+    const no = String(task.workNo || "");
+    if (!no.startsWith(prefix)) return max;
+
+    const seq = Number(no.slice(prefix.length));
+    return Number.isFinite(seq) ? Math.max(max, seq) : max;
+  }, 0);
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+function nextSocialNoForList(items) {
+  const y = new Date().getFullYear();
+  const prefix = `SMP-${y}-`;
+
+  const maxSeq = items.reduce((max, item) => {
+    const no = String(item.socialNo || "");
+    if (!no.startsWith(prefix)) return max;
+
+    const seq = Number(no.slice(prefix.length));
+    return Number.isFinite(seq) ? Math.max(max, seq) : max;
+  }, 0);
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+async function importExcelFile(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+
+  if (!file) return;
+
+  if (!window.XLSX) {
+    return toast("Excel kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.");
+  }
+
+  await pullSharedData();
+
+  const reader = new FileReader();
+
+  reader.onload = async () => {
+    try {
+      const workbook = XLSX.read(reader.result, {
+        type: "array",
+        cellDates: true
+      });
+
+      const taskSheet =
+        workbook.Sheets["Isler"] ||
+        workbook.Sheets["İşler"] ||
+        null;
+
+      const socialSheet =
+        workbook.Sheets["SosyalMedya"] ||
+        workbook.Sheets["Sosyal Medya"] ||
+        null;
+
+      const taskRows = taskSheet
+        ? XLSX.utils.sheet_to_json(taskSheet, { defval: "", raw: false }).filter(excelHasContent)
+        : [];
+
+      const socialRows = socialSheet
+        ? XLSX.utils.sheet_to_json(socialSheet, { defval: "", raw: false }).filter(excelHasContent)
+        : [];
+
+      if (!taskRows.length && !socialRows.length) {
+        return toast("Excel dosyasında yüklenecek kayıt bulunamadı.");
+      }
+
+      let tasks = getTasks();
+      let socialPosts = getSocialPosts();
+
+      const newTasks = [];
+      const newSocialPosts = [];
+      const errors = [];
+
+      taskRows.forEach((row, index) => {
+        const rowNo = index + 2;
+
+        const title = excelText(row, "İş Adı*");
+        const mainCategory = excelText(row, "Ana Kategori*");
+        const targetEndDate = parseExcelDateValue(row["Hedef Bitiş Tarihi*"]);
+
+        if (!title || !mainCategory || !targetEndDate) {
+          errors.push(`Isler sayfası ${rowNo}. satır: İş Adı, Ana Kategori ve Hedef Bitiş Tarihi zorunludur.`);
+          return;
+        }
+
+        if (!CATEGORIES[mainCategory]) {
+          errors.push(`Isler sayfası ${rowNo}. satır: Ana Kategori geçersiz. Mevcut kategorilerden birini yazın.`);
+          return;
+        }
+
+        const responsibleId = userIdFromExcel(row["Sorumlu Personel*"], true);
+
+        if (!responsibleId) {
+          errors.push(`Isler sayfası ${rowNo}. satır: Sorumlu Personel bulunamadı.`);
+          return;
+        }
+
+        const subCategory = excelText(row, "Alt Kategori*") || CATEGORIES[mainCategory][0] || "Genel";
+
+        if (!CATEGORIES[mainCategory].includes(subCategory)) {
+          errors.push(`Isler sayfası ${rowNo}. satır: Alt Kategori, seçilen Ana Kategori ile uyumlu değil.`);
+          return;
+        }
+
+        const startDate = parseExcelDateValue(row["Başlangıç Tarihi"]) || today();
+        const actualEndDate = parseExcelDateValue(row["Fiili Bitiş Tarihi"]);
+        const calendarDate = parseExcelDateValue(row["Takvim Tarihi"]) || targetEndDate;
+
+        const task = {
+          id: "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+          workNo: nextWorkNoForList([...tasks, ...newTasks]),
+          title,
+          mainCategory,
+          subCategory,
+          description: excelText(row, "İşin Açıklaması"),
+          requester: excelText(row, "Talep Eden"),
+          responsibleId,
+          helperIds: helperIdsFromExcel(row["Yardımcı Personel"], responsibleId),
+          priority: normalizeExcelChoice(row["Öncelik"], PRIORITIES, "Normal"),
+          startDate,
+          targetEndDate,
+          status: normalizeExcelChoice(row["Durum"], STATUS, "Yeni"),
+          approvalRequired: normalizeExcelChoice(row["Onay Gerekiyor mu"], YES_NO, "Hayır"),
+          fileLink: excelText(row, "Dosya / Bağlantı"),
+          actualEndDate,
+          delayReason: excelText(row, "Gecikme Nedeni"),
+          nextAction: excelText(row, "Sonraki Aksiyon"),
+          updateNote: excelText(row, "Son Güncelleme Notu"),
+          outputType: normalizeExcelChoice(row["Çıktı Türü"], OUTPUT_TYPES, "Yazı"),
+          confidentiality: normalizeExcelChoice(row["Gizlilik Düzeyi"], CONFIDENTIALITY, "Normal"),
+          completionNote: excelText(row, "Tamamlanma Notu"),
+          showOnCalendar: normalizeExcelChoice(row["Takvimde Gösterilsin mi"], YES_NO, "Evet"),
+          calendarDate,
+          calendarTitle: excelText(row, "Takvim Başlığı") || mainCategory,
+          calendarNote: excelText(row, "Takvim Notu"),
+          createdAt: dateTime(),
+          createdBy: state.currentUser.id,
+          updatedAt: dateTime(),
+          updatedBy: state.currentUser.id
+        };
+
+        if (task.status === "Tamamlandı" && !task.actualEndDate) {
+          task.actualEndDate = today();
+        }
+
+        newTasks.push(task);
+      });
+
+      socialRows.forEach((row, index) => {
+        const rowNo = index + 2;
+
+        const title = excelText(row, "Başlık*");
+        const publishDate = parseExcelDateValue(row["Yayın Tarihi*"]);
+
+        if (!title || !publishDate) {
+          errors.push(`SosyalMedya sayfası ${rowNo}. satır: Başlık ve Yayın Tarihi zorunludur.`);
+          return;
+        }
+
+        const publishOnWebsite = normalizeExcelChoice(row["Web Sitesinde Yayınlanacak mı"], YES_NO, "Evet");
+        const showOnSlider = normalizeExcelChoice(row["Ana Sayfa Slider’da Gösterilecek mi"], YES_NO, "Hayır");
+        const channels = splitSocialChannels(row["Kanallar"]);
+
+        if (!channels.length && publishOnWebsite === "Hayır") {
+          errors.push(`SosyalMedya sayfası ${rowNo}. satır: En az bir kanal girin veya Web Sitesinde Yayınlanacak mı alanını Evet yapın.`);
+          return;
+        }
+
+        if (showOnSlider === "Evet" && publishOnWebsite !== "Evet") {
+          errors.push(`SosyalMedya sayfası ${rowNo}. satır: Slider için Web Sitesinde Yayınlanacak mı alanı Evet olmalıdır.`);
+          return;
+        }
+
+        const item = {
+          id: "sp_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+          socialNo: nextSocialNoForList([...socialPosts, ...newSocialPosts]),
+          title,
+          shortDescription: excelText(row, "Kısa Açıklama"),
+          detailContent: excelText(row, "Detaylı İçerik"),
+          mediaUrl: excelText(row, "Görsel / Medya Bağlantısı"),
+          publishDate,
+          channels,
+          publishOnWebsite,
+          showOnSlider,
+          status: normalizeExcelChoice(row["Yayın Durumu"], SOCIAL_STATUS, "Taslak"),
+          createdBy: state.currentUser.id,
+          createdAt: dateTime(),
+          updatedAt: dateTime(),
+          updatedBy: state.currentUser.id
+        };
+
+        newSocialPosts.push(item);
+      });
+
+      if (errors.length) {
+        openModal(
+          "Excel Yükleme Hataları",
+          `
+            <p class="muted">Excel dosyası sisteme işlenmedi. Aşağıdaki hataları düzeltip tekrar yükleyin.</p>
+            <div class="summary-list">
+              ${errors.map(error => `<div class="mini-item"><div><strong>Hata</strong><span>${esc(error)}</span></div></div>`).join("")}
+            </div>
+          `,
+          `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`
+        );
+        return;
+      }
+
+      tasks = [...tasks, ...newTasks];
+      socialPosts = [...socialPosts, ...newSocialPosts];
+
+      saveTasks(tasks);
+      saveSocialPosts(socialPosts);
+
+      newTasks.forEach(task => {
+        notifyAssignment(
+          task,
+          "Yeni iş atandı",
+          `Size yeni bir iş atandı: ${task.workNo} - ${task.title}`,
+          `excel-${task.id}`
+        );
+      });
+
+      generateAutomaticNotifications();
+
+      await pushSharedData();
+
+      toast(`${newTasks.length} iş kaydı ve ${newSocialPosts.length} sosyal medya kaydı Excel'den yüklendi.`);
+
+      if (state.viewKey === "tasks") {
+        showTaskList(state.listType || "all");
+      } else if (state.viewKey === "social") {
+        showSocialList(state.socialListType || "all");
+      } else if (state.viewKey === "reports") {
+        showReports();
+      } else {
+        showDashboard();
+      }
+    } catch (e) {
+      console.error(e);
+      toast("Excel dosyası okunamadı. Lütfen şablonu kullanarak tekrar deneyin.");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
       function importBackupJson() {
         const file = $("restoreFile")?.files?.[0];
         if (!file) return toast("Lütfen JSON yedek dosyası seçin.");
@@ -2646,11 +3093,13 @@ saveSocialPosts(Array.isArray(data.socialPosts) ? data.socialPosts : []);
   openSocialCalendarDay,
   exportSocialCsv,
 
-  showReports,
-  exportCurrentListCsv,
-  exportAllCsv,
-  exportBackupJson,
-  importBackupJson,
+showReports,
+exportCurrentListCsv,
+exportAllCsv,
+exportBackupJson,
+downloadExcelTemplate,
+openExcelImport,
+importBackupJson,
 
   showProfile,
   saveProfile,
