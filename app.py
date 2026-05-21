@@ -13,8 +13,8 @@ st.markdown("""
 <style>
 /* Sayfanın genel boşluklarını sıfırla */
 html, body, [data-testid="stAppViewContainer"] {
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 14 !important;
+    padding: 14 !important;
     overflow: hidden !important;
 }
 
