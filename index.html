@@ -607,6 +607,8 @@ const SUPABASE_ROW_ID = "turkak_its_data";
 const SOCIAL_CHANNELS = ["X (Twitter)", "Instagram", "LinkedIn", "Nsocial", "Bluesky"];
 const SOCIAL_STATUS = ["Taslak", "Planlandı", "Yayınlandı"];
 const YES_NO = ["Evet", "Hayır"];
+const AI_PROXY_URL = "__AI_PROXY_URL__";
+const TERMS_GLOSSARY_URL = "https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/0d5489ad4f2ef7c2478c0c742f6185cfc7564622/terimler-sozlugu-2022-09-22.pdf";
 
       const CATEGORIES = {
         "Resmi Yazışma": ["Kamu Kurumu Yazışmaları", "Büyükelçi Karşılama Yazışmaları", "UDK ve STK Yazışmaları"],
@@ -750,8 +752,10 @@ function rerenderIfNeeded() {
   } else if (state.viewKey === "social") {
     showSocialList(state.socialListType || "all");
   } else if (state.viewKey === "reports") {
-    showReports();
-  }
+  showReports();
+} else if (state.viewKey === "contentAssistant") {
+  showContentAssistant();
+}
 }
 
 function startSharedRefresh() {
@@ -1099,6 +1103,7 @@ function socialPostsForDate(iso) {
   ["social", "Sosyal Medya Planı", "📣", "showSocialList"],
   ["new", "Yeni İş Kaydı", "＋", "showTaskForm"],
   ["socialNew", "Yeni Sosyal Medya Paylaşımı", "＋", "showSocialForm"],
+  ["contentAssistant", "Kurumsal İçerik Asistanı", "✍️", "showContentAssistant"],
   ["reports", "Raporlama", "📊", "showReports"],
   ["profile", "Profil / Şifre", "👤", "showProfile"]
 ];
@@ -2235,7 +2240,416 @@ closeModal();
 toast("Görev silindi. Anasayfaya dönüldü.");
 showDashboard();
       }
-   function showReports() {
+      function showContentAssistant() {
+  state.viewKey = "contentAssistant";
+
+  setTitle(
+    "Kurumsal İçerik Asistanı",
+    "Ham metinden kurumsal haber, sosyal medya metni, başlık ve spot metin üretimi"
+  );
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Kurumsal İçerik Asistanı</h2>
+        <p>Ham metni yapıştırın, istediğiniz çıktı türlerini seçin ve yapay zekâ destekli içerik üretin.</p>
+      </div>
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+
+    <div class="panel">
+      <div class="form-grid">
+        <div class="field span-3">
+          <label>Ham Metin *</label>
+          <textarea id="contentRawText" style="min-height:220px" placeholder="Toplantı notu, ziyaret bilgisi, etkinlik özeti veya duyuru metnini buraya yapıştırın."></textarea>
+          <small>Metin; TÜRKAK kurumsal dili ve terimler sözlüğü dikkate alınarak işlenir.</small>
+        </div>
+
+        <div class="field span-3">
+          <label>Üretilecek Çıktılar</label>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px">
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff">
+              <input type="checkbox" name="contentOutput" value="corporate_news" checked>
+              <span>Kurumsal haber metni oluştur</span>
+            </label>
+
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff">
+              <input type="checkbox" name="contentOutput" value="social_media" checked>
+              <span>Sosyal Medya Metni oluştur</span>
+            </label>
+
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff">
+              <input type="checkbox" name="contentOutput" value="title" checked>
+              <span>Başlık öner</span>
+            </label>
+
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff">
+              <input type="checkbox" name="contentOutput" value="spot" checked>
+              <span>Spot metin öner</span>
+            </label>
+          </div>
+          <small>Birden fazla seçim yapılabilir.</small>
+        </div>
+
+        <div class="field">
+          <label>Yapay Zekâ Kullanımı</label>
+          <select id="contentProvider">
+            <option value="chatgpt">ChatGPT API ile otomatik üret</option>
+            <option value="copilot">Copilot için prompt hazırla</option>
+          </select>
+        </div>
+
+        <div class="field span-2">
+          <label>Terimler Sözlüğü</label>
+          <input value="${esc(TERMS_GLOSSARY_URL)}" readonly>
+          <small>AI proxy bu PDF'i okuyarak terim referansı olarak kullanır.</small>
+        </div>
+      </div>
+
+      <div class="form-actions btn-row">
+        <button class="btn" type="button" onclick="App.generateContentWithAI()">İçerik Oluştur</button>
+        <button class="btn secondary" type="button" onclick="App.copyCopilotPrompt()">Copilot Promptunu Kopyala</button>
+        <button class="btn ghost" type="button" onclick="App.clearContentAssistant()">Temizle</button>
+      </div>
+    </div>
+
+    <div id="contentAssistantResults" style="margin-top:16px"></div>
+  `;
+}
+
+function selectedContentOutputs() {
+  return Array.from(document.querySelectorAll('input[name="contentOutput"]:checked'))
+    .map(input => input.value);
+}
+
+function contentOutputLabels() {
+  return {
+    corporate_news: "Kurumsal haber metni oluştur",
+    social_media: "Sosyal Medya Metni oluştur",
+    title: "Başlık öner",
+    spot: "Spot metin öner"
+  };
+}
+
+function buildCopilotPrompt() {
+  const rawText = $("contentRawText")?.value.trim() || "";
+  const outputs = selectedContentOutputs();
+  const labels = contentOutputLabels();
+
+  return `
+TÜRKAK Kurumsal İletişim Müdürlüğü için kurumsal içerik üret.
+
+Aşağıdaki ham metni işle:
+${rawText}
+
+İstenen çıktı türleri:
+${outputs.map(key => "- " + labels[key]).join("\\n")}
+
+Kurallar:
+- Resmi, açıklayıcı, sade ve kurumsal bir dil kullan.
+- TÜRKAK kurumsal üslubuna uygun yaz.
+- Gereksiz abartılı ifadelerden kaçın.
+- Başlıklar haber diliyle uyumlu olsun.
+- Spot metin kısa ve tek paragraf olsun.
+- Sosyal medya metni kısa, paylaşılabilir ve kurumsal olsun.
+- Turkey yerine Türkiye kullanımına dikkat et.
+- Denetim için İngilizcede assessment, değerlendirme için evaluation tercihlerini dikkate al.
+- "Local Accreditation, Global Acceptance" yerine "Accredited once, accepted everywhere" kullan.
+- Terimler sözlüğünü dikkate al: ${TERMS_GLOSSARY_URL}
+
+Cevabı şu başlıklarla ver:
+1. Kurumsal Haber Metni
+2. Sosyal Medya Metni
+3. Başlık Önerileri
+4. Spot Metin
+5. Terim / Dil Notları
+`.trim();
+}
+
+async function copyCopilotPrompt() {
+  const rawText = $("contentRawText")?.value.trim() || "";
+
+  if (!rawText) {
+    return toast("Copilot promptu için önce ham metin girin.");
+  }
+
+  const prompt = buildCopilotPrompt();
+
+  try {
+    await navigator.clipboard.writeText(prompt);
+    toast("Copilot promptu kopyalandı. Copilot Chat alanına yapıştırabilirsiniz.");
+  } catch {
+    openModal(
+      "Copilot Promptu",
+      `<textarea style="width:100%;min-height:360px;border:1px solid var(--line);border-radius:14px;padding:12px">${esc(prompt)}</textarea>`,
+      `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`
+    );
+  }
+}
+
+async function generateContentWithAI() {
+  const rawText = $("contentRawText")?.value.trim() || "";
+  const outputs = selectedContentOutputs();
+  const provider = $("contentProvider")?.value || "chatgpt";
+
+  if (!rawText) {
+    return toast("Lütfen ham metin girin.");
+  }
+
+  if (!outputs.length) {
+    return toast("Lütfen en az bir çıktı türü seçin.");
+  }
+
+  if (provider === "copilot") {
+    await copyCopilotPrompt();
+    return;
+  }
+
+  if (!AI_PROXY_URL || AI_PROXY_URL === "__AI_PROXY_URL__") {
+    return toast("AI proxy adresi tanımlı değil. app.py içindeki AI_PROXY_URL ayarını kontrol edin.");
+  }
+
+  $("contentAssistantResults").innerHTML = `
+    <div class="panel">
+      <h3>İçerik üretiliyor...</h3>
+      <p class="muted">ChatGPT API ve terimler sözlüğü kullanılarak metin hazırlanıyor.</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(AI_PROXY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        rawText,
+        outputs,
+        provider
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.detail || "AI servisi yanıt vermedi.");
+    }
+
+    state.contentAssistant = {
+      rawText,
+      outputs,
+      result: data.result
+    };
+
+    renderContentAssistantResults();
+
+  } catch (error) {
+    console.error(error);
+    $("contentAssistantResults").innerHTML = `
+      <div class="panel">
+        <h3>İçerik üretilemedi</h3>
+        <p class="danger-text">${esc(error.message || error)}</p>
+        <p class="muted">AI proxy servisinin çalıştığını, OPENAI_API_KEY değerinin tanımlandığını ve internet bağlantısını kontrol edin.</p>
+      </div>
+    `;
+  }
+}
+
+function renderContentAssistantResults() {
+  const data = state.contentAssistant?.result || {};
+  const selected = state.contentAssistant?.outputs || [];
+
+  const blocks = [];
+
+  if (selected.includes("corporate_news")) {
+    blocks.push(contentResultBlock("Kurumsal Haber Metni", data.corporate_news || ""));
+  }
+
+  if (selected.includes("social_media")) {
+    blocks.push(contentResultBlock("Sosyal Medya Metni", data.social_media || ""));
+  }
+
+  if (selected.includes("title")) {
+    const titles = Array.isArray(data.title_suggestions)
+      ? data.title_suggestions.map((title, index) => `${index + 1}. ${title}`).join("\\n")
+      : String(data.title_suggestions || "");
+
+    blocks.push(contentResultBlock("Başlık Önerileri", titles));
+  }
+
+  if (selected.includes("spot")) {
+    blocks.push(contentResultBlock("Spot Metin", data.spot_text || ""));
+  }
+
+  const notes = Array.isArray(data.term_notes) && data.term_notes.length
+    ? `
+      <div class="panel" style="margin-top:16px">
+        <h3>Terim / Dil Notları</h3>
+        <div class="summary-list">
+          ${data.term_notes.map(note => `<div class="mini-item"><div><strong>Not</strong><span>${esc(note)}</span></div></div>`).join("")}
+        </div>
+      </div>
+    `
+    : "";
+
+  $("contentAssistantResults").innerHTML = `
+    <div class="page-head" style="margin-top:18px">
+      <div>
+        <h2>Üretilen İçerikler</h2>
+        <p>Sonuçları kopyalayabilir, sosyal medya planına aktarabilir veya iş kaydı oluşturabilirsiniz.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="App.createSocialPostFromAssistant()">Sosyal Medya Planına Aktar</button>
+        <button class="btn secondary" onclick="App.createTaskFromAssistant()">İş Kaydına Bağla</button>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+      ${blocks.join("")}
+    </div>
+
+    ${notes}
+  `;
+}
+
+function contentResultBlock(title, text) {
+  const id = "copy_" + Math.random().toString(36).slice(2, 9);
+
+  return `
+    <div class="panel">
+      <h3>${esc(title)}</h3>
+      <textarea id="${id}" style="width:100%;min-height:230px;border:1px solid var(--line);border-radius:14px;padding:12px">${esc(text || "")}</textarea>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn secondary small" onclick="App.copyGeneratedText('${id}')">Kopyala</button>
+      </div>
+    </div>
+  `;
+}
+
+async function copyGeneratedText(id) {
+  const value = $(id)?.value || "";
+
+  if (!value) {
+    return toast("Kopyalanacak metin bulunamadı.");
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    toast("Metin kopyalandı.");
+  } catch {
+    toast("Kopyalama yapılamadı. Metni elle seçip kopyalayabilirsiniz.");
+  }
+}
+
+async function createSocialPostFromAssistant() {
+  await pullSharedData();
+
+  const data = state.contentAssistant?.result || {};
+  const rawText = state.contentAssistant?.rawText || "";
+
+  const titles = Array.isArray(data.title_suggestions) ? data.title_suggestions : [];
+  const title = titles[0] || firstSentence(data.spot_text) || "Kurumsal İçerik Asistanı İçeriği";
+  const socialText = data.social_media || data.spot_text || rawText;
+
+  if (!socialText) {
+    return toast("Sosyal medya planına aktarılacak metin bulunamadı.");
+  }
+
+  const item = {
+    id: "sp_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    socialNo: nextSocialNo(),
+    title: title.slice(0, 180),
+    shortDescription: data.spot_text || firstSentence(socialText),
+    detailContent: socialText,
+    mediaUrl: "",
+    publishDate: today(),
+    channels: ["LinkedIn"],
+    publishOnWebsite: "Evet",
+    showOnSlider: "Hayır",
+    status: "Taslak",
+    createdBy: state.currentUser.id,
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+    updatedBy: state.currentUser.id
+  };
+
+  saveSocialPosts([...getSocialPosts(), item]);
+  await pushSharedData();
+
+  toast("İçerik sosyal medya planına Taslak olarak aktarıldı.");
+  showSocialList();
+}
+
+async function createTaskFromAssistant() {
+  await pullSharedData();
+
+  const data = state.contentAssistant?.result || {};
+  const rawText = state.contentAssistant?.rawText || "";
+
+  const titles = Array.isArray(data.title_suggestions) ? data.title_suggestions : [];
+  const title = titles[0] || firstSentence(data.spot_text) || "Kurumsal içerik hazırlanması";
+
+  const task = {
+    id: "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    workNo: nextWorkNo(),
+    title: title.slice(0, 180),
+    mainCategory: "Haber ve Sosyal Medya",
+    subCategory: "Haber ve Sosyal Medya Takibi",
+    description: rawText,
+    requester: "Kurumsal İçerik Asistanı",
+    responsibleId: state.currentUser.id,
+    helperIds: [],
+    priority: "Normal",
+    startDate: today(),
+    targetEndDate: today(),
+    status: "Yeni",
+    approvalRequired: "Hayır",
+    fileLink: "",
+    actualEndDate: "",
+    delayReason: "",
+    nextAction: "Üretilen kurumsal içerik kontrol edilecek ve yayıma hazırlanacak.",
+    updateNote: data.corporate_news || data.social_media || "",
+    outputType: "Haber",
+    confidentiality: "Normal",
+    completionNote: "",
+    showOnCalendar: "Evet",
+    calendarDate: today(),
+    calendarTitle: "Haber ve Sosyal Medya",
+    calendarNote: data.spot_text || firstSentence(rawText),
+    createdAt: dateTime(),
+    createdBy: state.currentUser.id,
+    updatedAt: dateTime(),
+    updatedBy: state.currentUser.id
+  };
+
+  saveTasks([...getTasks(), task]);
+
+  notifyAssignment(
+    task,
+    "Yeni iş atandı",
+    `Size yeni bir iş atandı: ${task.workNo} - ${task.title}`,
+    `content-assistant-${task.id}`
+  );
+
+  generateAutomaticNotifications();
+  await pushSharedData();
+
+  toast("Kurumsal içerik için iş kaydı oluşturuldu.");
+  showTaskList("mine");
+}
+
+function firstSentence(text) {
+  const value = String(text || "").trim();
+  if (!value) return "";
+  return value.split(/[.!?]/)[0].trim();
+}
+
+function clearContentAssistant() {
+  if ($("contentRawText")) $("contentRawText").value = "";
+  state.contentAssistant = null;
+  if ($("contentAssistantResults")) $("contentAssistantResults").innerHTML = "";
+}
+  function showReports() {
   state.viewKey = "reports";
   setTitle("Gelişmiş Raporlama", "İşler ve sosyal medya içerikleri için raporlama ekranı");
 
@@ -3133,14 +3547,22 @@ saveSocialPosts(Array.isArray(data.socialPosts) ? data.socialPosts : []);
   thisMonth,
   openCalendarGroup,
 
-  showSocialList,
-  showSocialForm,
-  saveSocialPost,
-  renderSocialRows,
-  openSocialDetail,
-  deleteSocialPost,
-  openSocialCalendarDay,
-  exportSocialCsv,
+showSocialList,
+showSocialForm,
+saveSocialPost,
+renderSocialRows,
+openSocialDetail,
+deleteSocialPost,
+openSocialCalendarDay,
+exportSocialCsv,
+        
+showContentAssistant,
+generateContentWithAI,
+copyCopilotPrompt,
+copyGeneratedText,
+createSocialPostFromAssistant,
+createTaskFromAssistant,
+clearContentAssistant,
 
 showReports,
 exportCurrentListCsv,
