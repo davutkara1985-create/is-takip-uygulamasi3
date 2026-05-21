@@ -1997,7 +1997,10 @@ function exportSocialCsv() {
           calendarNote: ""
         };
         state.viewKey = "new";
-        setTitle(editing ? "İş Kaydını Düzenle" : "Yeni İş Kaydı", editing ? `${task.workNo} numaralı iş güncelleniyor` : );
+        setTitle(
+  editing ? "İş Kaydını Düzenle" : "Yeni İş Kaydı",
+  editing ? `${task.workNo} numaralı iş güncelleniyor` : "Yeni görev giriş ekranı"
+);
         $("view").innerHTML = `
           <div class="page-head">
             <div><h2>${editing ? 'İş Kaydını Düzenle' : 'YENİ İŞ KAYDI'}</h2><p></p></div>
