@@ -1108,11 +1108,6 @@ function socialPostsForDate(iso) {
     ${notificationsHtml()}
   </div>
 </div>
-
-<div class="panel" style="margin-top:16px">
-  ${socialCalendarHtml()}
-</div>
-
 <div class="panel" style="margin-top:16px">
             <div class="page-head" style="margin-bottom:10px"><div><h2 style="font-size:20px">Bana Atanan İşler</h2><p>Kendi sorumluluğunuzdaki ve yardımcı olduğunuz açık işler.</p></div><button class="btn secondary small" onclick="App.showTaskList('mine')">Tümünü gör</button></div>
             ${miniTaskTable(openTasks.filter(isMine).slice(0, 8))}
@@ -1217,9 +1212,24 @@ function socialPostsForDate(iso) {
       }
 
       function moveMonth(delta) {
-        state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + delta, 1);
-        showDashboard();
-      }
+  state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + delta, 1);
+
+  if (state.viewKey === "social") {
+    showSocialList(state.socialListType || "all");
+  } else {
+    showDashboard();
+  }
+}
+
+function thisMonth() {
+  state.calendarMonth = new Date();
+
+  if (state.viewKey === "social") {
+    showSocialList(state.socialListType || "all");
+  } else {
+    showDashboard();
+  }
+}
       function thisMonth() { state.calendarMonth = new Date(); showDashboard(); }
 
       function openCalendarGroup(iso, category) {
@@ -1573,6 +1583,10 @@ function showSocialList(type = "all") {
       </div>
 
       <div id="socialRows"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      ${socialCalendarHtml()}
     </div>
 
     <div style="margin-top:14px">
