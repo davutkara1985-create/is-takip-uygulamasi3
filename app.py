@@ -60,7 +60,7 @@ iframe {
 # HTML dosyasını oku
 with open("index.html", "r", encoding="utf-8") as f:
     html_kodu = f.read()
-ai_proxy_url = st.secrets.get("AI_PROXY_URL", "https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/9c255a575565455552fd64cdd5c7675d9ad90a8c/ai_proxy.py")
+ai_proxy_url = st.secrets.get("AI_PROXY_URL", "http://127.0.0.1:8000/ai-content")
 html_kodu = html_kodu.replace("__AI_PROXY_URL__", ai_proxy_url)
 # HTML'i Streamlit bileşeni olarak tam ekrana yakın göster
 components.html(
