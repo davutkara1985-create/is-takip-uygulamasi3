@@ -607,6 +607,13 @@ const SUPABASE_ROW_ID = "turkak_its_data";
 const SOCIAL_CHANNELS = ["X (Twitter)", "Instagram", "LinkedIn", "Nsocial", "Bluesky"];
 const SOCIAL_STATUS = ["Taslak", "Planlandı", "Yayınlandı"];
 const YES_NO = ["Evet", "Hayır"];
+const OFFICIAL_SOCIAL_ACCOUNTS = {
+  "X (Twitter)": "@turkak",
+  "Instagram": "@Türk Akreditasyon Kurumu",
+  "LinkedIn": "Türk Akreditasyon Kurumu (TÜRKAK)",
+  "Nsocial": "@turkakreditasyonkurumu",
+  "Bluesky": "@turkak.org.tr"
+};  
 const AI_PROXY_URL = "__AI_PROXY_URL__";
 const TERMS_GLOSSARY_URL = "https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/0d5489ad4f2ef7c2478c0c742f6185cfc7564622/terimler-sozlugu-2022-09-22.pdf";
 
@@ -1035,6 +1042,75 @@ function socialPostsForDate(iso) {
     .filter(item => item.publishDate === iso)
     .sort((a, b) => String(a.title).localeCompare(String(b.title), "tr"));
 }
+      function metricNumber(value) {
+  const number = Number(String(value ?? "0").replace(",", "."));
+  return Number.isFinite(number) && number >= 0 ? number : 0;
+}
+
+function socialInteractions(item) {
+  return (
+    metricNumber(item.likes) +
+    metricNumber(item.shares) +
+    metricNumber(item.clicks)
+  );
+}
+
+function engagementRate(item) {
+  const denominator = metricNumber(item.reach) || metricNumber(item.impressions);
+
+  if (!denominator) {
+    return 0;
+  }
+
+  return Math.round((socialInteractions(item) / denominator) * 1000) / 10;
+}
+
+function performanceText(item) {
+  return [
+    `Erişim: ${metricNumber(item.reach)}`,
+    `Gösterim: ${metricNumber(item.impressions)}`,
+    `Görüntülenme: ${metricNumber(item.views)}`,
+    `Beğeni: ${metricNumber(item.likes)}`,
+    `Paylaşım: ${metricNumber(item.shares)}`,
+    `Tıklama: ${metricNumber(item.clicks)}`,
+    `Etkileşim Oranı: %${engagementRate(item)}`,
+    `Performans Notu: ${item.performanceNote || "-"}`
+  ].join("\n");
+}
+
+function socialOfficialAccountsText(item) {
+  const channels = item?.channels || [];
+
+  if (!channels.length) {
+    return "-";
+  }
+
+  return channels
+    .map(channel => `${channel}: ${OFFICIAL_SOCIAL_ACCOUNTS[channel] || "Tanımlanmadı"}`)
+    .join("\n");
+}
+
+function performanceTotals(items = getSocialPosts()) {
+  return items.reduce((acc, item) => {
+    acc.reach += metricNumber(item.reach);
+    acc.impressions += metricNumber(item.impressions);
+    acc.views += metricNumber(item.views);
+    acc.likes += metricNumber(item.likes);
+    acc.shares += metricNumber(item.shares);
+    acc.clicks += metricNumber(item.clicks);
+    acc.interactions += socialInteractions(item);
+
+    return acc;
+  }, {
+    reach: 0,
+    impressions: 0,
+    views: 0,
+    likes: 0,
+    shares: 0,
+    clicks: 0,
+    interactions: 0
+  });
+}
       function toast(message) {
         const node = document.createElement("div");
         node.className = "toast";
@@ -1410,21 +1486,30 @@ function showSocialForm(id = null) {
   if (editing && !canEditSocialPost(old)) return toast("Bu kaydı düzenleme yetkiniz yok.");
 
   const item = old || {
-    id: "",
-    socialNo: nextSocialNo(),
-    title: "",
-    shortDescription: "",
-    detailContent: "",
-    mediaUrl: "",
-    publishDate: today(),
-    channels: [],
-    publishOnWebsite: "Evet",
-    showOnSlider: "Hayır",
-    status: "Taslak",
-    createdBy: state.currentUser.id,
-    createdAt: dateTime(),
-    updatedAt: dateTime()
-  };
+  id: "",
+  socialNo: nextSocialNo(),
+  title: "",
+  shortDescription: "",
+  detailContent: "",
+  mediaUrl: "",
+  publishDate: today(),
+  channels: [],
+  publishOnWebsite: "Evet",
+  showOnSlider: "Hayır",
+  status: "Taslak",
+
+  reach: 0,
+  impressions: 0,
+  views: 0,
+  likes: 0,
+  shares: 0,
+  clicks: 0,
+  performanceNote: "",
+
+  createdBy: state.currentUser.id,
+  createdAt: dateTime(),
+  updatedAt: dateTime()
+};
 
   state.viewKey = "socialNew";
 
@@ -1496,13 +1581,55 @@ function showSocialForm(id = null) {
         </div>
 
         <div class="field span-3">
-          <label>Paylaşılacak Sosyal Medya Kanalları</label>
-          <div style="display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px">
-            ${channelCheckboxes(item.channels || [])}
-          </div>
-          <small>Birden fazla kanal seçilebilir.</small>
-        </div>
-      </div>
+  <label>Resmî Hesap Bilgisi</label>
+  <textarea readonly>${esc(socialOfficialAccountsText(item))}</textarea>
+  <small>Bu alan seçilen platformlara göre TÜRKAK resmî hesaplarını gösterir.</small>
+</div>
+
+<div class="field span-3">
+  <label>Sosyal Medya Performans Ölçümü</label>
+  <small>Bu alanlar paylaşım yayımlandıktan sonra doldurulabilir.</small>
+</div>
+
+<div class="field">
+  <label>Erişim</label>
+  <input id="socialReach" type="number" min="0" value="${esc(metricNumber(item.reach))}">
+</div>
+
+<div class="field">
+  <label>Gösterim</label>
+  <input id="socialImpressions" type="number" min="0" value="${esc(metricNumber(item.impressions))}">
+</div>
+
+<div class="field">
+  <label>Görüntülenme</label>
+  <input id="socialViews" type="number" min="0" value="${esc(metricNumber(item.views))}">
+</div>
+
+<div class="field">
+  <label>Beğeni</label>
+  <input id="socialLikes" type="number" min="0" value="${esc(metricNumber(item.likes))}">
+</div>
+
+<div class="field">
+  <label>Paylaşım</label>
+  <input id="socialShares" type="number" min="0" value="${esc(metricNumber(item.shares))}">
+</div>
+
+<div class="field">
+  <label>Tıklama</label>
+  <input id="socialClicks" type="number" min="0" value="${esc(metricNumber(item.clicks))}">
+</div>
+
+<div class="field">
+  <label>Etkileşim Oranı</label>
+  <input value="%${esc(engagementRate(item))}" readonly>
+</div>
+
+<div class="field span-2">
+  <label>Performans Notu</label>
+  <textarea id="socialPerformanceNote" placeholder="Paylaşım performansına ilişkin kısa değerlendirme.">${esc(item.performanceNote || "")}</textarea>
+</div>
 
       <div class="form-actions btn-row">
         <button class="btn" type="submit">Kaydet ve Listeye Dön</button>
@@ -1526,8 +1653,17 @@ function readSocialForm(existing) {
     publishOnWebsite: $("socialPublishOnWebsite").value,
     showOnSlider: $("socialShowOnSlider").value,
     status: $("socialStatus").value,
-    updatedAt: dateTime(),
-    updatedBy: state.currentUser.id
+
+reach: metricNumber($("socialReach")?.value),
+impressions: metricNumber($("socialImpressions")?.value),
+views: metricNumber($("socialViews")?.value),
+likes: metricNumber($("socialLikes")?.value),
+shares: metricNumber($("socialShares")?.value),
+clicks: metricNumber($("socialClicks")?.value),
+performanceNote: $("socialPerformanceNote")?.value.trim() || "",
+
+updatedAt: dateTime(),
+updatedBy: state.currentUser.id
   };
 }
 
@@ -1706,6 +1842,7 @@ function renderSocialRows() {
             <th>Kanallar</th>
             <th>Web / Slider</th>
             <th>Durum</th>
+            <th>Performans</th>
             <th>Oluşturan</th>
             <th>İşlem</th>
           </tr>
@@ -1725,7 +1862,13 @@ function renderSocialRows() {
                 Slider: <b>${esc(item.showOnSlider)}</b>
               </td>
               <td>${badge(item.status, socialStatusClass(item.status))}</td>
-              <td>${esc(userName(item.createdBy))}</td>
+<td>
+  Erişim: <b>${metricNumber(item.reach)}</b><br>
+  Gösterim: <b>${metricNumber(item.impressions)}</b><br>
+  Etkileşim: <b>${socialInteractions(item)}</b><br>
+  Oran: <b>%${engagementRate(item)}</b>
+</td>
+<td>${esc(userName(item.createdBy))}</td>
               <td>
                 <div class="btn-row">
                   <button class="btn secondary small" onclick="App.openSocialDetail('${js(item.id)}')">Detay</button>
@@ -1761,6 +1904,8 @@ function openSocialDetail(id) {
       ${detail("Görsel / Medya", item.mediaUrl ? `<a href="${esc(item.mediaUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.mediaUrl)}</a>` : "-", true, true)}
       ${detail("Kısa Açıklama", item.shortDescription, true)}
       ${detail("Detaylı İçerik", item.detailContent, true)}
+      ${detail("TÜRKAK Resmî Hesapları", socialOfficialAccountsText(item), true)}
+      ${detail("Performans Özeti", performanceText(item), true)}
     </div>
   `;
 
@@ -1803,14 +1948,34 @@ function exportSocialCsv() {
     ["publishOnWebsite", "Web Sitesinde Yayınlanacak mı"],
     ["showOnSlider", "Ana Sayfa Slider"],
     ["status", "Yayın Durumu"],
+    ["officialAccountsText", "TÜRKAK Resmî Hesapları"],
+    ["reach", "Erişim"],
+    ["impressions", "Gösterim"],
+    ["views", "Görüntülenme"],
+    ["likes", "Beğeni"],
+    ["shares", "Paylaşım"],
+    ["clicks", "Tıklama"],
+    ["interactions", "Toplam Etkileşim"],
+    ["engagementRateText", "Etkileşim Oranı"],
+    ["performanceNote", "Performans Notu"],
     ["createdByName", "Oluşturan"]
   ];
 
   const rows = baseFilteredSocialPosts().map(item => ({
-    ...item,
-    channelsText: (item.channels || []).join(", "),
-    createdByName: userName(item.createdBy)
-  }));
+  ...item,
+  channelsText: (item.channels || []).join(", "),
+  officialAccountsText: socialOfficialAccountsText(item).replaceAll("\n", " | "),
+  reach: metricNumber(item.reach),
+  impressions: metricNumber(item.impressions),
+  views: metricNumber(item.views),
+  likes: metricNumber(item.likes),
+  shares: metricNumber(item.shares),
+  clicks: metricNumber(item.clicks),
+  interactions: socialInteractions(item),
+  engagementRateText: `%${engagementRate(item)}`,
+  performanceNote: item.performanceNote || "",
+  createdByName: userName(item.createdBy)
+}));
 
   const csv = "\ufeff" + [
     fields.map(field => csvCell(field[1])).join(";"),
@@ -2570,7 +2735,16 @@ async function createSocialPostFromAssistant() {
     publishOnWebsite: "Evet",
     showOnSlider: "Hayır",
     status: "Taslak",
-    createdBy: state.currentUser.id,
+
+reach: 0,
+impressions: 0,
+views: 0,
+likes: 0,
+shares: 0,
+clicks: 0,
+performanceNote: "",
+
+createdBy: state.currentUser.id,
     createdAt: dateTime(),
     updatedAt: dateTime(),
     updatedBy: state.currentUser.id
@@ -2697,6 +2871,10 @@ function clearContentAssistant() {
   const socialPublished = socialPosts.filter(item => item.status === "Yayınlandı").length;
   const socialWebsite = socialPosts.filter(item => item.publishOnWebsite === "Evet").length;
   const socialSlider = socialPosts.filter(item => item.showOnSlider === "Evet").length;
+  const socialPerformance = performanceTotals(socialPosts);
+  const socialAverageEngagementRate = socialPerformance.reach || socialPerformance.impressions
+  ? Math.round((socialPerformance.interactions / (socialPerformance.reach || socialPerformance.impressions)) * 1000) / 10
+  : 0;
 
   $("view").innerHTML = `
     <div class="page-head">
@@ -2744,6 +2922,42 @@ function clearContentAssistant() {
     </div>
 
     <div class="reports-grid">
+    <div class="panel" style="margin-top:16px;margin-bottom:16px">
+  <h3>Sosyal Medya Performans Özeti</h3>
+  <p class="muted">TÜRKAK resmî sosyal medya hesapları için girilen performans verilerinin genel toplamı.</p>
+
+  <div class="cards" style="margin-top:12px;margin-bottom:0">
+    <div class="stat-card">
+      <div class="label">Toplam erişim</div>
+      <div class="num">${socialPerformance.reach}</div>
+      <div class="hint">Girilen tüm erişim verileri</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="label">Toplam gösterim</div>
+      <div class="num">${socialPerformance.impressions}</div>
+      <div class="hint">Girilen tüm gösterim verileri</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="label">Toplam görüntülenme</div>
+      <div class="num">${socialPerformance.views}</div>
+      <div class="hint">Video / içerik görüntülenmeleri</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="label">Toplam etkileşim</div>
+      <div class="num">${socialPerformance.interactions}</div>
+      <div class="hint">Beğeni + paylaşım + tıklama</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="label">Etkileşim oranı</div>
+      <div class="num">%${socialAverageEngagementRate}</div>
+      <div class="hint">Toplam etkileşim / erişim</div>
+    </div>
+  </div>
+</div>
       <div class="panel">
         <h3>Kategori Bazlı Dağılım</h3>
         ${barChart(categoryData)}
