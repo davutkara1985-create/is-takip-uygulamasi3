@@ -1579,59 +1579,66 @@ function showSocialForm(id = null) {
             ${YES_NO.map(value => `<option ${item.showOnSlider === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
           </select>
         </div>
+        <div class="field span-3">
+          <label>Paylaşılacak Sosyal Medya Kanalları</label>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:10px">
+            ${channelCheckboxes(item.channels || [])}
+          </div>
+          <small>Birden fazla kanal seçilebilir.</small>
+        </div>
 
         <div class="field span-3">
-  <label>Resmî Hesap Bilgisi</label>
-  <textarea readonly>${esc(socialOfficialAccountsText(item))}</textarea>
-  <small>Bu alan seçilen platformlara göre TÜRKAK resmî hesaplarını gösterir.</small>
-</div>
+          <label>Resmî Hesap Bilgisi</label>
+          <textarea readonly>${esc(socialOfficialAccountsText(item))}</textarea>
+          <small>Bu alan seçilen platformlara göre TÜRKAK resmî hesaplarını gösterir.</small>
+        </div>
 
-<div class="field span-3">
-  <label>Sosyal Medya Performans Ölçümü</label>
-  <small>Bu alanlar paylaşım yayımlandıktan sonra doldurulabilir.</small>
-</div>
+        <div class="field span-3">
+          <label>Sosyal Medya Performans Ölçümü</label>
+          <small>Bu alanlar paylaşım yayımlandıktan sonra doldurulabilir.</small>
+        </div>
 
-<div class="field">
-  <label>Erişim</label>
-  <input id="socialReach" type="number" min="0" value="${esc(metricNumber(item.reach))}">
-</div>
+        <div class="field">
+          <label>Erişim</label>
+          <input id="socialReach" type="number" min="0" value="${esc(metricNumber(item.reach))}">
+        </div>
 
-<div class="field">
-  <label>Gösterim</label>
-  <input id="socialImpressions" type="number" min="0" value="${esc(metricNumber(item.impressions))}">
-</div>
+        <div class="field">
+          <label>Gösterim</label>
+          <input id="socialImpressions" type="number" min="0" value="${esc(metricNumber(item.impressions))}">
+        </div>
 
-<div class="field">
-  <label>Görüntülenme</label>
-  <input id="socialViews" type="number" min="0" value="${esc(metricNumber(item.views))}">
-</div>
+        <div class="field">
+          <label>Görüntülenme</label>
+          <input id="socialViews" type="number" min="0" value="${esc(metricNumber(item.views))}">
+        </div>
 
-<div class="field">
-  <label>Beğeni</label>
-  <input id="socialLikes" type="number" min="0" value="${esc(metricNumber(item.likes))}">
-</div>
+        <div class="field">
+          <label>Beğeni</label>
+          <input id="socialLikes" type="number" min="0" value="${esc(metricNumber(item.likes))}">
+        </div>
 
-<div class="field">
-  <label>Paylaşım</label>
-  <input id="socialShares" type="number" min="0" value="${esc(metricNumber(item.shares))}">
-</div>
+        <div class="field">
+          <label>Paylaşım</label>
+          <input id="socialShares" type="number" min="0" value="${esc(metricNumber(item.shares))}">
+        </div>
 
-<div class="field">
-  <label>Tıklama</label>
-  <input id="socialClicks" type="number" min="0" value="${esc(metricNumber(item.clicks))}">
-</div>
+        <div class="field">
+          <label>Tıklama</label>
+          <input id="socialClicks" type="number" min="0" value="${esc(metricNumber(item.clicks))}">
+        </div>
 
-<div class="field">
-  <label>Etkileşim Oranı</label>
-  <input value="%${esc(engagementRate(item))}" readonly>
-</div>
+        <div class="field">
+          <label>Etkileşim Oranı</label>
+          <input value="%${esc(engagementRate(item))}" readonly>
+        </div>
 
-<div class="field span-2">
-  <label>Performans Notu</label>
-  <textarea id="socialPerformanceNote" placeholder="Paylaşım performansına ilişkin kısa değerlendirme.">${esc(item.performanceNote || "")}</textarea>
-</div>
-
-      <div class="form-actions btn-row">
+        <div class="field span-2">
+          <label>Performans Notu</label>
+          <textarea id="socialPerformanceNote" placeholder="Paylaşım performansına ilişkin kısa değerlendirme.">${esc(item.performanceNote || "")}</textarea>
+        </div>
+      </div>
+            <div class="form-actions btn-row">
         <button class="btn" type="submit">Kaydet ve Listeye Dön</button>
         <button class="btn ghost" type="button" onclick="App.showSocialList()">Sosyal Medya Planına DÖN</button>
         ${editing && canDeleteSocialPost(item) ? `<button class="btn danger" type="button" onclick="App.deleteSocialPost('${js(item.id)}')">Kaydı Sil</button>` : ""}
@@ -2921,12 +2928,7 @@ function clearContentAssistant() {
       </div>
     </div>
 
-    <div class="reports-grid">
-    <div class="panel" style="margin-top:16px;margin-bottom:16px">
-  <h3>Sosyal Medya Performans Özeti</h3>
-  <p class="muted">TÜRKAK resmî sosyal medya hesapları için girilen performans verilerinin genel toplamı.</p>
-
-  <div class="cards" style="margin-top:12px;margin-bottom:0">
+    <div class="cards" style="margin-top:12px;margin-bottom:0">
     <div class="stat-card">
       <div class="label">Toplam erişim</div>
       <div class="num">${socialPerformance.reach}</div>
@@ -3015,7 +3017,25 @@ function clearContentAssistant() {
         <div class="hint">Web sitesi / slider</div>
       </div>
     </div>
+ <div class="stat-card">
+          <div class="label">Toplam görüntülenme</div>
+          <div class="num">${socialPerformance.views}</div>
+          <div class="hint">Video / içerik görüntülenmeleri</div>
+        </div>
 
+        <div class="stat-card">
+          <div class="label">Toplam etkileşim</div>
+          <div class="num">${socialPerformance.interactions}</div>
+          <div class="hint">Beğeni + paylaşım + tıklama</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="label">Etkileşim oranı</div>
+          <div class="num">%${socialAverageEngagementRate}</div>
+          <div class="hint">Toplam etkileşim / erişim</div>
+        </div>
+      </div>
+    </div>
     <div class="reports-grid">
       <div class="panel">
         <h3>Sosyal Medya Yayın Durumları</h3>
