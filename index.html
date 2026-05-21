@@ -26,12 +26,20 @@
     }
 
     * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; }
+   html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
     body {
-      background: linear-gradient(135deg, #fff 0%, #fff 44%, #fff5f6 100%);
-      color: var(--ink);
-      overflow: hidden;
-    }
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #fff 0%, #fff 44%, #fff5f6 100%);
+  color: var(--ink);
+  overflow: hidden;
+}
 
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; border: 0; }
@@ -142,21 +150,27 @@
     .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
     .app {
-      height: 100vh;
-      display: grid;
-      grid-template-columns: 286px 1fr;
-      background: #fff;
-    }
+  width: 100vw;
+  height: 100vh;
+  min-width: 100vw;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 286px 1fr;
+  background: #fff;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
     .sidebar {
-      min-width: 0;
-      border-right: 1px solid rgba(200,16,46,.15);
-      background: linear-gradient(180deg, #fff, #fff6f7);
-      padding: 22px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
+  min-width: 0;
+  border-right: 1px solid rgba(200,16,46,.15);
+  background: linear-gradient(180deg, #fff, #fff6f7);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
     .side-brand { display: flex; align-items: center; gap: 12px; padding: 10px 8px 18px; border-bottom: 1px solid var(--line); }
     .side-brand .logo-mark { width: 52px; height: 52px; border: 1px solid rgba(200,16,46,.18); box-shadow: var(--shadow-soft); }
     .side-brand .logo-mark img {width: 44px; height: 44px; object-fit: contain; display: block;}
@@ -199,15 +213,15 @@
       background: #f9fafb;
     }
     .topbar {
-      flex: 0 0 auto;
-      height: 76px;
-      background: #fff;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-    }
+  flex: 0 0 auto;
+  height: 68px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
     .topbar h1 { margin: 0; font-size: 21px; }
     .topbar .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
     .user-chip {
@@ -228,10 +242,10 @@
       font-weight: 900;
     }
     .view {
-      flex: 1 1 auto;
-      overflow: auto;
-      padding: 24px;
-    }
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 0;
+}
 
     .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
     .page-head h2 { margin: 0; font-size: 27px; }
