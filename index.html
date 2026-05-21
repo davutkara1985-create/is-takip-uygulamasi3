@@ -2141,36 +2141,196 @@ closeModal();
 toast("Görev silindi. Anasayfaya dönüldü.");
 showDashboard();
       }
-      function showReports() {
-        state.viewKey = "reports";
-        setTitle("Gelişmiş Raporlama", "Kategori, durum ve personel bazlı iş yükü analizleri");
-        const tasks = visibleTasks();
-        const categoryData = countBy(tasks, t => t.mainCategory || "Diğer");
-        const statusData = countBy(tasks, t => t.status || "Belirsiz");
-        const personData = countBy(tasks.filter(isOpen), t => userName(t.responsibleId));
-        const priorityData = countBy(tasks.filter(isOpen), t => t.priority || "Normal");
-        $("view").innerHTML = `
-          <div class="page-head">
-            <div><h2>Raporlama ve Dışa Aktarma</h2><p> Veriye Dayalı Süreçler, İletişimi Güçlendirir</p></div>
-            <div class="btn-row"><button class="btn secondary" onclick="App.exportAllCsv()">Tüm İşleri CSV</button><button class="btn secondary" onclick="App.exportBackupJson()">JSON Yedek</button><button class="btn ghost" onclick="window.print()">Yazdır / PDF</button></div>
-          </div>
-          <div class="cards">
-            <div class="stat-card"><div class="label">Toplam iş</div><div class="num">${tasks.length}</div></div>
-            <div class="stat-card"><div class="label">Açık iş</div><div class="num">${tasks.filter(isOpen).length}</div></div>
-            <div class="stat-card"><div class="label">Geciken</div><div class="num danger-text">${tasks.filter(isOverdue).length}</div></div>
-            <div class="stat-card"><div class="label">Tamamlanan</div><div class="num success-text">${tasks.filter(t => t.status === 'Tamamlandı').length}</div></div>
-            <div class="stat-card"><div class="label">Onay bekleyen</div><div class="num">${tasks.filter(t => isOpen(t) && isApproval(t)).length}</div></div>
-          </div>
-          <div class="reports-grid">
-            <div class="panel"><h3>Kategori Bazlı Dağılım</h3>${barChart(categoryData)}</div>
-            <div class="panel"><h3>İş Durumları</h3>${barChart(statusData)}</div>
-            <div class="panel"><h3>Personel Bazlı Açık İş Yükü</h3>${barChart(personData)}</div>
-            <div class="panel"><h3>Öncelik Dağılımı</h3>${barChart(priorityData)}</div>
-          </div>
-          <div class="panel" style="margin-top:16px"><h3>Yedekten Geri Yükleme</h3><p class="muted">JSON yedek dosyasının içeriğini seçerek sistemi geri yükleyebilirsiniz. Mevcut verilerin üzerine yazar.</p><input type="file" id="restoreFile" accept="application/json" /> <button class="btn warning small" onclick="App.importBackupJson()">JSON Geri Yükle</button></div>
-          <div style="margin-top:14px"><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>`;
-      }
+   function showReports() {
+  state.viewKey = "reports";
+  setTitle("Gelişmiş Raporlama", "İşler ve sosyal medya içerikleri için raporlama ekranı");
 
+  const tasks = visibleTasks();
+  const socialPosts = getSocialPosts();
+
+  const categoryData = countBy(tasks, t => t.mainCategory || "Diğer");
+  const statusData = countBy(tasks, t => t.status || "Belirsiz");
+  const personData = countBy(tasks.filter(isOpen), t => userName(t.responsibleId));
+  const priorityData = countBy(tasks.filter(isOpen), t => t.priority || "Normal");
+
+  const socialStatusData = countBy(socialPosts, item => item.status || "Belirsiz");
+
+  const socialChannelData = socialPosts.reduce((acc, item) => {
+    const channels = item.channels || [];
+
+    if (!channels.length) {
+      acc["Kanal seçilmemiş"] = (acc["Kanal seçilmemiş"] || 0) + 1;
+      return acc;
+    }
+
+    channels.forEach(channel => {
+      acc[channel] = (acc[channel] || 0) + 1;
+    });
+
+    return acc;
+  }, {});
+
+  const socialWebsiteData = countBy(socialPosts, item => `Web: ${item.publishOnWebsite || "Belirsiz"}`);
+  const socialSliderData = countBy(socialPosts, item => `Slider: ${item.showOnSlider || "Belirsiz"}`);
+
+  const socialMonthData = countBy(socialPosts, item => {
+    if (!item.publishDate) return "Tarihsiz";
+    return parseDate(item.publishDate).toLocaleDateString("tr-TR", {
+      month: "long",
+      year: "numeric"
+    });
+  });
+
+  const socialDraft = socialPosts.filter(item => item.status === "Taslak").length;
+  const socialPlanned = socialPosts.filter(item => item.status === "Planlandı").length;
+  const socialPublished = socialPosts.filter(item => item.status === "Yayınlandı").length;
+  const socialWebsite = socialPosts.filter(item => item.publishOnWebsite === "Evet").length;
+  const socialSlider = socialPosts.filter(item => item.showOnSlider === "Evet").length;
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Raporlama ve Dışa Aktarma</h2>
+        <p>İş kayıtları ve sosyal medya içerikleri aynı ekrandan izlenir.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="App.exportAllCsv()">Tüm İşleri CSV</button>
+        <button class="btn secondary" onclick="App.exportSocialCsv()">Sosyal Medya CSV</button>
+        <button class="btn secondary" onclick="App.exportBackupJson()">JSON Yedek</button>
+        <button class="btn ghost" onclick="window.print()">Yazdır / PDF</button>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px">
+      <h3>İş Raporları</h3>
+      <p class="muted">Genel iş listesi, açık işler, geciken işler ve personel bazlı iş yükü raporları.</p>
+    </div>
+
+    <div class="cards">
+      <div class="stat-card">
+        <div class="label">Toplam iş</div>
+        <div class="num">${tasks.length}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Açık iş</div>
+        <div class="num">${tasks.filter(isOpen).length}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Geciken</div>
+        <div class="num danger-text">${tasks.filter(isOverdue).length}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Tamamlanan</div>
+        <div class="num success-text">${tasks.filter(t => t.status === "Tamamlandı").length}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Onay bekleyen</div>
+        <div class="num">${tasks.filter(t => isOpen(t) && isApproval(t)).length}</div>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+      <div class="panel">
+        <h3>Kategori Bazlı Dağılım</h3>
+        ${barChart(categoryData)}
+      </div>
+
+      <div class="panel">
+        <h3>İş Durumları</h3>
+        ${barChart(statusData)}
+      </div>
+
+      <div class="panel">
+        <h3>Personel Bazlı Açık İş Yükü</h3>
+        ${barChart(personData)}
+      </div>
+
+      <div class="panel">
+        <h3>Öncelik Dağılımı</h3>
+        ${barChart(priorityData)}
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:22px;margin-bottom:16px">
+      <h3>Sosyal Medya Raporları</h3>
+      <p class="muted">Sosyal medya paylaşım kayıtları; yayın durumu, kanal, web sitesi ve slider bilgilerine göre raporlanır.</p>
+    </div>
+
+    <div class="cards">
+      <div class="stat-card red">
+        <div class="label">Toplam sosyal medya içeriği</div>
+        <div class="num">${socialPosts.length}</div>
+        <div class="hint">Tüm kayıtlar</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Taslak</div>
+        <div class="num">${socialDraft}</div>
+        <div class="hint">Hazırlık aşamasında</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Planlandı</div>
+        <div class="num">${socialPlanned}</div>
+        <div class="hint">Yayın tarihi belirlenen</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Yayınlandı</div>
+        <div class="num success-text">${socialPublished}</div>
+        <div class="hint">Tamamlanan içerikler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Web / Slider</div>
+        <div class="num">${socialWebsite} / ${socialSlider}</div>
+        <div class="hint">Web sitesi / slider</div>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+      <div class="panel">
+        <h3>Sosyal Medya Yayın Durumları</h3>
+        ${barChart(socialStatusData)}
+      </div>
+
+      <div class="panel">
+        <h3>Kanal Bazlı Dağılım</h3>
+        ${barChart(socialChannelData)}
+      </div>
+
+      <div class="panel">
+        <h3>Web Sitesi Yayın Dağılımı</h3>
+        ${barChart(socialWebsiteData)}
+      </div>
+
+      <div class="panel">
+        <h3>Slider Dağılımı</h3>
+        ${barChart(socialSliderData)}
+      </div>
+
+      <div class="panel">
+        <h3>Ay Bazlı Yayın Planı</h3>
+        ${barChart(socialMonthData)}
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Yedekten Geri Yükleme</h3>
+      <p class="muted">JSON yedek dosyasının içeriğini seçerek sistemi geri yükleyebilirsiniz. Mevcut verilerin üzerine yazar.</p>
+      <input type="file" id="restoreFile" accept="application/json" />
+      <button class="btn warning small" onclick="App.importBackupJson()">JSON Geri Yükle</button>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+}
       function countBy(items, getter) {
         return items.reduce((acc, item) => {
           const key = getter(item) || "Belirsiz";
