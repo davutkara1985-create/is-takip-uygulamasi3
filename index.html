@@ -465,7 +465,38 @@
       .detail-grid { grid-template-columns: 1fr; }
       .detail-grid .span-2 { grid-column: span 1; }
     }
+#appPage.app {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
+#loginPage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.main {
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.view {
+  height: calc(100vh - 68px);
+  min-height: 0;
+  overflow: auto;
+}
     @media print {
       .sidebar, .topbar, .btn, .form-actions, .filters, .marquee { display: none !important; }
       body { overflow: visible; background: #fff; }
