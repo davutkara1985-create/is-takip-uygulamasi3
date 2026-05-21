@@ -1824,27 +1824,76 @@ function exportSocialCsv() {
         </tbody></table></div>`;
       }
 
+     function showTaskList(type = "all") {
+  state.viewKey = "tasks";
+  state.listType = type;
+  setTitle("Genel İş Listesi", "Açık, geciken, tamamlanan ve onay bekleyen işler");
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>${esc(listTitle(type))}</h2>
+        <p>Özet kartlarından gelen filtreler bu listede açılır.</p>
+      </div>
+
       <div class="btn-row">
-  <button class="btn secondary" onclick="App.downloadExcelTemplate()">Boş Excel Şablonu</button>
-  <button class="btn secondary" onclick="App.openExcelImport()">Excel'den Toplu Yükle</button>
-  <button class="btn secondary" onclick="App.exportCurrentListCsv()">CSV Dışa Aktar</button>
-  <button class="btn" onclick="App.showTaskForm()">＋ Yeni İş</button>
-</div>
-          </div>
-          <div class="panel">
-            <div class="filters">
-              <div class="field"><label>Arama</label><input id="filterSearch" oninput="App.renderTaskRows()" placeholder="İş no, iş adı, açıklama, talep eden..." /></div>
-              <div class="field"><label>Durum</label><select id="filterStatus" onchange="App.renderTaskRows()"><option value="">Tümü</option>${STATUS.map(s => `<option>${esc(s)}</option>`).join("")}</select></div>
-              <div class="field"><label>Kategori</label><select id="filterCategory" onchange="App.renderTaskRows()"><option value="">Tümü</option>${Object.keys(CATEGORIES).map(c => `<option>${esc(c)}</option>`).join("")}</select></div>
-              <div class="field"><label>Personel</label><select id="filterPerson" onchange="App.renderTaskRows()"><option value="">Tümü</option>${activeUsers().map(u => `<option value="${esc(u.id)}">${esc(u.fullName)}</option>`).join("")}</select></div>
-              <div class="field"><label>Öncelik</label><select id="filterPriority" onchange="App.renderTaskRows()"><option value="">Tümü</option>${PRIORITIES.map(p => `<option>${esc(p)}</option>`).join("")}</select></div>
-            </div>
-            <div id="taskRows"></div>
-          </div>
-          <div style="margin-top:14px"><button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button></div>
-        `;
-        renderTaskRows();
-      }
+        <button class="btn secondary" onclick="App.downloadExcelTemplate()">Boş Excel Şablonu</button>
+        <button class="btn secondary" onclick="App.openExcelImport()">Excel'den Toplu Yükle</button>
+        <button class="btn secondary" onclick="App.exportCurrentListCsv()">CSV Dışa Aktar</button>
+        <button class="btn" onclick="App.showTaskForm()">＋ Yeni İş</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="filters">
+        <div class="field">
+          <label>Arama</label>
+          <input id="filterSearch" oninput="App.renderTaskRows()" placeholder="İş no, iş adı, açıklama, talep eden..." />
+        </div>
+
+        <div class="field">
+          <label>Durum</label>
+          <select id="filterStatus" onchange="App.renderTaskRows()">
+            <option value="">Tümü</option>
+            ${STATUS.map(s => `<option>${esc(s)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Kategori</label>
+          <select id="filterCategory" onchange="App.renderTaskRows()">
+            <option value="">Tümü</option>
+            ${Object.keys(CATEGORIES).map(c => `<option>${esc(c)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Personel</label>
+          <select id="filterPerson" onchange="App.renderTaskRows()">
+            <option value="">Tümü</option>
+            ${activeUsers().map(u => `<option value="${esc(u.id)}">${esc(u.fullName)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Öncelik</label>
+          <select id="filterPriority" onchange="App.renderTaskRows()">
+            <option value="">Tümü</option>
+            ${PRIORITIES.map(p => `<option>${esc(p)}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+
+      <div id="taskRows"></div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+
+  renderTaskRows();
+}
 
       function listTitle(type) {
         return ({ all: "Tüm İşler", open: "Açık İşler", week: "Bu Hafta Bitecek İşler", overdue: "Geciken İşler", approval: "Onay Bekleyen İşler", completed: "Tamamlanan İşler", mine: "Bana Atanan İşler", today: "Bugün Takvimde / Hedefte Olan İşler", tomorrow: "Yarın Tamamlanacak İşler" })[type] || "Tüm İşler";
