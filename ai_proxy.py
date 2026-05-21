@@ -3,7 +3,40 @@ import json
 import re
 import tempfile
 from functools import lru_cache
+from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    tomllib = None
+
+
+def load_local_secrets():
+    if tomllib is None:
+        return
+
+    possible_paths = [
+        Path(".streamlit/secrets.toml"),
+        Path("secrets.toml")
+    ]
+
+    for path in possible_paths:
+        if not path.exists():
+            continue
+
+        try:
+            data = tomllib.loads(path.read_text(encoding="utf-8"))
+
+            for key in ["OPENAI_API_KEY", "OPENAI_MODEL"]:
+                value = data.get(key)
+                if value and not os.getenv(key):
+                    os.environ[key] = str(value)
+
+            break
+        except Exception as exc:
+            print("secrets.toml okunamadı:", exc)
+
+load_local_secrets()
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -136,7 +169,7 @@ def safe_json_parse(text: str) -> dict:
     }
 
 
-@app.post("/ai-content")
+@app.post("http://127.0.0.1:8000/ai-content")
 def ai_content(req: ContentRequest):
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY tanımlı değil.")
