@@ -2470,12 +2470,10 @@ showDashboard();
         </div>
 
         <div class="field">
-          <label>Yapay Zekâ Kullanımı</label>
-          <select id="contentProvider">
-            <option value="chatgpt">ChatGPT API ile otomatik üret</option>
-            <option value="copilot">Copilot için prompt hazırla</option>
-          </select>
-        </div>
+  <label>Yapay Zekâ Kullanımı</label>
+  <input value="Genel kullanım modu - kullanıcı ChatGPT hesabı gerekmez" readonly>
+  <input id="contentProvider" type="hidden" value="general">
+</div>
 
         <div class="field span-2">
           <label>Terimler Sözlüğü</label>
@@ -2485,10 +2483,9 @@ showDashboard();
       </div>
 
       <div class="form-actions btn-row">
-        <button class="btn" type="button" onclick="App.generateContentWithAI()">İçerik Oluştur</button>
-        <button class="btn secondary" type="button" onclick="App.copyCopilotPrompt()">Copilot Promptunu Kopyala</button>
-        <button class="btn ghost" type="button" onclick="App.clearContentAssistant()">Temizle</button>
-      </div>
+  <button class="btn" type="button" onclick="App.generateContentWithAI()">İçerik Oluştur</button>
+  <button class="btn ghost" type="button" onclick="App.clearContentAssistant()">Temizle</button>
+</div>
     </div>
 
     <div id="contentAssistantResults" style="margin-top:16px"></div>
@@ -2566,9 +2563,9 @@ async function copyCopilotPrompt() {
 }
 
 async function generateContentWithAI() {
-  const rawText = $("contentRawText")?.value.trim() || "";
-  const outputs = selectedContentOutputs();
-  const provider = $("contentProvider")?.value || "chatgpt";
+const rawText = $("contentRawText")?.value.trim() || "";
+const outputs = selectedContentOutputs();
+const provider = "general";
 
   if (!rawText) {
     return toast("Lütfen ham metin girin.");
@@ -2578,12 +2575,7 @@ async function generateContentWithAI() {
     return toast("Lütfen en az bir çıktı türü seçin.");
   }
 
-  if (provider === "copilot") {
-    await copyCopilotPrompt();
-    return;
-  }
-
-  if (!AI_PROXY_URL || AI_PROXY_URL === "__AI_PROXY_URL__") {
+    if (!AI_PROXY_URL || AI_PROXY_URL === "__AI_PROXY_URL__") {
     return toast("AI proxy adresi tanımlı değil. app.py içindeki AI_PROXY_URL ayarını kontrol edin.");
   }
 
