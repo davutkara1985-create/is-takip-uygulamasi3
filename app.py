@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 # Streamlit sayfasını geniş ekran yap
 st.set_page_config(
     page_title="TÜRKAK İş Yönetim Sistemi",
-    page_icon="https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/9072968591dc7419cca008c4992f9b7d213f756a/turkak.png",
+    page_icon="turkak.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
