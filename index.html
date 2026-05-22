@@ -3378,6 +3378,291 @@ function personPerformanceTable(rows) {
     </div>
   `;
 }
+      function showReports() {
+  state.viewKey = "reports";
+
+  setTitle(
+    "Gelişmiş Raporlama",
+    "İş yükü, tamamlanma süresi, aylık dağılım ve genel performans ölçümü"
+  );
+
+  const tasks = visibleTasks();
+  const socialPosts = getSocialPosts();
+
+  const categoryData = countBy(tasks, task => task.mainCategory || "Diğer");
+  const statusData = countBy(tasks, task => task.status || "Belirsiz");
+  const priorityData = countBy(tasks.filter(isOpen), task => task.priority || "Normal");
+
+  const personRows = personReportRows(tasks);
+  const personOpenData = personChartData(personRows, "open");
+  const personCompletedData = personChartData(personRows, "completed");
+
+  const monthlyRows = monthlyTaskRows(tasks);
+  const completion = completionStats(tasks);
+
+  const departmentPerformance = taskPerformanceScore(tasks);
+  const currentUserTasks = state.currentUser ? userTaskScope(tasks, state.currentUser) : [];
+  const currentUserPerformance = taskPerformanceScore(currentUserTasks);
+
+  const socialStatusData = countBy(socialPosts, item => item.status || "Belirsiz");
+
+  const socialChannelData = socialPosts.reduce((acc, item) => {
+    const channels = item.channels || [];
+
+    if (!channels.length) {
+      acc["Kanal seçilmemiş"] = (acc["Kanal seçilmemiş"] || 0) + 1;
+      return acc;
+    }
+
+    channels.forEach(channel => {
+      acc[channel] = (acc[channel] || 0) + 1;
+    });
+
+    return acc;
+  }, {});
+
+  const socialWebsiteData = countBy(socialPosts, item => `Web: ${item.publishOnWebsite || "Belirsiz"}`);
+  const socialSliderData = countBy(socialPosts, item => `Slider: ${item.showOnSlider || "Belirsiz"}`);
+
+  const socialMonthData = countBy(socialPosts, item => {
+    if (!item.publishDate) return "Tarihsiz";
+
+    const date = parseDate(item.publishDate);
+    if (!date) return "Tarihsiz";
+
+    return date.toLocaleDateString("tr-TR", {
+      month: "long",
+      year: "numeric"
+    });
+  });
+
+  const socialDraft = socialPosts.filter(item => item.status === "Taslak").length;
+  const socialPlanned = socialPosts.filter(item => item.status === "Planlandı").length;
+  const socialPublished = socialPosts.filter(item => item.status === "Yayınlandı").length;
+  const socialWebsite = socialPosts.filter(item => item.publishOnWebsite === "Evet").length;
+  const socialSlider = socialPosts.filter(item => item.showOnSlider === "Evet").length;
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Raporlama ve Dışa Aktarma</h2>
+        <p>İş yükü, tamamlanma süresi, aylık dağılım ve genel performans ölçümü.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="App.exportAllCsv()">Tüm İşleri CSV</button>
+        <button class="btn secondary" onclick="App.exportSocialCsv()">Sosyal Medya CSV</button>
+        <button class="btn secondary" onclick="App.exportBackupJson()">JSON Yedek</button>
+        <button class="btn ghost" onclick="window.print()">Yazdır / PDF</button>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px">
+      <h3>İş Raporları</h3>
+      <p class="muted">Şeffaf İş Takibi, Güçlü Yönetim</p>
+    </div>
+
+    <div class="cards">
+      <div class="stat-card">
+        <div class="label">Toplam iş</div>
+        <div class="num">${tasks.length}</div>
+        <div class="hint">Sistemdeki tüm işler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Açık iş</div>
+        <div class="num">${tasks.filter(isOpen).length}</div>
+        <div class="hint">Tamamlanmamış işler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Geciken</div>
+        <div class="num danger-text">${tasks.filter(isOverdue).length}</div>
+        <div class="hint">Hedef tarihi geçen açık işler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Tamamlanan</div>
+        <div class="num success-text">${tasks.filter(task => task.status === "Tamamlandı").length}</div>
+        <div class="hint">Kapanan işler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Onay bekleyen</div>
+        <div class="num">${tasks.filter(task => isOpen(task) && isApproval(task)).length}</div>
+        <div class="hint">Onayda veya onay gerekli</div>
+      </div>
+    </div>
+
+    <div class="cards" style="margin-top:12px">
+      <div class="stat-card red">
+        <div class="label">Müdürlük Genel Performansı</div>
+        <div class="num">${percentText(departmentPerformance)}</div>
+        <div class="hint">Tamamlanma + zamanında bitirme + gecikmeyen açık işler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Kullanıcı Performansı</div>
+        <div class="num">${percentText(currentUserPerformance)}</div>
+        <div class="hint">${esc(state.currentUser?.fullName || "Aktif kullanıcı")}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Ort. Tamamlanma Süresi</div>
+        <div class="num">${completion.averageDays}</div>
+        <div class="hint">Gün</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Zamanında Tamamlanan</div>
+        <div class="num">${percentText(completion.onTimeRate)}</div>
+        <div class="hint">${completion.onTimeCount} / ${completion.completedCount} iş</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Ölçülen Tamamlanma</div>
+        <div class="num">${completion.measuredCount}</div>
+        <div class="hint">Başlangıç ve bitiş tarihi olan işler</div>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+      <div class="panel">
+        <h3>Kategori Bazlı Dağılım</h3>
+        ${barChart(categoryData)}
+      </div>
+
+      <div class="panel">
+        <h3>İş Durumları</h3>
+        ${barChart(statusData)}
+      </div>
+
+      <div class="panel">
+        <h3>Personel Bazlı Açık İş Yükü</h3>
+        ${barChart(personOpenData)}
+      </div>
+
+      <div class="panel">
+        <h3>Personel Bazlı Tamamlanan İş Yükü</h3>
+        ${barChart(personCompletedData)}
+      </div>
+
+      <div class="panel">
+        <h3>Öncelik Dağılımı</h3>
+        ${barChart(priorityData)}
+      </div>
+
+      <div class="panel">
+        <h3>Aylık İş Sayısı Dağılımı</h3>
+        ${chronologicalBarChart(monthlyRows, "total")}
+      </div>
+
+      <div class="panel">
+        <h3>Aylık Tamamlanan İş Dağılımı</h3>
+        ${chronologicalBarChart(monthlyRows, "completed")}
+      </div>
+
+      <div class="panel">
+        <h3>İşlerin Tamamlanma Gün Sayıları</h3>
+        <p class="muted">
+          En kısa: ${completion.shortestDays} gün |
+          En uzun: ${completion.longestDays} gün |
+          Ortalama: ${completion.averageDays} gün
+        </p>
+        ${completionDaysTable(tasks)}
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Personel Bazlı Genel Performans Tablosu</h3>
+      <p class="muted">
+        Açık iş, tamamlanan iş, geciken iş, ortalama tamamlanma günü ve kullanıcı performans yüzdesi birlikte gösterilir.
+      </p>
+      ${personPerformanceTable(personRows)}
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Aylık İş Sayısı Detayı</h3>
+      <p class="muted">Ay bazında toplam, açık, tamamlanan ve geciken iş dağılımı.</p>
+      ${monthlyTaskTable(monthlyRows)}
+    </div>
+
+    <div class="panel" style="margin-top:22px;margin-bottom:16px">
+      <h3>Sosyal Medya Raporları</h3>
+      <p class="muted">Akreditasyonu Anlatıyor, Güveni Paylaşıyoruz</p>
+    </div>
+
+    <div class="cards">
+      <div class="stat-card red">
+        <div class="label">Toplam sosyal medya içeriği</div>
+        <div class="num">${socialPosts.length}</div>
+        <div class="hint">Tüm kayıtlar</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Taslak</div>
+        <div class="num">${socialDraft}</div>
+        <div class="hint">Hazırlık aşamasında</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Planlandı</div>
+        <div class="num">${socialPlanned}</div>
+        <div class="hint">Yayın tarihi belirlenen</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Yayınlandı</div>
+        <div class="num success-text">${socialPublished}</div>
+        <div class="hint">Tamamlanan içerikler</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Web / Slider</div>
+        <div class="num">${socialWebsite} / ${socialSlider}</div>
+        <div class="hint">Web sitesi / slider</div>
+      </div>
+    </div>
+
+    <div class="reports-grid">
+      <div class="panel">
+        <h3>Sosyal Medya Yayın Durumları</h3>
+        ${barChart(socialStatusData)}
+      </div>
+
+      <div class="panel">
+        <h3>Kanal Bazlı Dağılım</h3>
+        ${barChart(socialChannelData)}
+      </div>
+
+      <div class="panel">
+        <h3>Web Sitesi Yayın Dağılımı</h3>
+        ${barChart(socialWebsiteData)}
+      </div>
+
+      <div class="panel">
+        <h3>Slider Dağılımı</h3>
+        ${barChart(socialSliderData)}
+      </div>
+
+      <div class="panel">
+        <h3>Ay Bazlı Yayın Planı</h3>
+        ${barChart(socialMonthData)}
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Yedekten Geri Yükleme</h3>
+      <p class="muted">JSON yedek dosyasının içeriğini seçerek sistemi geri yükleyebilirsiniz. Mevcut verilerin üzerine yazar.</p>
+      <input type="file" id="restoreFile" accept="application/json" />
+      <button class="btn warning small" onclick="App.importBackupJson()">JSON Geri Yükle</button>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+}
        function countBy(items, getter) {
         return items.reduce((acc, item) => {
           const key = getter(item) || "Belirsiz";
