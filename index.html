@@ -1765,9 +1765,10 @@ function renderMeetingRows() {
               <td><b>${esc(item.meetingNo)}</b></td>
               <td>${esc(item.meetingType)}</td>
               <td>
-                <b>${esc(item.visitorName)}</b><br>
-                <small class="muted">${esc(item.participants || "")}</small>
-              </td>
+  <b>${esc(item.visitorName)}</b><br>
+  <small class="muted">Sorumlu: ${esc(userName(item.responsibleId || item.createdBy))}</small><br>
+  <small class="muted">${esc(item.participants || "")}</small>
+</td>
               <td>
                 Başlangıç: <b>${formatDate(item.visitStartDate)}</b><br>
                 Bitiş: <b>${formatDate(item.visitEndDate)}</b>
@@ -1979,6 +1980,7 @@ function readMeetingForm(existing) {
     ...(existing || {}),
     meetingNo: $("meetingNo").value.trim(),
     meetingType: $("meetingType").value,
+    responsibleId: $("meetingResponsibleId").value,
     visitorName: $("meetingVisitorName").value.trim(),
     visitStartDate: $("meetingVisitStartDate").value,
     visitEndDate: $("meetingVisitEndDate").value || $("meetingVisitStartDate").value,
@@ -2014,9 +2016,9 @@ async function saveMeeting(event, id) {
 
   const item = readMeetingForm(existing);
 
-  if (!item.visitorName || !item.visitStartDate || !item.subject) {
-    return toast("Ziyaret eden kurum / kişi, ziyaret başlangıç tarihi ve görüşme konusu zorunludur.");
-  }
+  if (!item.visitorName || !item.visitStartDate || !item.subject || !item.responsibleId) {
+  return toast("Ziyaret eden kurum / kişi, ziyaret başlangıç tarihi, görüşme konusu ve sorumlu personel zorunludur.");
+}
 
   if (!id) {
     item.id = "mt_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -2049,6 +2051,7 @@ function openMeetingDetail(id) {
       ${detail("Ziyaret Eden Kurum / Kişi", item.visitorName)}
       ${detail("Ziyaret Başlangıç Tarihi", formatDate(item.visitStartDate))}
       ${detail("Ziyaret Bitiş Tarihi", formatDate(item.visitEndDate))}
+      ${detail("Sorumlu Personel", userName(item.responsibleId || item.createdBy))}
       ${detail("Oluşturan", userName(item.createdBy))}
       ${detail("Katılımcılar", item.participants, true)}
       ${detail("Görüşme Konusu", item.subject, true)}
