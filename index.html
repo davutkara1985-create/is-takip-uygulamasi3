@@ -596,6 +596,7 @@
   tasks: "turkak_its_tasks_v1",
   notifications: "turkak_its_notifications_v1",
   socialPosts: "turkak_its_social_posts_v1",
+  meetings: "turkak_its_meetings_v1",
   session: "turkak_its_session_v1"
 };
       const DEFAULT_PASSWORD = "Turkak2026!";
@@ -607,6 +608,10 @@ const SUPABASE_ROW_ID = "turkak_its_data";
 const SOCIAL_CHANNELS = ["X (Twitter)", "Instagram", "LinkedIn", "Nsocial", "Bluesky"];
 const SOCIAL_STATUS = ["Taslak", "Planlandı", "Yayınlandı"];
 const YES_NO = ["Evet", "Hayır"];
+const MEETING_TYPES = ["Toplantı", "Ziyaret", "Heyet Kabulü", "Protokol", "Etkinlik"];
+const MEETING_STATUS = ["Planlandı", "Hazırlıkta", "Gerçekleşti", "Takipte", "Ertelendi", "İptal"];
+const TRANSPORT_OPTIONS = ["Yok", "Kurum Aracı", "VIP Transfer", "Tam Gün Tahsis Araç", "Diğer"];
+const ACCOMMODATION_PAYMENT_OPTIONS = ["Yok", "Misafirler Tarafından Ödenecek", "TÜRKAK Tarafından Ödenecek"];
 const OFFICIAL_SOCIAL_ACCOUNTS = {
   "X (Twitter)": "@turkak",
   "Instagram": "@Türk Akreditasyon Kurumu",
@@ -663,7 +668,8 @@ function localDataPayload() {
     users: store.get(KEYS.users, []),
     tasks: store.get(KEYS.tasks, []),
     notifications: store.get(KEYS.notifications, []),
-    socialPosts: store.get(KEYS.socialPosts, [])
+    socialPosts: store.get(KEYS.socialPosts, []),
+    meetings: store.get(KEYS.meetings, [])
   };
 }
 
@@ -703,6 +709,9 @@ async function pullSharedData(showError = true) {
     }
     if (Array.isArray(payload.socialPosts)) {
      store.set(KEYS.socialPosts, payload.socialPosts);
+    }
+    if (Array.isArray(payload.meetings)) {
+  store.set(KEYS.meetings, payload.meetings);
     }
     return true;
   } catch (e) {
@@ -760,9 +769,11 @@ function rerenderIfNeeded() {
   showSocialList(state.socialListType || "all");
   } else if (state.viewKey === "socialPerformance") {
   showSocialPerformance();
-  } else if (state.viewKey === "reports") {
+  } else if (state.viewKey === "meetings") {
+  showMeetingList(state.meetingListType || "all");
+} else if (state.viewKey === "reports") {
   showReports();
-  } else if (state.viewKey === "contentAssistant") {
+} else if (state.viewKey === "contentAssistant") {
   showContentAssistant();
 }
 }
@@ -773,7 +784,7 @@ function startSharedRefresh() {
   sharedRefreshTimer = setInterval(async () => {
     if (!state.currentUser) return;
 
-    if (["new", "socialNew", "profile", "admin"].includes(state.viewKey)) {
+    if (["new", "socialNew", "meetingNew", "profile", "admin"].includes(state.viewKey)) {
   return;
 }
 
@@ -871,6 +882,9 @@ function startSharedRefresh() {
 if (!localStorage.getItem(KEYS.socialPosts)) {
   store.set(KEYS.socialPosts, []);
 }
+    if (!localStorage.getItem(KEYS.meetings)) {
+  store.set(KEYS.meetings, []);
+}
     await pushSharedData(false);
     return;
   }
@@ -912,6 +926,14 @@ function getSocialPosts() {
 
 function saveSocialPosts(items) {
   store.set(KEYS.socialPosts, items);
+  queueSharedSave();
+}
+      function getMeetings() {
+  return store.get(KEYS.meetings, []);
+}
+
+function saveMeetings(items) {
+  store.set(KEYS.meetings, items);
   queueSharedSave();
 }
       function userById(id) { return getUsers().find(u => u.id === id); }
@@ -1179,6 +1201,7 @@ function performanceTotals(items = getSocialPosts()) {
   ["dashboard", "Anasayfa", "🏠", "showDashboard"],
   ["tasks", "Genel İş Listesi", "📋", "showTaskList"],
   ["social", "Sosyal Medya Planı", "📣", "showSocialList"],
+  ["meetings", "Toplantı / Ziyaret Takibi", "🤝", "showMeetingList"],
   ["new", "Yeni İş Kaydı", "＋", "showTaskForm"],
   ["socialNew", "Yeni Sosyal Medya Paylaşımı", "＋", "showSocialForm"],
   ["contentAssistant", "Kurumsal İçerik Asistanı", "✍️", "showContentAssistant"],
@@ -1480,7 +1503,591 @@ function openSocialCalendarDay(iso) {
 
   openModal(`${formatDate(iso)} - Sosyal Medya Paylaşım Takvimi`, body, `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`);
 }
+function nextMeetingNo() {
+  const y = new Date().getFullYear();
+  const prefix = `TZ-${y}-`;
 
+  const maxSeq = getMeetings().reduce((max, item) => {
+    const no = String(item.meetingNo || "");
+    if (!no.startsWith(prefix)) return max;
+
+    const seq = Number(no.slice(prefix.length));
+    return Number.isFinite(seq) ? Math.max(max, seq) : max;
+  }, 0);
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+function meetingStatusClass(status) {
+  return {
+    "Planlandı": "status-planlandi",
+    "Hazırlıkta": "status-devam",
+    "Gerçekleşti": "status-tamamlandi",
+    "Takipte": "status-onayda",
+    "Ertelendi": "status-revizyonda",
+    "İptal": "status-iptal"
+  }[status] || "status-beklemede";
+}
+
+function canEditMeeting(item) {
+  return Boolean(item) && item.createdBy === state.currentUser?.id;
+}
+
+function canDeleteMeeting(item) {
+  return Boolean(item) && item.createdBy === state.currentUser?.id;
+}
+
+function meetingTypeOptions(selected) {
+  return MEETING_TYPES
+    .map(type => `<option ${selected === type ? "selected" : ""}>${esc(type)}</option>`)
+    .join("");
+}
+
+function meetingStatusOptions(selected) {
+  return MEETING_STATUS
+    .map(status => `<option ${selected === status ? "selected" : ""}>${esc(status)}</option>`)
+    .join("");
+}
+
+function transportOptions(selected) {
+  return TRANSPORT_OPTIONS
+    .map(value => `<option ${selected === value ? "selected" : ""}>${esc(value)}</option>`)
+    .join("");
+}
+
+function accommodationPaymentOptions(selected) {
+  return ACCOMMODATION_PAYMENT_OPTIONS
+    .map(value => `<option ${selected === value ? "selected" : ""}>${esc(value)}</option>`)
+    .join("");
+}
+
+function showMeetingList(type = "all") {
+  state.viewKey = "meetings";
+  state.meetingListType = type;
+
+  setTitle(
+    "Toplantı / Ziyaret Takibi",
+    "Toplantı, ziyaret, heyet kabulü, protokol ve etkinlik kayıtları"
+  );
+
+  const items = getMeetings();
+  const planned = items.filter(item => item.status === "Planlandı").length;
+  const preparation = items.filter(item => item.status === "Hazırlıkta").length;
+  const completed = items.filter(item => item.status === "Gerçekleşti").length;
+  const followUp = items.filter(item => item.status === "Takipte").length;
+  const newsNeeded = items.filter(item => item.newsRequired === "Evet").length;
+  const socialNeeded = items.filter(item => item.socialRequired === "Evet").length;
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Toplantı ve Ziyaret Takip Modülü</h2>
+        <p>Toplantı, ziyaret, heyet kabulü, protokol ve etkinlik süreçlerini tek ekrandan takip edin.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="App.showMeetingForm()">＋ Yeni Kayıt</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <button class="stat-card red" onclick="App.showMeetingList('all')">
+        <div class="label">Toplam kayıt</div>
+        <div class="num">${items.length}</div>
+        <div class="hint">Tüm toplantı / ziyaret kayıtları</div>
+      </button>
+
+      <button class="stat-card" onclick="App.showMeetingList('planned')">
+        <div class="label">Planlandı</div>
+        <div class="num">${planned}</div>
+        <div class="hint">Yaklaşan kayıtlar</div>
+      </button>
+
+      <button class="stat-card" onclick="App.showMeetingList('preparation')">
+        <div class="label">Hazırlıkta</div>
+        <div class="num">${preparation}</div>
+        <div class="hint">Hazırlık süreci devam edenler</div>
+      </button>
+
+      <button class="stat-card" onclick="App.showMeetingList('completed')">
+        <div class="label">Gerçekleşti</div>
+        <div class="num success-text">${completed}</div>
+        <div class="hint">Tamamlanan kayıtlar</div>
+      </button>
+
+      <button class="stat-card" onclick="App.showMeetingList('followUp')">
+        <div class="label">Takipte</div>
+        <div class="num">${followUp}</div>
+        <div class="hint">Aksiyon bekleyenler</div>
+      </button>
+    </div>
+
+    <div class="cards">
+      <button class="stat-card" onclick="App.showMeetingList('news')">
+        <div class="label">Haber yapılacak</div>
+        <div class="num">${newsNeeded}</div>
+        <div class="hint">Haber ihtiyacı olan kayıtlar</div>
+      </button>
+
+      <button class="stat-card" onclick="App.showMeetingList('social')">
+        <div class="label">Sosyal medya</div>
+        <div class="num">${socialNeeded}</div>
+        <div class="hint">Paylaşım yapılacak kayıtlar</div>
+      </button>
+    </div>
+
+    <div class="panel">
+      <div class="filters">
+        <div class="field">
+          <label>Arama</label>
+          <input id="meetingFilterSearch" oninput="App.renderMeetingRows()" placeholder="Kurum, kişi, konu, katılımcı, aksiyon...">
+        </div>
+
+        <div class="field">
+          <label>Başlık</label>
+          <select id="meetingFilterType" onchange="App.renderMeetingRows()">
+            <option value="">Tümü</option>
+            ${MEETING_TYPES.map(type => `<option>${esc(type)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Durum</label>
+          <select id="meetingFilterStatus" onchange="App.renderMeetingRows()">
+            <option value="">Tümü</option>
+            ${MEETING_STATUS.map(status => `<option>${esc(status)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Haber</label>
+          <select id="meetingFilterNews" onchange="App.renderMeetingRows()">
+            <option value="">Tümü</option>
+            <option>Evet</option>
+            <option>Hayır</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Sosyal Medya</label>
+          <select id="meetingFilterSocial" onchange="App.renderMeetingRows()">
+            <option value="">Tümü</option>
+            <option>Evet</option>
+            <option>Hayır</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="meetingRows"></div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+
+  renderMeetingRows();
+}
+
+function baseFilteredMeetings() {
+  let items = getMeetings();
+  const type = state.meetingListType;
+
+  if (type === "planned") items = items.filter(item => item.status === "Planlandı");
+  if (type === "preparation") items = items.filter(item => item.status === "Hazırlıkta");
+  if (type === "completed") items = items.filter(item => item.status === "Gerçekleşti");
+  if (type === "followUp") items = items.filter(item => item.status === "Takipte");
+  if (type === "news") items = items.filter(item => item.newsRequired === "Evet");
+  if (type === "social") items = items.filter(item => item.socialRequired === "Evet");
+
+  const search = $("meetingFilterSearch")?.value.trim().toLocaleLowerCase("tr-TR") || "";
+  const meetingType = $("meetingFilterType")?.value || "";
+  const status = $("meetingFilterStatus")?.value || "";
+  const news = $("meetingFilterNews")?.value || "";
+  const social = $("meetingFilterSocial")?.value || "";
+
+  if (search) {
+    items = items.filter(item => JSON.stringify(item).toLocaleLowerCase("tr-TR").includes(search));
+  }
+
+  if (meetingType) {
+    items = items.filter(item => item.meetingType === meetingType);
+  }
+
+  if (status) {
+    items = items.filter(item => item.status === status);
+  }
+
+  if (news) {
+    items = items.filter(item => item.newsRequired === news);
+  }
+
+  if (social) {
+    items = items.filter(item => item.socialRequired === social);
+  }
+
+  return items.sort((a, b) =>
+    String(a.visitStartDate).localeCompare(String(b.visitStartDate)) ||
+    String(a.visitorName).localeCompare(String(b.visitorName), "tr")
+  );
+}
+
+function renderMeetingRows() {
+  const items = baseFilteredMeetings();
+
+  if (!$("meetingRows")) return;
+
+  if (!items.length) {
+    $("meetingRows").innerHTML = `<p class="muted">Bu filtrelere uygun toplantı / ziyaret kaydı bulunmuyor.</p>`;
+    return;
+  }
+
+  $("meetingRows").innerHTML = `
+    <div class="table-wrap">
+      <table style="min-width:1250px">
+        <thead>
+          <tr>
+            <th>Kayıt No</th>
+            <th>Başlık</th>
+            <th>Ziyaret Eden Kurum / Kişi</th>
+            <th>Ziyaret Tarihleri</th>
+            <th>Görüşme Konusu</th>
+            <th>Haber / Sosyal Medya</th>
+            <th>Ulaşım / Konaklama</th>
+            <th>Durum</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${items.map(item => `
+            <tr>
+              <td><b>${esc(item.meetingNo)}</b></td>
+              <td>${esc(item.meetingType)}</td>
+              <td>
+                <b>${esc(item.visitorName)}</b><br>
+                <small class="muted">${esc(item.participants || "")}</small>
+              </td>
+              <td>
+                Başlangıç: <b>${formatDate(item.visitStartDate)}</b><br>
+                Bitiş: <b>${formatDate(item.visitEndDate)}</b>
+              </td>
+              <td>${esc(item.subject || "-")}</td>
+              <td>
+                Haber: <b>${esc(item.newsRequired)}</b><br>
+                Sosyal medya: <b>${esc(item.socialRequired)}</b><br>
+                Fotoğraf: <b>${esc(item.photoRequired)}</b>
+              </td>
+              <td>
+                Ulaşım: <b>${esc(item.transportOption)}</b><br>
+                Konaklama: <b>${esc(item.accommodationRequired)}</b>
+              </td>
+              <td>${badge(item.status, meetingStatusClass(item.status))}</td>
+              <td>
+                <div class="btn-row">
+                  <button class="btn secondary small" onclick="App.openMeetingDetail('${js(item.id)}')">Detay</button>
+                  ${canEditMeeting(item) ? `<button class="btn ghost small" onclick="App.showMeetingForm('${js(item.id)}')">Düzenle</button>` : ""}
+                  ${canDeleteMeeting(item) ? `<button class="btn danger small" onclick="App.deleteMeeting('${js(item.id)}')">Sil</button>` : ""}
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function showMeetingForm(id = null) {
+  const editing = Boolean(id);
+  const old = editing ? getMeetings().find(item => item.id === id) : null;
+
+  if (editing && !old) return toast("Toplantı / ziyaret kaydı bulunamadı.");
+  if (editing && !canEditMeeting(old)) return toast("Bu kaydı düzenleme yetkiniz yok.");
+
+  const item = old || {
+    id: "",
+    meetingNo: nextMeetingNo(),
+    meetingType: "Toplantı",
+    visitorName: "",
+    visitStartDate: today(),
+    visitEndDate: today(),
+    participants: "",
+    subject: "",
+    photoRequired: "Hayır",
+    giftRequired: "Hayır",
+    newsRequired: "Hayır",
+    transportOption: "Yok",
+    transportNote: "",
+    accommodationRequired: "Hayır",
+    accommodationFacility: "",
+    accommodationPayment: "Yok",
+    socialRequired: "Hayır",
+    followUpAction: "",
+    status: "Planlandı",
+    createdBy: state.currentUser.id,
+    createdAt: dateTime(),
+    updatedAt: dateTime()
+  };
+
+  state.viewKey = "meetingNew";
+
+  setTitle(
+    editing ? "Toplantı / Ziyaret Kaydını Düzenle" : "Yeni Toplantı / Ziyaret Kaydı",
+    editing ? `${item.meetingNo} numaralı kayıt güncelleniyor` : "Toplantı, ziyaret, heyet kabulü, protokol ve etkinlik kaydı"
+  );
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>${editing ? "Toplantı / Ziyaret Kaydını Düzenle" : "YENİ TOPLANTI / ZİYARET KAYDI"}</h2>
+        <p>Ziyaret, heyet kabulü, protokol ve etkinlik süreçlerini planlayın.</p>
+      </div>
+      <button class="btn ghost" onclick="App.showMeetingList()">Listeye DÖN</button>
+    </div>
+
+    <form id="meetingForm" class="panel" onsubmit="App.saveMeeting(event, '${js(id || "")}')">
+      <div class="form-grid">
+        <div class="field">
+          <label>Kayıt No</label>
+          <input id="meetingNo" value="${esc(item.meetingNo)}" readonly>
+        </div>
+
+        <div class="field">
+          <label>Başlık *</label>
+          <select id="meetingType" required>
+            ${meetingTypeOptions(item.meetingType)}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Durum</label>
+          <select id="meetingStatus">
+            ${meetingStatusOptions(item.status)}
+          </select>
+        </div>
+
+        <div class="field span-3">
+          <label>Ziyaret Eden Kurum / Kişi *</label>
+          <input id="meetingVisitorName" required value="${esc(item.visitorName)}" placeholder="Kurum, heyet, kişi veya misafir adı">
+        </div>
+
+        <div class="field">
+          <label>Ziyaret Başlangıç Tarihi *</label>
+          <input id="meetingVisitStartDate" type="date" required value="${esc(item.visitStartDate)}">
+        </div>
+
+        <div class="field">
+          <label>Ziyaret Bitiş Tarihi</label>
+          <input id="meetingVisitEndDate" type="date" value="${esc(item.visitEndDate)}">
+        </div>
+
+        <div class="field">
+          <label>Sorumlu Personel</label>
+          <input value="${esc(userName(item.createdBy))}" readonly>
+        </div>
+
+        <div class="field span-3">
+          <label>Katılımcılar</label>
+          <textarea id="meetingParticipants" placeholder="TÜRKAK katılımcıları, misafir katılımcılar, protokol bilgileri...">${esc(item.participants)}</textarea>
+        </div>
+
+        <div class="field span-3">
+          <label>Görüşme Konusu *</label>
+          <textarea id="meetingSubject" required placeholder="Toplantı / ziyaret / heyet kabulü / protokol / etkinlik konusu">${esc(item.subject)}</textarea>
+        </div>
+
+        <div class="field">
+          <label>Fotoğraf Çekimi Yapılacak mı?</label>
+          <select id="meetingPhotoRequired">
+            ${YES_NO.map(value => `<option ${item.photoRequired === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Hediye Takdimi Yapılacak mı?</label>
+          <select id="meetingGiftRequired">
+            ${YES_NO.map(value => `<option ${item.giftRequired === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Haber Yapılacak mı?</label>
+          <select id="meetingNewsRequired">
+            ${YES_NO.map(value => `<option ${item.newsRequired === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Sosyal Medya Paylaşımı Yapılacak mı?</label>
+          <select id="meetingSocialRequired">
+            ${YES_NO.map(value => `<option ${item.socialRequired === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Ulaşım Seçeneği</label>
+          <select id="meetingTransportOption">
+            ${transportOptions(item.transportOption)}
+          </select>
+        </div>
+
+        <div class="field span-2">
+          <label>Ulaşım Notu</label>
+          <input id="meetingTransportNote" value="${esc(item.transportNote)}" placeholder="Araç plakası, transfer saati, güzergâh, tahsis notu...">
+        </div>
+
+        <div class="field">
+          <label>Konaklama Olacak mı?</label>
+          <select id="meetingAccommodationRequired">
+            ${YES_NO.map(value => `<option ${item.accommodationRequired === value ? "selected" : ""}>${esc(value)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Tesis Adı</label>
+          <input id="meetingAccommodationFacility" value="${esc(item.accommodationFacility)}" placeholder="Otel / tesis adı">
+        </div>
+
+        <div class="field">
+          <label>Konaklama Ödeme Durumu</label>
+          <select id="meetingAccommodationPayment">
+            ${accommodationPaymentOptions(item.accommodationPayment)}
+          </select>
+        </div>
+
+        <div class="field span-3">
+          <label>Takip Edilecek Aksiyon</label>
+          <textarea id="meetingFollowUpAction" placeholder="Haber hazırlanacak, fotoğraf seçilecek, protokol listesi teyit edilecek, sosyal medya metni hazırlanacak...">${esc(item.followUpAction)}</textarea>
+        </div>
+      </div>
+
+      <div class="form-actions btn-row">
+        <button class="btn" type="submit">Kaydet ve Listeye Dön</button>
+        <button class="btn ghost" type="button" onclick="App.showMeetingList()">Listeye DÖN</button>
+        ${editing && canDeleteMeeting(item) ? `<button class="btn danger" type="button" onclick="App.deleteMeeting('${js(item.id)}')">Kaydı Sil</button>` : ""}
+      </div>
+    </form>
+  `;
+}
+
+function readMeetingForm(existing) {
+  return {
+    ...(existing || {}),
+    meetingNo: $("meetingNo").value.trim(),
+    meetingType: $("meetingType").value,
+    visitorName: $("meetingVisitorName").value.trim(),
+    visitStartDate: $("meetingVisitStartDate").value,
+    visitEndDate: $("meetingVisitEndDate").value || $("meetingVisitStartDate").value,
+    participants: $("meetingParticipants").value.trim(),
+    subject: $("meetingSubject").value.trim(),
+    photoRequired: $("meetingPhotoRequired").value,
+    giftRequired: $("meetingGiftRequired").value,
+    newsRequired: $("meetingNewsRequired").value,
+    transportOption: $("meetingTransportOption").value,
+    transportNote: $("meetingTransportNote").value.trim(),
+    accommodationRequired: $("meetingAccommodationRequired").value,
+    accommodationFacility: $("meetingAccommodationFacility").value.trim(),
+    accommodationPayment: $("meetingAccommodationPayment").value,
+    socialRequired: $("meetingSocialRequired").value,
+    followUpAction: $("meetingFollowUpAction").value.trim(),
+    status: $("meetingStatus").value,
+    updatedAt: dateTime(),
+    updatedBy: state.currentUser.id
+  };
+}
+
+async function saveMeeting(event, id) {
+  event.preventDefault();
+
+  await pullSharedData();
+
+  let items = getMeetings();
+  const existing = id ? items.find(item => item.id === id) : null;
+
+  if (id && (!existing || !canEditMeeting(existing))) {
+    return toast("Bu işlem için yetkiniz yok.");
+  }
+
+  const item = readMeetingForm(existing);
+
+  if (!item.visitorName || !item.visitStartDate || !item.subject) {
+    return toast("Ziyaret eden kurum / kişi, ziyaret başlangıç tarihi ve görüşme konusu zorunludur.");
+  }
+
+  if (!id) {
+    item.id = "mt_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    item.createdAt = dateTime();
+    item.createdBy = state.currentUser.id;
+    items.push(item);
+  } else {
+    items = items.map(x => x.id === id ? item : x);
+  }
+
+  saveMeetings(items);
+  await pushSharedData();
+
+  toast("Toplantı / ziyaret kaydı kaydedildi.");
+  showMeetingList();
+}
+
+function openMeetingDetail(id) {
+  const item = getMeetings().find(x => x.id === id);
+
+  if (!item) {
+    return toast("Toplantı / ziyaret kaydı bulunamadı.");
+  }
+
+  const body = `
+    <div class="detail-grid">
+      ${detail("Kayıt No", item.meetingNo)}
+      ${detail("Başlık", item.meetingType)}
+      ${detail("Durum", item.status)}
+      ${detail("Ziyaret Eden Kurum / Kişi", item.visitorName)}
+      ${detail("Ziyaret Başlangıç Tarihi", formatDate(item.visitStartDate))}
+      ${detail("Ziyaret Bitiş Tarihi", formatDate(item.visitEndDate))}
+      ${detail("Oluşturan", userName(item.createdBy))}
+      ${detail("Katılımcılar", item.participants, true)}
+      ${detail("Görüşme Konusu", item.subject, true)}
+      ${detail("Fotoğraf Çekimi", item.photoRequired)}
+      ${detail("Hediye Takdimi", item.giftRequired)}
+      ${detail("Haber Yapılacak mı?", item.newsRequired)}
+      ${detail("Sosyal Medya Paylaşımı", item.socialRequired)}
+      ${detail("Ulaşım Seçeneği", item.transportOption)}
+      ${detail("Ulaşım Notu", item.transportNote || "-", true)}
+      ${detail("Konaklama Olacak mı?", item.accommodationRequired)}
+      ${detail("Tesis Adı", item.accommodationFacility || "-")}
+      ${detail("Konaklama Ödeme Durumu", item.accommodationPayment)}
+      ${detail("Takip Edilecek Aksiyon", item.followUpAction || "-", true)}
+    </div>
+  `;
+
+  const footer = `
+    ${canEditMeeting(item) ? `<button class="btn" onclick="App.closeModal(); App.showMeetingForm('${js(item.id)}')">Düzenle</button>` : ""}
+    ${canDeleteMeeting(item) ? `<button class="btn danger" onclick="App.closeModal(); App.deleteMeeting('${js(item.id)}')">Sil</button>` : ""}
+    <button class="btn ghost" onclick="App.closeModal()">Kapat</button>
+  `;
+
+  openModal(`${item.meetingNo} - Toplantı / Ziyaret Detayı`, body, footer);
+}
+
+async function deleteMeeting(id) {
+  await pullSharedData();
+
+  const item = getMeetings().find(x => x.id === id);
+
+  if (!item) return toast("Toplantı / ziyaret kaydı bulunamadı.");
+  if (!canDeleteMeeting(item)) return toast("Bu kaydı silme yetkiniz yok.");
+
+  if (!confirm(`${item.meetingNo} - ${item.visitorName} kaydı silinsin mi?`)) return;
+
+  saveMeetings(getMeetings().filter(x => x.id !== id));
+  await pushSharedData();
+
+  closeModal();
+  toast("Toplantı / ziyaret kaydı silindi.");
+  showMeetingList();
+}
 function showSocialForm(id = null) {
   const editing = Boolean(id);
   const old = editing ? getSocialPosts().find(item => item.id === id) : null;
@@ -4381,6 +4988,13 @@ deleteSocialPost,
 openSocialCalendarDay,
 exportSocialCsv,
 showSocialPerformance,
+
+showMeetingList,
+showMeetingForm,
+saveMeeting,
+renderMeetingRows,
+openMeetingDetail,
+deleteMeeting,
         
 showContentAssistant,
 generateContentWithAI,
