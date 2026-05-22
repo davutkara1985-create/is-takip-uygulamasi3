@@ -394,7 +394,193 @@
     .priority-normal { color: #1d4ed8; background: #dbeafe; }
     .priority-yuksek { color: #9a3412; background: #ffedd5; }
     .priority-acil { color: #991b1b; background: #fee2e2; }
+.scorecard-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 16px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255,255,255,.22), transparent 24%),
+    radial-gradient(circle at 85% 80%, rgba(255,255,255,.14), transparent 26%),
+    linear-gradient(135deg, var(--turkak-red), var(--turkak-dark-red));
+  box-shadow: var(--shadow);
+}
 
+.scorecard-hero::after {
+  content: "";
+  position: absolute;
+  inset: -60px;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.18), transparent 70%);
+  transform: translateX(-70%);
+  animation: scorecardShine 5s linear infinite;
+}
+
+@keyframes scorecardShine {
+  from { transform: translateX(-70%); }
+  to { transform: translateX(70%); }
+}
+
+.scorecard-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.scorecard-hero h2 {
+  margin: 0;
+  font-size: 34px;
+}
+
+.scorecard-hero p {
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.9);
+}
+
+.scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.scorecard-kpi {
+  border-radius: 20px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  animation: scorecardRise .45s ease both;
+}
+
+.scorecard-kpi .label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.scorecard-kpi .value {
+  font-size: 32px;
+  font-weight: 950;
+  margin-top: 7px;
+}
+
+.scorecard-kpi .hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+@keyframes scorecardRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scorecard-meter {
+  margin-top: 10px;
+  height: 14px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.scorecard-meter-fill {
+  height: 100%;
+  min-width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--turkak-red), var(--turkak-dark-red));
+  animation: scorecardGrow 1s ease-out both;
+}
+
+@keyframes scorecardGrow {
+  from { width: 0; }
+}
+
+.scorecard-panel-grid {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.scorecard-rank {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scorecard-rank-item {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #f9fafb;
+}
+
+.scorecard-rank-no {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--turkak-red);
+  color: #fff;
+  font-weight: 950;
+}
+
+.scorecard-month-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scorecard-month-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 48px;
+  gap: 10px;
+  align-items: center;
+}
+
+.scorecard-month-track {
+  height: 14px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.scorecard-month-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--turkak-red);
+  animation: scorecardGrow 1s ease-out both;
+}
+
+.scorecard-print-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 1180px) {
+  .scorecard-grid,
+  .scorecard-panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .scorecard-hero::after {
+    display: none;
+  }
+
+  .scorecard-kpi,
+  .scorecard-meter-fill,
+  .scorecard-month-fill {
+    animation: none !important;
+  }
+}
     .reports-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .bar-row { display: grid; grid-template-columns: 190px 1fr 48px; gap: 10px; align-items: center; margin: 10px 0; }
     .bar-label { font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -771,6 +957,8 @@ function rerenderIfNeeded() {
   showSocialPerformance();
   } else if (state.viewKey === "meetings") {
   showMeetingList(state.meetingListType || "all");
+} else if (state.viewKey === "annualScorecard") {
+  showAnnualScorecard(state.scorecardYear || new Date().getFullYear());
 } else if (state.viewKey === "reports") {
   showReports();
 } else if (state.viewKey === "contentAssistant") {
@@ -1207,6 +1395,7 @@ function performanceTotals(items = getSocialPosts()) {
   ["contentAssistant", "Kurumsal İçerik Asistanı", "✍️", "showContentAssistant"],
   ["socialPerformance", "Sosyal Medya Performansı", "📈", "showSocialPerformance"],
   ["reports", "Raporlama", "📊", "showReports"],
+  ["annualScorecard", "Yıllık Kurumsal İletişim Karnesi", "🏆", "showAnnualScorecard"],
   ["profile", "Profil / Şifre", "👤", "showProfile"]
 ];
         if (state.currentUser?.role === "admin") buttons.push(["admin", "Kullanıcı Yönetimi", "⚙", "showAdmin"]);
@@ -4125,6 +4314,689 @@ function personPerformanceTable(rows) {
     </div>
   `;
 }
+      function scorecardCleanDate(value) {
+  const text = String(value || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
+function scorecardYearOf(value) {
+  const date = scorecardCleanDate(value);
+  return date ? Number(date.slice(0, 4)) : null;
+}
+
+function scorecardNumber(value) {
+  return Number(value || 0).toLocaleString("tr-TR");
+}
+
+function scorecardClampPercent(value) {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function scorecardPercent(value) {
+  return `%${scorecardClampPercent(value)}`;
+}
+
+function scorecardAverage(values) {
+  const clean = values.filter(value => Number.isFinite(value));
+
+  if (!clean.length) return 0;
+
+  return Math.round((clean.reduce((sum, value) => sum + value, 0) / clean.length) * 10) / 10;
+}
+
+function scorecardTaskYear(task) {
+  return scorecardYearOf(task.actualEndDate)
+    || scorecardYearOf(task.updatedAt)
+    || scorecardYearOf(task.startDate)
+    || scorecardYearOf(task.targetEndDate)
+    || scorecardYearOf(task.createdAt);
+}
+
+function scorecardSocialYear(item) {
+  return scorecardYearOf(item.publishDate)
+    || scorecardYearOf(item.updatedAt)
+    || scorecardYearOf(item.createdAt);
+}
+
+function scorecardCompletionDate(task) {
+  return scorecardCleanDate(task.actualEndDate)
+    || scorecardCleanDate(task.updatedAt)
+    || "";
+}
+
+function scorecardCompletionDays(task) {
+  if (task.status !== "Tamamlandı") return null;
+
+  const start = scorecardCleanDate(task.startDate);
+  const end = scorecardCompletionDate(task);
+
+  if (!start || !end) return null;
+
+  return Math.max(0, diffDays(start, end));
+}
+
+function scorecardCompletedOnTime(task) {
+  if (task.status !== "Tamamlandı") return false;
+
+  const end = scorecardCompletionDate(task);
+  const target = scorecardCleanDate(task.targetEndDate);
+
+  if (!end || !target) return false;
+
+  return diffDays(end, target) >= 0;
+}
+
+function scorecardDepartmentPerformance(tasks) {
+  if (!tasks.length) return 0;
+
+  const completed = tasks.filter(task => task.status === "Tamamlandı");
+  const open = tasks.filter(isOpen);
+  const overdue = tasks.filter(isOverdue);
+  const onTimeCompleted = completed.filter(scorecardCompletedOnTime);
+
+  const completionRate = tasks.length ? completed.length / tasks.length * 100 : 0;
+  const onTimeRate = completed.length ? onTimeCompleted.length / completed.length * 100 : 0;
+  const openHealthyRate = open.length ? (open.length - overdue.length) / open.length * 100 : 100;
+
+  return scorecardClampPercent(
+    completionRate * 0.50 +
+    onTimeRate * 0.30 +
+    openHealthyRate * 0.20
+  );
+}
+
+function scorecardYearOptions(selectedYear) {
+  const years = new Set([new Date().getFullYear()]);
+
+  visibleTasks().forEach(task => {
+    const year = scorecardTaskYear(task);
+    if (year) years.add(year);
+  });
+
+  getSocialPosts().forEach(item => {
+    const year = scorecardSocialYear(item);
+    if (year) years.add(year);
+  });
+
+  return [...years]
+    .sort((a, b) => b - a)
+    .map(year => `<option value="${year}" ${Number(selectedYear) === Number(year) ? "selected" : ""}>${year}</option>`)
+    .join("");
+}
+
+function scorecardMonthRows(year, tasks, socialPosts) {
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    key: `${year}-${String(index + 1).padStart(2, "0")}`,
+    label: new Date(year, index, 1).toLocaleDateString("tr-TR", { month: "short" }),
+    tasks: 0,
+    completed: 0,
+    social: 0
+  }));
+
+  tasks.forEach(task => {
+    const date =
+      scorecardCleanDate(task.startDate) ||
+      scorecardCleanDate(task.createdAt) ||
+      scorecardCleanDate(task.targetEndDate);
+
+    if (!date || Number(date.slice(0, 4)) !== Number(year)) return;
+
+    const monthIndex = Number(date.slice(5, 7)) - 1;
+    if (!rows[monthIndex]) return;
+
+    rows[monthIndex].tasks += 1;
+
+    if (task.status === "Tamamlandı") {
+      rows[monthIndex].completed += 1;
+    }
+  });
+
+  socialPosts.forEach(item => {
+    const date = scorecardCleanDate(item.publishDate);
+    if (!date || Number(date.slice(0, 4)) !== Number(year)) return;
+
+    const monthIndex = Number(date.slice(5, 7)) - 1;
+    if (!rows[monthIndex]) return;
+
+    rows[monthIndex].social += 1;
+  });
+
+  return rows;
+}
+
+function scorecardMonthBars(rows) {
+  const max = Math.max(...rows.map(row => row.tasks + row.social), 1);
+
+  return `
+    <div class="scorecard-month-bars">
+      ${rows.map(row => {
+        const total = row.tasks + row.social;
+        const width = Math.max(4, Math.round(total / max * 100));
+
+        return `
+          <div class="scorecard-month-row">
+            <b>${esc(row.label)}</b>
+            <div class="scorecard-month-track">
+              <div class="scorecard-month-fill" style="width:${width}%"></div>
+            </div>
+            <span class="muted"><b>${total}</b></span>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function scorecardChannelRows(posts) {
+  const map = {};
+
+  posts.forEach(item => {
+    const channels = item.channels?.length ? item.channels : ["Kanal seçilmemiş"];
+
+    channels.forEach(channel => {
+      if (!map[channel]) {
+        map[channel] = {
+          channel,
+          count: 0,
+          reach: 0,
+          impressions: 0,
+          views: 0,
+          likes: 0,
+          shares: 0,
+          clicks: 0,
+          interactions: 0
+        };
+      }
+
+      map[channel].count += 1;
+      map[channel].reach += metricNumber(item.reach);
+      map[channel].impressions += metricNumber(item.impressions);
+      map[channel].views += metricNumber(item.views);
+      map[channel].likes += metricNumber(item.likes);
+      map[channel].shares += metricNumber(item.shares);
+      map[channel].clicks += metricNumber(item.clicks);
+      map[channel].interactions += socialInteractions(item);
+    });
+  });
+
+  return Object.values(map)
+    .map(row => ({
+      ...row,
+      rate: row.reach || row.impressions
+        ? Math.round((row.interactions / (row.reach || row.impressions)) * 1000) / 10
+        : 0
+    }))
+    .sort((a, b) =>
+      b.interactions - a.interactions ||
+      b.views - a.views ||
+      b.reach - a.reach
+    );
+}
+
+function scorecardPersonRows(tasks) {
+  return activeUsers()
+    .map(user => {
+      const userTasks = tasks.filter(task =>
+        task.responsibleId === user.id ||
+        (task.helperIds || []).includes(user.id)
+      );
+
+      const completed = userTasks.filter(task => task.status === "Tamamlandı");
+      const completionDays = completed
+        .map(scorecardCompletionDays)
+        .filter(value => value !== null);
+
+      return {
+        name: user.fullName,
+        title: user.title || roleName(user.role),
+        total: userTasks.length,
+        completed: completed.length,
+        open: userTasks.filter(isOpen).length,
+        averageDays: scorecardAverage(completionDays),
+        contribution: tasks.length ? scorecardClampPercent(userTasks.length / tasks.length * 100) : 0
+      };
+    })
+    .filter(row => row.total > 0)
+    .sort((a, b) =>
+      b.completed - a.completed ||
+      b.total - a.total ||
+      a.name.localeCompare(b.name, "tr")
+    );
+}
+
+function scorecardRankList(rows, labelKey, valueKey, suffix = "") {
+  if (!rows.length) {
+    return `<p class="muted">Veri bulunmuyor.</p>`;
+  }
+
+  return `
+    <div class="scorecard-rank">
+      ${rows.slice(0, 6).map((row, index) => `
+        <div class="scorecard-rank-item">
+          <div class="scorecard-rank-no">${index + 1}</div>
+          <div>
+            <b>${esc(row[labelKey])}</b>
+            <br>
+            <small class="muted">${esc(row.title || row.hint || "")}</small>
+          </div>
+          <div><b>${scorecardNumber(row[valueKey])}${suffix}</b></div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function scorecardPersonTable(rows) {
+  if (!rows.length) {
+    return `<p class="muted">Personel bazlı katkı verisi bulunmuyor.</p>`;
+  }
+
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Personel</th>
+            <th>Unvan</th>
+            <th>Toplam Katkı</th>
+            <th>Tamamlanan</th>
+            <th>Açık İş</th>
+            <th>Ort. Tamamlanma Günü</th>
+            <th>Katkı Oranı</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td><b>${esc(row.name)}</b></td>
+              <td>${esc(row.title || "-")}</td>
+              <td>${row.total}</td>
+              <td>${row.completed}</td>
+              <td>${row.open}</td>
+              <td>${row.averageDays}</td>
+              <td><b>%${row.contribution}</b></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function scorecardChannelTable(rows) {
+  if (!rows.length) {
+    return `<p class="muted">Sosyal medya kanal performansı bulunmuyor.</p>`;
+  }
+
+  return `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kanal</th>
+            <th>Paylaşım</th>
+            <th>Erişim</th>
+            <th>Gösterim</th>
+            <th>Görüntülenme</th>
+            <th>Etkileşim</th>
+            <th>Etkileşim Oranı</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td><b>${esc(row.channel)}</b></td>
+              <td>${row.count}</td>
+              <td>${scorecardNumber(row.reach)}</td>
+              <td>${scorecardNumber(row.impressions)}</td>
+              <td>${scorecardNumber(row.views)}</td>
+              <td>${scorecardNumber(row.interactions)}</td>
+              <td><b>%${row.rate}</b></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function scorecardMetric(label, value, hint, extra = "") {
+  return `
+    <div class="scorecard-kpi">
+      <div class="label">${esc(label)}</div>
+      <div class="value">${value}</div>
+      <div class="hint">${esc(hint || "")}</div>
+      ${extra}
+    </div>
+  `;
+}
+
+function scorecardProgressBar(value) {
+  const percent = scorecardClampPercent(value);
+
+  return `
+    <div class="scorecard-meter">
+      <div class="scorecard-meter-fill" style="width:${percent}%"></div>
+    </div>
+  `;
+}
+
+function showAnnualScorecard(year = new Date().getFullYear()) {
+  const selectedYear = Number(year) || new Date().getFullYear();
+  state.viewKey = "annualScorecard";
+  state.scorecardYear = selectedYear;
+
+  setTitle(
+    "Yıllık Kurumsal İletişim Karnesi",
+    "Yıl sonu iş, sosyal medya, personel katkısı ve birim performansı"
+  );
+
+  const tasks = visibleTasks().filter(task => scorecardTaskYear(task) === selectedYear);
+  const completedTasks = tasks.filter(task => task.status === "Tamamlandı");
+  const socialPosts = getSocialPosts().filter(item => scorecardSocialYear(item) === selectedYear);
+
+  const categoryEntries = Object.entries(countBy(tasks, task => task.mainCategory || "Diğer"))
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total);
+
+  const topCategory = categoryEntries[0];
+
+  const completionDays = completedTasks
+    .map(scorecardCompletionDays)
+    .filter(value => value !== null);
+
+  const averageCompletionDays = scorecardAverage(completionDays);
+  const departmentPerformance = scorecardDepartmentPerformance(tasks);
+
+  const channelRows = scorecardChannelRows(socialPosts);
+  const bestChannel = channelRows[0];
+
+  const topContent = [...socialPosts]
+    .sort((a, b) =>
+      socialInteractions(b) - socialInteractions(a) ||
+      metricNumber(b.views) - metricNumber(a.views) ||
+      metricNumber(b.reach) - metricNumber(a.reach)
+    )[0];
+
+  const monthlyRows = scorecardMonthRows(selectedYear, tasks, socialPosts);
+  const personRows = scorecardPersonRows(tasks);
+  const totalSocialPerformance = performanceTotals(socialPosts);
+
+  $("view").innerHTML = `
+    <div class="page-head">
+      <div>
+        <h2>Yıllık Kurumsal İletişim Karnesi</h2>
+        <p>${selectedYear} yılına ait iş yönetimi, sosyal medya performansı ve personel katkı özeti.</p>
+      </div>
+
+      <div class="btn-row">
+        <select id="scorecardYear" onchange="App.showAnnualScorecard(this.value)">
+          ${scorecardYearOptions(selectedYear)}
+        </select>
+        <button class="btn secondary" onclick="App.exportAnnualScorecardPdf()">PDF Dışa Aktar</button>
+        <button class="btn ghost" onclick="window.print()">Yazdır</button>
+      </div>
+    </div>
+
+    <div id="annualScorecardPrintArea">
+      <div class="scorecard-hero">
+        <h2>${selectedYear} Kurumsal İletişim Karnesi</h2>
+        <p>Kurumsal İletişim Müdürlüğü için yıl sonu performans, iş yükü, içerik üretimi ve sosyal medya görünürlüğü özeti.</p>
+        <p class="scorecard-print-note">Rapor tarihi: ${new Date().toLocaleDateString("tr-TR")}</p>
+      </div>
+
+      <div class="scorecard-grid">
+        ${scorecardMetric("Toplam tamamlanan iş", scorecardNumber(completedTasks.length), "Yıl içinde tamamlanan iş sayısı")}
+        ${scorecardMetric("Toplam sosyal medya paylaşımı", scorecardNumber(socialPosts.length), "Yıl içinde kayıtlı sosyal medya içerikleri")}
+        ${scorecardMetric("Ortalama iş tamamlama süresi", `${averageCompletionDays} gün`, "Başlangıç - fiili bitiş ortalaması")}
+        ${scorecardMetric("Birim performansı", scorecardPercent(departmentPerformance), "Tamamlanma, zamanında bitirme ve gecikmeyen işler", scorecardProgressBar(departmentPerformance))}
+      </div>
+
+      <div class="scorecard-grid">
+        ${scorecardMetric("En çok çalışılan kategori", esc(topCategory?.category || "-"), `${topCategory?.total || 0} iş kaydı`)}
+        ${scorecardMetric("En yüksek performanslı kanal", esc(bestChannel?.channel || "-"), bestChannel ? `${scorecardNumber(bestChannel.interactions)} etkileşim` : "Veri yok")}
+        ${scorecardMetric("En çok etkileşim alan içerik", esc(topContent?.title || "-"), topContent ? `${scorecardNumber(socialInteractions(topContent))} etkileşim` : "Veri yok")}
+        ${scorecardMetric("Toplam sosyal etkileşim", scorecardNumber(totalSocialPerformance.interactions), "Beğeni + paylaşım + tıklama")}
+      </div>
+
+      <div class="scorecard-panel-grid">
+        <div class="panel">
+          <h3>Aylık İş ve İçerik Yoğunluğu</h3>
+          <p class="muted">İş kayıtları ve sosyal medya paylaşımları birlikte değerlendirilir.</p>
+          ${scorecardMonthBars(monthlyRows)}
+        </div>
+
+        <div class="panel">
+          <h3>En Çok Çalışılan Kategoriler</h3>
+          ${scorecardRankList(categoryEntries, "category", "total")}
+        </div>
+      </div>
+
+      <div class="scorecard-panel-grid">
+        <div class="panel">
+          <h3>Personel Bazlı Katkı</h3>
+          <p class="muted">Sorumlu veya yardımcı olunan işler üzerinden hesaplanır.</p>
+          ${scorecardPersonTable(personRows)}
+        </div>
+
+        <div class="panel">
+          <h3>Sosyal Medya Kanal Performansı</h3>
+          <p class="muted">Kanal bazında paylaşım, erişim, görüntülenme ve etkileşim özeti.</p>
+          ${scorecardChannelTable(channelRows)}
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <h3>Yılın Öne Çıkan Sosyal Medya İçeriği</h3>
+        ${
+          topContent ? `
+            <div class="mini-item">
+              <div>
+                <strong>${esc(topContent.socialNo)} - ${esc(topContent.title)}</strong>
+                <span>
+                  Yayın tarihi: ${formatDate(topContent.publishDate)}
+                  <br>
+                  Kanallar: ${(topContent.channels || []).map(esc).join(", ") || "-"}
+                  <br>
+                  Erişim: ${scorecardNumber(metricNumber(topContent.reach))}
+                  | Gösterim: ${scorecardNumber(metricNumber(topContent.impressions))}
+                  | Görüntülenme: ${scorecardNumber(metricNumber(topContent.views))}
+                  | Etkileşim: ${scorecardNumber(socialInteractions(topContent))}
+                  <br>
+                  ${esc(topContent.shortDescription || "")}
+                </span>
+              </div>
+              <button class="btn secondary small" onclick="App.openSocialDetail('${js(topContent.id)}')">Detay</button>
+            </div>
+          ` : `<p class="muted">Bu yıl için sosyal medya performans verisi bulunmuyor.</p>`
+        }
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
+    </div>
+  `;
+}
+
+function exportAnnualScorecardPdf() {
+  const node = $("annualScorecardPrintArea");
+
+  if (!node) {
+    return toast("PDF aktarımı için önce Yıllık Karne sayfasını açın.");
+  }
+
+  const year = $("scorecardYear")?.value || state.scorecardYear || new Date().getFullYear();
+
+  const printWindow = window.open("", "_blank");
+
+  if (!printWindow) {
+    return toast("PDF penceresi açılamadı. Tarayıcı açılır pencere iznini kontrol edin.");
+  }
+
+  printWindow.document.write(`
+    <!doctype html>
+    <html lang="tr">
+    <head>
+      <meta charset="utf-8">
+      <title>${year} Yıllık Kurumsal İletişim Karnesi</title>
+      <style>
+        :root {
+          --turkak-red: #c8102e;
+          --turkak-dark-red: #8f0d21;
+          --line: #e5e7eb;
+          --muted: #6b7280;
+          --ink: #1f2937;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+          margin: 0;
+          padding: 24px;
+          color: var(--ink);
+          font-family: Arial, sans-serif;
+          background: #fff;
+        }
+
+        .scorecard-hero {
+          border-radius: 20px;
+          padding: 24px;
+          margin-bottom: 16px;
+          color: #fff;
+          background: linear-gradient(135deg, var(--turkak-red), var(--turkak-dark-red));
+        }
+
+        .scorecard-hero h2 { margin: 0; font-size: 30px; }
+        .scorecard-hero p { margin: 8px 0 0; }
+
+        .scorecard-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-bottom: 14px;
+        }
+
+        .scorecard-kpi,
+        .panel {
+          border: 1px solid var(--line);
+          border-radius: 16px;
+          padding: 14px;
+          margin-bottom: 14px;
+          break-inside: avoid;
+        }
+
+        .scorecard-kpi .label {
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        .scorecard-kpi .value {
+          font-size: 26px;
+          font-weight: 900;
+          margin-top: 6px;
+        }
+
+        .scorecard-kpi .hint,
+        .muted {
+          color: var(--muted);
+          font-size: 12px;
+        }
+
+        .scorecard-panel-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .scorecard-rank-item,
+        .mini-item {
+          display: grid;
+          grid-template-columns: 34px 1fr auto;
+          gap: 10px;
+          align-items: center;
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          padding: 10px;
+          margin-bottom: 8px;
+        }
+
+        .scorecard-rank-no {
+          width: 30px;
+          height: 30px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: var(--turkak-red);
+          color: #fff;
+          font-weight: bold;
+        }
+
+        .scorecard-month-row {
+          display: grid;
+          grid-template-columns: 80px 1fr 44px;
+          gap: 8px;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .scorecard-month-track,
+        .scorecard-meter {
+          height: 12px;
+          border-radius: 999px;
+          background: #f1f5f9;
+          overflow: hidden;
+        }
+
+        .scorecard-month-fill,
+        .scorecard-meter-fill {
+          height: 100%;
+          border-radius: 999px;
+          background: var(--turkak-red);
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 12px;
+        }
+
+        th, td {
+          border-bottom: 1px solid var(--line);
+          padding: 8px;
+          text-align: left;
+          vertical-align: top;
+        }
+
+        th {
+          background: #fff1f3;
+        }
+
+        .btn {
+          display: none !important;
+        }
+
+        @media print {
+          body { padding: 12mm; }
+        }
+      </style>
+    </head>
+    <body>
+      ${node.outerHTML}
+      <script>
+        window.onload = function() {
+          window.print();
+        };
+      </script>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+}
       function showReports() {
   state.viewKey = "reports";
 
@@ -5145,6 +6017,8 @@ createTaskFromAssistant,
 clearContentAssistant,
 
 showReports,
+showAnnualScorecard,
+exportAnnualScorecardPdf,
 exportCurrentListCsv,
 exportAllCsv,
 exportBackupJson,
