@@ -1342,7 +1342,7 @@ function performanceTotals(items = getSocialPosts()) {
         }
         return `
           <div class="calendar-head">
-            <h3>İş Takvimi - ${esc(monthTitle)}</h3>
+            <h3>Kurumsal İletişim Müdürlüğü Çalışma Takvimi - ${esc(monthTitle)}</h3>
             <div class="btn-row">
               <button class="btn ghost small" onclick="App.moveMonth(-1)">‹ Önceki</button>
               <button class="btn secondary small" onclick="App.thisMonth()">Bugün</button>
@@ -1354,15 +1354,59 @@ function performanceTotals(items = getSocialPosts()) {
       }
 
       function calendarGroupsForDate(iso) {
-        return visibleTasks()
-          .filter(t => t.showOnCalendar === "Evet" && t.calendarDate === iso)
-          .reduce((acc, task) => {
-            const key = task.calendarTitle || task.mainCategory || "Diğer";
-            acc[key] = acc[key] || [];
-            acc[key].push(task);
-            return acc;
-          }, {});
-      }
+  const groups = {};
+
+  visibleTasks()
+    .filter(task => task.showOnCalendar === "Evet" && task.calendarDate === iso)
+    .forEach(task => {
+      const key = task.calendarTitle || task.mainCategory || "İş Takvimi";
+
+      groups[key] = groups[key] || [];
+      groups[key].push({
+        type: "task",
+        sortDate: task.targetEndDate || task.calendarDate || iso,
+        title: task.title,
+        data: task
+      });
+    });
+
+  getSocialPosts()
+    .filter(item => item.publishDate === iso)
+    .forEach(item => {
+      const key = "Sosyal Medya Paylaşımları";
+
+      groups[key] = groups[key] || [];
+      groups[key].push({
+        type: "social",
+        sortDate: item.publishDate || iso,
+        title: item.title,
+        data: item
+      });
+    });
+
+  getMeetings()
+    .filter(item => {
+      const start = item.visitStartDate || "";
+      const end = item.visitEndDate || item.visitStartDate || "";
+
+      if (!start) return false;
+
+      return iso >= start && iso <= end;
+    })
+    .forEach(item => {
+      const key = "Toplantı / Ziyaret Takibi";
+
+      groups[key] = groups[key] || [];
+      groups[key].push({
+        type: "meeting",
+        sortDate: item.visitStartDate || iso,
+        title: item.visitorName,
+        data: item
+      });
+    });
+
+  return groups;
+}
 
       function moveMonth(delta) {
   state.calendarMonth = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth() + delta, 1);
@@ -1385,21 +1429,111 @@ function thisMonth() {
 }
       function thisMonth() { state.calendarMonth = new Date(); showDashboard(); }
 
-      function openCalendarGroup(iso, category) {
-        const list = (calendarGroupsForDate(iso)[category] || []).sort((a,b) => String(a.targetEndDate).localeCompare(String(b.targetEndDate)));
-        const body = list.length ? list.map(task => `
-          <div class="mini-item">
-            <div>
-              <strong>${esc(task.workNo)} - ${esc(task.title)}</strong>
-              <span>${badge(task.status, statusClass(task.status))} ${badge(task.priority, priorityClass(task.priority))}<br>Sorumlu: ${esc(userName(task.responsibleId))} | Hedef: ${formatDate(task.targetEndDate)}<br>${esc(task.calendarNote || task.updateNote || '')}</span>
-            </div>
-            <div class="btn-row">
-              <button class="btn secondary small" onclick="App.openTaskDetail('${js(task.id)}')">Detay</button>
-              ${canEditTask(task) ? `<button class="btn ghost small" onclick="App.showTaskForm('${js(task.id)}')">Düzenle</button>` : ""}
-            </div>
-          </div>`).join("") : `<p>Bu gün için kayıt yok.</p>`;
-        openModal(`${formatDate(iso)} - ${category}`, body, `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`);
-      }
+     function openCalendarGroup(iso, category) {
+  const list = (calendarGroupsForDate(iso)[category] || [])
+    .sort((a, b) =>
+      String(a.sortDate).localeCompare(String(b.sortDate)) ||
+      String(a.title).localeCompare(String(b.title), "tr")
+    );
+
+  const body = list.length ? list.map(entry => {
+    if (entry.type === "task") {
+      const task = entry.data;
+
+      return `
+        <div class="mini-item">
+          <div>
+            <strong>${esc(task.workNo)} - ${esc(task.title)}</strong>
+            <span>
+              ${badge(task.status, statusClass(task.status))}
+              ${badge(task.priority, priorityClass(task.priority))}
+              <br>
+              Tür: İş kaydı
+              <br>
+              Sorumlu: ${esc(userName(task.responsibleId))}
+              | Hedef: ${formatDate(task.targetEndDate)}
+              <br>
+              ${esc(task.calendarNote || task.updateNote || "")}
+            </span>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn secondary small" onclick="App.openTaskDetail('${js(task.id)}')">Detay</button>
+            ${canEditTask(task) ? `<button class="btn ghost small" onclick="App.showTaskForm('${js(task.id)}')">Düzenle</button>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    if (entry.type === "social") {
+      const item = entry.data;
+
+      return `
+        <div class="mini-item">
+          <div>
+            <strong>${esc(item.socialNo)} - ${esc(item.title)}</strong>
+            <span>
+              ${badge(item.status, socialStatusClass(item.status))}
+              <br>
+              Tür: Sosyal medya paylaşımı
+              <br>
+              Yayın tarihi: ${formatDate(item.publishDate)}
+              <br>
+              Kanallar: ${(item.channels || []).map(esc).join(", ") || "-"}
+              <br>
+              Web: ${esc(item.publishOnWebsite)} | Slider: ${esc(item.showOnSlider)}
+              <br>
+              ${esc(item.shortDescription || "")}
+            </span>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn secondary small" onclick="App.openSocialDetail('${js(item.id)}')">Detay</button>
+            ${canEditSocialPost(item) ? `<button class="btn ghost small" onclick="App.showSocialForm('${js(item.id)}')">Düzenle</button>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    if (entry.type === "meeting") {
+      const item = entry.data;
+
+      return `
+        <div class="mini-item">
+          <div>
+            <strong>${esc(item.meetingNo)} - ${esc(item.visitorName)}</strong>
+            <span>
+              ${badge(item.status, meetingStatusClass(item.status))}
+              <br>
+              Tür: ${esc(item.meetingType)}
+              <br>
+              Tarih: ${formatDate(item.visitStartDate)} - ${formatDate(item.visitEndDate)}
+              <br>
+              Sorumlu: ${esc(userName(item.responsibleId || item.createdBy))}
+              <br>
+              Konu: ${esc(item.subject || "-")}
+              <br>
+              Haber: ${esc(item.newsRequired)} | Sosyal Medya: ${esc(item.socialRequired)} | Fotoğraf: ${esc(item.photoRequired)}
+            </span>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn secondary small" onclick="App.openMeetingDetail('${js(item.id)}')">Detay</button>
+            ${canEditMeeting(item) ? `<button class="btn ghost small" onclick="App.showMeetingForm('${js(item.id)}')">Düzenle</button>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    return "";
+  }).join("") : `<p>Bu gün için kayıt yok.</p>`;
+
+  openModal(
+    `${formatDate(iso)} - ${category}`,
+    body,
+    `<button class="btn ghost" onclick="App.closeModal()">Kapat</button>`
+  );
+}
 function socialCalendarHtml() {
   const monthDate = new Date(state.calendarMonth.getFullYear(), state.calendarMonth.getMonth(), 1);
   const monthTitle = monthDate.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
