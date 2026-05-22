@@ -2836,11 +2836,11 @@ function clearContentAssistant() {
   state.contentAssistant = null;
   if ($("contentAssistantResults")) $("contentAssistantResults").innerHTML = "";
 }
-  function socialPostsForChannelReport(channel) {
+function socialPostsForChannelReport(channel) {
   return getSocialPosts()
     .filter(item => (item.channels || []).includes(channel))
     .sort((a, b) =>
-      String(b.publishDate).localeCompare(String(a.publishDate)) ||
+      String(a.publishDate || a.createdAt).localeCompare(String(b.publishDate || b.createdAt)) ||
       String(a.title).localeCompare(String(b.title), "tr")
     );
 }
