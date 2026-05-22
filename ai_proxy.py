@@ -5,38 +5,6 @@ import tempfile
 from functools import lru_cache
 from pathlib import Path
 
-try:
-    import tomllib
-except ModuleNotFoundError:
-    tomllib = None
-
-
-def load_local_secrets():
-    if tomllib is None:
-        return
-
-    possible_paths = [
-        Path(".streamlit/secrets.toml"),
-        Path("secrets.toml")
-    ]
-
-    for path in possible_paths:
-        if not path.exists():
-            continue
-
-        try:
-            data = tomllib.loads(path.read_text(encoding="utf-8"))
-
-            for key in ["OPENAI_API_KEY", "OPENAI_MODEL"]:
-                value = data.get(key)
-                if value and not os.getenv(key):
-                    os.environ[key] = str(value)
-
-            break
-        except Exception as exc:
-            print("secrets.toml okunamadı:", exc)
-
-load_local_secrets()
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -51,7 +19,35 @@ TERMS_PDF_URL = (
     "terimler-sozlugu-2022-09-22.pdf"
 )
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+
+def load_local_secrets():
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        return
+
+    possible_paths = [
+        Path(".streamlit/secrets.toml"),
+        Path("secrets.toml")
+    ]
+
+    for path in possible_paths:
+        if not path.exists():
+            continue
+
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+
+        for key in ["OPENAI_API_KEY", "OPENAI_MODEL"]:
+            value = data.get(key)
+            if value and not os.getenv(key):
+                os.environ[key] = str(value)
+
+        break
+
+
+load_local_secrets()
 
 app = FastAPI(title="TÜRKAK Kurumsal İçerik Asistanı API")
 
@@ -69,7 +65,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 class ContentRequest(BaseModel):
     rawText: str
     outputs: list[str]
-    provider: str = "chatgpt"
+    provider: str = "general"
 
 
 @lru_cache(maxsize=1)
@@ -90,10 +86,10 @@ def load_terms_text() -> str:
             pages.append(text)
 
         text = "\n".join(pages)
-
         text = re.sub(r"\s+", " ", text).strip()
 
         return text[:18000]
+
     except Exception as exc:
         print("Terimler sözlüğü okunamadı:", exc)
         return ""
@@ -112,13 +108,11 @@ def build_prompt(raw_text: str, outputs: list[str], terms_text: str) -> str:
     return f"""
 Sen TÜRKAK Kurumsal İletişim Müdürlüğü için çalışan bir kurumsal içerik asistanısın.
 
-Aşağıdaki ham metni, TÜRKAK'ın resmi, açıklayıcı, sade ve kurumsal iletişim diline uygun şekilde işle.
-
 Kullanıcının istediği çıktı türleri:
 {json.dumps(selected_outputs, ensure_ascii=False, indent=2)}
 
 Kurumsal dil kuralları:
-- Metinler resmi, anlaşılır, sade ve kurumsal olmalı.
+- Metinler resmi, sade, açıklayıcı ve kurumsal olmalı.
 - Gereksiz abartılı ifadeler kullanılmamalı.
 - TÜRKAK adı doğru ve tutarlı kullanılmalı.
 - İngilizce ülke adında Turkey yerine Türkiye tercih edilmeli.
@@ -128,7 +122,7 @@ Kurumsal dil kuralları:
 - Kurumsal haber metninde ziyaretin/toplantının amacı, teknik bilgi paylaşımı, iş birliği ve kurumsal katkı vurgusu bulunmalı.
 - Sosyal medya metni kısa, etkili, kurumsal ve paylaşılabilir olmalı.
 - Başlıklar haber diliyle uyumlu olmalı.
-- Spot metin tek paragraf ve kısa olmalı.
+- Spot metin kısa ve tek paragraf olmalı.
 
 Terimler sözlüğünden çıkarılan referans metin:
 {terms_text}
@@ -154,6 +148,7 @@ def safe_json_parse(text: str) -> dict:
         return json.loads(text)
     except Exception:
         match = re.search(r"\{.*\}", text, re.DOTALL)
+
         if match:
             try:
                 return json.loads(match.group(0))
@@ -185,7 +180,7 @@ def ai_content(req: ContentRequest):
 
     try:
         response = client.responses.create(
-            model=OPENAI_MODEL,
+            model=os.getenv("OPENAI_MODEL", OPENAI_MODEL),
             input=prompt,
         )
 
@@ -194,7 +189,7 @@ def ai_content(req: ContentRequest):
 
         return {
             "ok": True,
-            "provider": "chatgpt",
+            "provider": "general",
             "result": result_json,
         }
 
