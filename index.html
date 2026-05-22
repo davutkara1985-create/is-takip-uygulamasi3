@@ -1806,29 +1806,30 @@ function showMeetingForm(id = null) {
   if (editing && !canEditMeeting(old)) return toast("Bu kaydı düzenleme yetkiniz yok.");
 
   const item = old || {
-    id: "",
-    meetingNo: nextMeetingNo(),
-    meetingType: "Toplantı",
-    visitorName: "",
-    visitStartDate: today(),
-    visitEndDate: today(),
-    participants: "",
-    subject: "",
-    photoRequired: "Hayır",
-    giftRequired: "Hayır",
-    newsRequired: "Hayır",
-    transportOption: "Yok",
-    transportNote: "",
-    accommodationRequired: "Hayır",
-    accommodationFacility: "",
-    accommodationPayment: "Yok",
-    socialRequired: "Hayır",
-    followUpAction: "",
-    status: "Planlandı",
-    createdBy: state.currentUser.id,
-    createdAt: dateTime(),
-    updatedAt: dateTime()
-  };
+  id: "",
+  meetingNo: nextMeetingNo(),
+  meetingType: "Toplantı",
+  visitorName: "",
+  visitStartDate: today(),
+  visitEndDate: today(),
+  participants: "",
+  subject: "",
+  photoRequired: "Hayır",
+  giftRequired: "Hayır",
+  newsRequired: "Hayır",
+  transportOption: "Yok",
+  transportNote: "",
+  accommodationRequired: "Hayır",
+  accommodationFacility: "",
+  accommodationPayment: "Yok",
+  socialRequired: "Hayır",
+  followUpAction: "",
+  status: "Planlandı",
+  responsibleId: state.currentUser.id,
+  createdBy: state.currentUser.id,
+  createdAt: dateTime(),
+  updatedAt: dateTime()
+};
 
   state.viewKey = "meetingNew";
 
