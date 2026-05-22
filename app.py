@@ -61,6 +61,7 @@ iframe {
 # HTML dosyasını oku
 with open("index.html", "r", encoding="utf-8") as f:
     html_kodu = f.read()
+
 ai_proxy_url = st.secrets.get("AI_PROXY_URL", "http://127.0.0.1:8000/ai-content")
 html_kodu = html_kodu.replace("__AI_PROXY_URL__", ai_proxy_url)
 
