@@ -3,7 +3,8 @@ import streamlit.components.v1 as components
 
 # Streamlit sayfasını geniş ekran yap
 st.set_page_config(
-    page_title="İş Yönetim Sistemi",
+    page_title="TÜRKAK İş Yönetim Sistemi",
+    page_icon="turkak.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
