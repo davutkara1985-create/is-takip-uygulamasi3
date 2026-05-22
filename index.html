@@ -1884,9 +1884,11 @@ function showMeetingForm(id = null) {
         </div>
 
         <div class="field">
-          <label>Sorumlu Personel</label>
-          <input value="${esc(userName(item.createdBy))}" readonly>
-        </div>
+  <label>Sorumlu Personel *</label>
+  <select id="meetingResponsibleId" required>
+    ${userOptions(item.responsibleId || item.createdBy || state.currentUser.id, true)}
+  </select>
+</div>
 
         <div class="field span-3">
           <label>Katılımcılar</label>
