@@ -806,6 +806,10 @@ const OFFICIAL_SOCIAL_ACCOUNTS = {
   "Bluesky": "@turkak.org.tr"
 };  
 const AI_PROXY_URL = "__AI_PROXY_URL__";
+const SOCIAL_PERFORMANCE_START_DATE = "2026-05-01";
+const SOCIAL_PERFORMANCE_SYNC_URL = AI_PROXY_URL && AI_PROXY_URL !== "__AI_PROXY_URL__"
+  ? AI_PROXY_URL.replace(/\/ai-content\/?$/, "/social-performance/sync")
+  : "__SOCIAL_PERFORMANCE_SYNC_URL__";
 const TERMS_GLOSSARY_URL = "https://github.com/davutkara1985-create/is-takip-uygulamasi3/blob/0d5489ad4f2ef7c2478c0c742f6185cfc7564622/terimler-sozlugu-2022-09-22.pdf";
 
       const CATEGORIES = {
@@ -833,7 +837,10 @@ const TERMS_GLOSSARY_URL = "https://github.com/davutkara1985-create/is-takip-uyg
         view: "dashboard",
         calendarMonth: new Date(),
         listType: "all",
-        selectedTaskId: null
+        selectedTaskId: null,
+        socialPerformanceSyncing: false,
+        lastSocialPerformanceSyncAt: null,
+        socialPerformanceAutoTimer: null
       };
 
       const $ = (id) => document.getElementById(id);
@@ -1299,6 +1306,80 @@ function socialOfficialAccountsText(item) {
 
   return channels
     .map(channel => `${channel}: ${OFFICIAL_SOCIAL_ACCOUNTS[channel] || "Tanımlanmadı"}`)
+    .join("\n");
+}
+
+
+function detectSocialChannelFromValue(value) {
+  const text = String(value || "").toLocaleLowerCase("tr-TR");
+
+  if (text.includes("x.com") || text.includes("twitter.com") || text.includes("tweet") || text.includes("status/")) return "X (Twitter)";
+  if (text.includes("instagram.com") || text.includes("instagr.am")) return "Instagram";
+  if (text.includes("linkedin.com") || text.includes("urn:li:")) return "LinkedIn";
+  if (text.includes("bsky.app") || text.includes("bsky.social") || text.includes("at://") || text.includes("bluesky")) return "Bluesky";
+  if (text.includes("nsocial") || text.includes("sosyal")) return "Nsocial";
+
+  return "";
+}
+
+function normalizeSocialChannelLabel(label, fallbackValue = "") {
+  const text = String(label || "").trim().toLocaleLowerCase("tr-TR");
+
+  const exact = SOCIAL_CHANNELS.find(channel => channel.toLocaleLowerCase("tr-TR") === text);
+  if (exact) return exact;
+
+  if (text.includes("twitter") || text === "x") return "X (Twitter)";
+  if (text.includes("instagram")) return "Instagram";
+  if (text.includes("linkedin")) return "LinkedIn";
+  if (text.includes("nsocial")) return "Nsocial";
+  if (text.includes("bluesky") || text.includes("bsky")) return "Bluesky";
+
+  return detectSocialChannelFromValue(fallbackValue);
+}
+
+function parsePlatformUrls(value) {
+  if (!value) return {};
+  if (typeof value === "object" && !Array.isArray(value)) return value;
+
+  const result = {};
+
+  String(value).split(/\n+/).forEach(line => {
+    const raw = line.trim();
+    if (!raw) return;
+
+    const separator = raw.includes(":") ? raw.indexOf(":") : -1;
+    let channel = "";
+    let ref = raw;
+
+    if (separator > -1) {
+      channel = normalizeSocialChannelLabel(raw.slice(0, separator), raw.slice(separator + 1));
+      ref = raw.slice(separator + 1).trim();
+    } else {
+      channel = detectSocialChannelFromValue(raw);
+    }
+
+    if (channel && ref) {
+      result[channel] = ref;
+    }
+  });
+
+  return result;
+}
+
+function platformUrlsText(item) {
+  const value = item?.platformUrls || item?.platformRefs || "";
+
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return SOCIAL_CHANNELS
+    .filter(channel => value[channel])
+    .map(channel => `${channel}: ${value[channel]}`)
     .join("\n");
 }
 
@@ -2431,6 +2512,7 @@ function showSocialForm(id = null) {
   shortDescription: "",
   detailContent: "",
   mediaUrl: "",
+  platformUrls: {},
   publishDate: today(),
   channels: [],
   publishOnWebsite: "Evet",
@@ -2491,6 +2573,15 @@ function showSocialForm(id = null) {
         <div class="field span-3">
           <label>Görsel / Medya Bağlantısı</label>
           <input id="socialMediaUrl" value="${esc(item.mediaUrl)}" placeholder="https://... veya ortak klasör dosya yolu">
+        </div>
+
+        <div class="field span-3">
+          <label>Platform Paylaşım URL / ID Bilgileri</label>
+          <textarea id="socialPlatformUrls" placeholder="X (Twitter): https://x.com/turkak/status/...
+Instagram: https://www.instagram.com/p/...
+LinkedIn: urn:li:share:...
+Bluesky: at://...">${esc(platformUrlsText(item))}</textarea>
+          <small>Otomatik ölçüm için mümkünse her platformdaki yayımlanmış paylaşım URL'sini veya ID/URN bilgisini yazın. Boş bırakılırsa sistem tarih ve başlığa göre eşleştirmeyi dener.</small>
         </div>
 
         <div class="field">
@@ -2594,6 +2685,7 @@ function readSocialForm(existing) {
     shortDescription: $("socialShortDescription").value.trim(),
     detailContent: $("socialDetailContent").value.trim(),
     mediaUrl: $("socialMediaUrl").value.trim(),
+    platformUrls: parsePlatformUrls($("socialPlatformUrls")?.value.trim() || ""),
     publishDate: $("socialPublishDate").value,
     channels: checkedSocialChannels(),
     publishOnWebsite: $("socialPublishOnWebsite").value,
@@ -2848,6 +2940,8 @@ function openSocialDetail(id) {
       ${detail("Ana Sayfa Slider’da Gösterilecek mi?", item.showOnSlider)}
       ${detail("Oluşturan", userName(item.createdBy))}
       ${detail("Görsel / Medya", item.mediaUrl ? `<a href="${esc(item.mediaUrl)}" target="_blank" rel="noopener noreferrer">${esc(item.mediaUrl)}</a>` : "-", true, true)}
+      ${detail("Platform Paylaşım URL / ID Bilgileri", platformUrlsText(item) || "-", true)}
+      ${detail("Son Performans Güncellemesi", item.lastPerformanceSyncAt ? new Date(item.lastPerformanceSyncAt).toLocaleString("tr-TR") : "-", true)}
       ${detail("Kısa Açıklama", item.shortDescription, true)}
       ${detail("Detaylı İçerik", item.detailContent, true)}
       ${detail("TÜRKAK Resmî Hesapları", socialOfficialAccountsText(item), true)}
@@ -2889,6 +2983,7 @@ function exportSocialCsv() {
     ["shortDescription", "Kısa Açıklama"],
     ["detailContent", "Detaylı İçerik"],
     ["mediaUrl", "Görsel / Medya"],
+    ["platformUrlsText", "Platform Paylaşım URL / ID Bilgileri"],
     ["publishDate", "Yayın Tarihi"],
     ["channelsText", "Kanallar"],
     ["publishOnWebsite", "Web Sitesinde Yayınlanacak mı"],
@@ -2904,6 +2999,8 @@ function exportSocialCsv() {
     ["interactions", "Toplam Etkileşim"],
     ["engagementRateText", "Etkileşim Oranı"],
     ["performanceNote", "Performans Notu"],
+    ["performanceSource", "Performans Kaynağı"],
+    ["lastPerformanceSyncAtText", "Son Performans Güncellemesi"],
     ["createdByName", "Oluşturan"]
   ];
 
@@ -2920,6 +3017,8 @@ function exportSocialCsv() {
   interactions: socialInteractions(item),
   engagementRateText: `%${engagementRate(item)}`,
   performanceNote: item.performanceNote || "",
+  performanceSource: item.performanceSource || "",
+  lastPerformanceSyncAtText: item.lastPerformanceSyncAt ? new Date(item.lastPerformanceSyncAt).toLocaleString("tr-TR") : "",
   createdByName: userName(item.createdBy)
 }));
 
@@ -3805,6 +3904,7 @@ function socialPerformanceTable(items) {
             <th>Tıklama</th>
             <th>Etkileşim Oranı</th>
             <th>Performans Notu</th>
+            <th>Son Güncelleme</th>
           </tr>
         </thead>
 
@@ -3826,6 +3926,7 @@ function socialPerformanceTable(items) {
               <td>${metricNumber(item.clicks)}</td>
               <td><b>%${engagementRate(item)}</b></td>
               <td>${esc(item.performanceNote || "-")}</td>
+              <td>${item.lastPerformanceSyncAt ? new Date(item.lastPerformanceSyncAt).toLocaleString("tr-TR") : "-"}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -3923,6 +4024,137 @@ function socialChannelPerformancePanel(channel) {
   `;
 }
 
+
+function socialPerformanceSyncEndpoint() {
+  if (!SOCIAL_PERFORMANCE_SYNC_URL || SOCIAL_PERFORMANCE_SYNC_URL.includes("__SOCIAL_PERFORMANCE_SYNC_URL__")) {
+    return "";
+  }
+
+  return SOCIAL_PERFORMANCE_SYNC_URL;
+}
+
+function socialPerformanceEligiblePosts(items = getSocialPosts()) {
+  return items.filter(item =>
+    item.status === "Yayınlandı" &&
+    String(item.publishDate || "") >= SOCIAL_PERFORMANCE_START_DATE &&
+    Array.isArray(item.channels) &&
+    item.channels.length
+  );
+}
+
+function setSocialSyncStatus(message, type = "muted") {
+  const node = $("socialSyncStatus");
+  if (!node) return;
+
+  const cls = type === "danger" ? "danger-text" : type === "success" ? "success-text" : "muted";
+  node.innerHTML = `<p class="${cls}" style="margin:0">${esc(message)}</p>`;
+}
+
+function requestSocialPerformanceAutoSync() {
+  if (state.socialPerformanceSyncing) return;
+
+  const last = state.lastSocialPerformanceSyncAt ? new Date(state.lastSocialPerformanceSyncAt).getTime() : 0;
+  const fifteenMinutes = 15 * 60 * 1000;
+
+  if (last && Date.now() - last < fifteenMinutes) {
+    return;
+  }
+
+  setTimeout(() => syncSocialPerformance({ silent: true, auto: true }), 350);
+}
+
+function startSocialPerformanceAutoSync() {
+  if (state.socialPerformanceAutoTimer) return;
+
+  state.socialPerformanceAutoTimer = setInterval(() => {
+    if (!state.currentUser) return;
+    syncSocialPerformance({ silent: true, auto: true });
+  }, 60 * 60 * 1000);
+}
+
+async function syncSocialPerformance(options = {}) {
+  const silent = Boolean(options.silent);
+  const endpoint = socialPerformanceSyncEndpoint();
+
+  if (!endpoint) {
+    if (!silent) {
+      toast("Sosyal medya performans servisi tanımlı değil. AI_PROXY_URL ayarının /ai-content ile bittiğini kontrol edin.");
+    }
+    return;
+  }
+
+  if (state.socialPerformanceSyncing) {
+    if (!silent) toast("Performans güncellemesi zaten çalışıyor.");
+    return;
+  }
+
+  await pullSharedData(false);
+
+  const posts = getSocialPosts();
+  const eligiblePosts = socialPerformanceEligiblePosts(posts);
+
+  if (!eligiblePosts.length) {
+    if (!silent) toast("1 Mayıs 2026 sonrası yayınlanmış sosyal medya paylaşım kaydı bulunmuyor.");
+    return;
+  }
+
+  state.socialPerformanceSyncing = true;
+  state.lastSocialPerformanceSyncAt = new Date().toISOString();
+  setSocialSyncStatus("Performans verileri resmî hesaplardan güncelleniyor...");
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        since: SOCIAL_PERFORMANCE_START_DATE,
+        posts,
+        officialAccounts: OFFICIAL_SOCIAL_ACCOUNTS
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const updates = Array.isArray(data.updatedPosts) ? data.updatedPosts : [];
+
+    if (updates.length) {
+      const updateMap = new Map(updates.map(item => [item.id, item]));
+      const merged = getSocialPosts().map(item => updateMap.has(item.id) ? { ...item, ...updateMap.get(item.id) } : item);
+      saveSocialPosts(merged);
+      await pushSharedData(false);
+    }
+
+    const warningText = Array.isArray(data.warnings) && data.warnings.length
+      ? ` Uyarı: ${data.warnings.slice(0, 3).join(" | ")}`
+      : "";
+
+    setSocialSyncStatus(`${updates.length} paylaşım için performans verisi güncellendi.${warningText}`, updates.length ? "success" : "muted");
+
+    if (!silent) {
+      toast(`${updates.length} sosyal medya performans kaydı güncellendi.`);
+    }
+
+    if (state.viewKey === "socialPerformance") {
+      showSocialPerformance();
+    } else if (state.viewKey === "social") {
+      showSocialList(state.socialListType || "all");
+    }
+  } catch (error) {
+    console.error("Sosyal medya performansı güncellenemedi:", error);
+    setSocialSyncStatus(`Performans verileri güncellenemedi: ${error.message || error}`, "danger");
+
+    if (!silent) {
+      toast("Sosyal medya performansı güncellenemedi. Proxy servisi ve API anahtarlarını kontrol edin.");
+    }
+  } finally {
+    state.socialPerformanceSyncing = false;
+  }
+}
+
 function showSocialPerformance() {
   state.viewKey = "socialPerformance";
 
@@ -3943,9 +4175,14 @@ function showSocialPerformance() {
       </div>
 
       <div class="btn-row">
+        <button class="btn" onclick="App.syncSocialPerformance()">Performansı Güncelle</button>
         <button class="btn secondary" onclick="App.exportSocialCsv()">CSV Dışa Aktar</button>
         <button class="btn ghost" onclick="App.showSocialList()">Sosyal Medya Planına DÖN</button>
       </div>
+    </div>
+
+    <div id="socialSyncStatus" class="panel" style="margin-bottom:16px">
+      <p class="muted" style="margin:0">01.05.2026 sonrası “Yayınlandı” durumundaki kayıtlar için otomatik performans ölçümü yapılır.</p>
     </div>
 
     <div class="cards">
@@ -3986,6 +4223,8 @@ function showSocialPerformance() {
       <button class="btn ghost" onclick="App.showDashboard()">Anasayfaya DÖN</button>
     </div>
   `;
+
+  requestSocialPerformanceAutoSync();
 }
   function clampPercent(value) {
   const number = Number(value || 0);
@@ -5958,6 +6197,7 @@ saveSocialPosts(Array.isArray(data.socialPosts) ? data.socialPosts : []);
   $("loginForm").addEventListener("submit", login);
 
   startSharedRefresh();
+  startSocialPerformanceAutoSync();
 
   const session = store.get(KEYS.session, null);
         if (session?.userId) {
@@ -6000,6 +6240,7 @@ deleteSocialPost,
 openSocialCalendarDay,
 exportSocialCsv,
 showSocialPerformance,
+syncSocialPerformance,
 
 showMeetingList,
 showMeetingForm,
