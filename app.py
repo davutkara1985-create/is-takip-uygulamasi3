@@ -1,73 +1,132 @@
+"""TÜRKAK İş Yönetim Sistemi - modular Streamlit entrypoint."""
+from __future__ import annotations
+
 import streamlit as st
-import streamlit.components.v1 as components
 
-# Streamlit sayfasını geniş ekran yap
-st.set_page_config(
-    page_title="TÜRKAK İş Yönetim Sistemi",
-    page_icon="turkak.png",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+from components.chatbot import render_sidebar_chatbot
+from components.navbar import render_nav
+from database.db import get_session, init_db
+from database.models import User
+from pages import admin, dashboard, ideas, library, notifications, reset_password, search, timeline
+from services.auth_service import authenticate_user, change_own_password, current_user_id, login_user, logout_user, require_login
+from services.notification_service import render_unread_toasts, unread_count
+from utils.constants import APP_ICON, APP_TITLE, FONT_SIZE_OPTIONS, THEME_OPTIONS
+from utils.helpers import init_session_defaults, inject_global_css
 
-# Streamlit'in kendi boşluklarını ve üst/alt alanlarını kaldır
-st.markdown("""
-<style>
-/* Sayfanın genel boşluklarını sıfırla */
-html, body, [data-testid="stAppViewContainer"] {
-    margin: 14 !important;
-    padding: 14 !important;
-    overflow: hidden !important;
-}
 
-/* Streamlit ana içerik kapsayıcısının boşluklarını kaldır */
-.block-container {
-    padding-top: 0rem !important;
-    padding-bottom: 0rem !important;
-    padding-left: 0rem !important;
-    padding-right: 0rem !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-}
+def render_login(db) -> None:
+    """Render login and forgot-password access."""
+    st.title("TÜRKAK İş Yönetim Sistemi")
+    st.caption("Kurumsal iletişim süreçleri için modüler yönetim paneli")
 
-/* Streamlit üst barını gizle */
-[data-testid="stHeader"] {
-    display: none !important;
-}
+    with st.form("login_form"):
+        username = st.text_input("Kullanıcı adı")
+        password = st.text_input("Şifre", type="password")
+        submitted = st.form_submit_button("Giriş Yap", type="primary")
+        if submitted:
+            user = authenticate_user(db, username, password)
+            if not user:
+                st.error("Kullanıcı adı veya şifre hatalı.")
+                return
+            login_user(user)
+            st.success("Giriş başarılı.")
+            st.rerun()
 
-/* Streamlit toolbar alanını gizle */
-[data-testid="stToolbar"] {
-    display: none !important;
-}
+    if st.button("Şifremi Unuttum"):
+        st.query_params["page"] = "reset_password"
+        st.rerun()
 
-/* Streamlit footer alanını gizle */
-footer {
-    display: none !important;
-}
 
-/* iframe çevresindeki boşlukları kaldır */
-iframe {
-    display: block !important;
-    width: 100vw !important;
-    min-width: 100vw !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    border: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+def render_accessibility_settings() -> None:
+    """Render session-state based accessibility settings in sidebar."""
+    with st.sidebar.expander("♿ Erişilebilirlik", expanded=False):
+        st.session_state["accessibility_theme"] = st.selectbox(
+            "Tema",
+            THEME_OPTIONS,
+            index=THEME_OPTIONS.index(st.session_state.get("accessibility_theme", THEME_OPTIONS[0])),
+        )
+        st.session_state["font_size"] = st.selectbox(
+            "Yazı boyutu",
+            list(FONT_SIZE_OPTIONS.keys()),
+            index=list(FONT_SIZE_OPTIONS.keys()).index(st.session_state.get("font_size", "Normal")),
+        )
 
-# HTML dosyasını oku
-with open("index.html", "r", encoding="utf-8") as f:
-    html_kodu = f.read()
 
-ai_proxy_url = st.secrets.get("AI_PROXY_URL", "http://127.0.0.1:8000/ai-content")
-html_kodu = html_kodu.replace("__AI_PROXY_URL__", ai_proxy_url)
+def render_profile(db, user: User) -> None:
+    """Render profile/password update form."""
+    with st.sidebar.expander("👤 Profil / Şifre", expanded=False):
+        st.write(f"**{user.full_name}**")
+        st.caption(user.email)
+        with st.form("change_password_form"):
+            old = st.text_input("Mevcut şifre", type="password")
+            new = st.text_input("Yeni şifre", type="password")
+            new2 = st.text_input("Yeni şifre tekrar", type="password")
+            submitted = st.form_submit_button("Şifreyi değiştir")
+            if submitted:
+                if new != new2:
+                    st.error("Yeni şifreler eşleşmiyor.")
+                    return
+                try:
+                    change_own_password(db, user.id, old, new)
+                    st.success("Şifre güncellendi.")
+                except ValueError as exc:
+                    st.error(str(exc))
+        if st.button("Çıkış Yap"):
+            logout_user()
+            st.rerun()
 
-# HTML'i Streamlit bileşeni olarak tam ekrana yakın göster
-components.html(
-    html_kodu,
-    height=1100,
-    scrolling=False
-)
+
+def route_page(page_key: str, db, user_id: int) -> None:
+    """Route selected sidebar page to its module render function."""
+    if page_key == "dashboard":
+        dashboard.render(db, user_id)
+    elif page_key == "admin":
+        admin.render(db, user_id)
+    elif page_key == "library":
+        library.render(db, user_id)
+    elif page_key == "notifications":
+        notifications.render(db, user_id)
+    elif page_key == "ideas":
+        ideas.render(db, user_id)
+    elif page_key == "timeline":
+        timeline.render(db, user_id)
+    elif page_key == "search":
+        search.render(db, user_id)
+    else:
+        dashboard.render(db, user_id)
+
+
+def main() -> None:
+    """Configure Streamlit, initialize DB and render the application."""
+    st.set_page_config(page_title=APP_TITLE, page_icon=APP_ICON, layout="wide", initial_sidebar_state="expanded")
+    init_session_defaults()
+    inject_global_css()
+    init_db()
+
+    with get_session() as db:
+        if st.query_params.get("page") == "reset_password":
+            reset_password.render(db)
+            return
+
+        if not require_login():
+            render_login(db)
+            return
+
+        user_id = current_user_id()
+        user = db.get(User, user_id) if user_id else None
+        if not user or not user.active:
+            logout_user()
+            st.warning("Oturum sonlandırıldı. Lütfen tekrar giriş yapın.")
+            return
+
+        render_accessibility_settings()
+        render_profile(db, user)
+        unread = unread_count(db, user.id)
+        page_key = render_nav(unread)
+        render_sidebar_chatbot(db, user.id)
+        render_unread_toasts(db, user.id)
+        route_page(page_key, db, user.id)
+
+
+if __name__ == "__main__":
+    main()
