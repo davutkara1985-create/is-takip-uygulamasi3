@@ -140,8 +140,16 @@ def build_prompt(raw_text: str, outputs: list[str], terms_text: str, custom_prom
         "social_media": "Sosyal medya metni oluştur",
         "title": "Başlık öner",
         "spot": "Spot metin öner",
+        "web_news": "Kurumsal web sitesi haberi oluştur",
+        "linkedin_post": "LinkedIn paylaşımı oluştur",
+        "x_post": "X paylaşımı oluştur",
+        "instagram_post": "Instagram paylaşımı oluştur",
+        "bulletin_text": "Bülten metni oluştur",
+        "english_news": "İngilizce haber versiyonu oluştur",
+        "press_note": "Basın notu oluştur",
         "image_prompt": "Kurumsal görsel üretim promptu oluştur",
         "daily_summary": "Günlük iş ve iletişim öncelikleri özeti oluştur",
+        "sensitive_check": "Hassas içerik uyarı sistemi kontrolü yap",
         "chatbot": "Uygulama bağlamına göre kısa danışman cevabı üret",
     }
     selected_outputs = [output_labels.get(x, x) for x in outputs]
@@ -170,6 +178,8 @@ Kurumsal dil kuralları:
 - Günlük özet üretiliyorsa öncelik, risk ve önerilen aksiyonlara odaklan.
 - Chatbot cevabı üretiliyorsa kısa, uygulanabilir ve bağlama duyarlı cevap ver.
 - Görsel prompt üretiliyorsa TÜRKAK kurumsal kimliği, kırmızı-beyaz tonlar, sade ve resmî görsel dil vurgulansın.
+- Hassas içerik kontrolü isteniyorsa şu başlıkları özellikle denetle: fazla iddialı ifade, resmî dile uygun olmayan ifade, yanlış kurum adı kullanımı, eksik unvan, yanlış tarih, politik açıdan hassas ifade, akreditasyon terminolojisine uygun olmayan kullanım.
+- Platforma özel metinlerde aynı içeriği tekrar etme; LinkedIn, X ve Instagram dilini ayrı ayrı uyarlayıp üret.
 
 Terimler sözlüğünden çıkarılan referans metin:
 {terms_text}
@@ -185,8 +195,17 @@ JSON şeması:
   "social_media": "Sosyal medya metni burada",
   "title_suggestions": ["Başlık 1", "Başlık 2", "Başlık 3"],
   "spot_text": "Spot metin burada",
+  "web_news": "Kurumsal web sitesi haberi burada",
+  "linkedin_post": "LinkedIn paylaşımı burada",
+  "x_post": "X paylaşımı burada",
+  "instagram_post": "Instagram paylaşımı burada",
+  "bulletin_text": "Bülten metni burada",
+  "english_news": "English news version here",
+  "press_note": "Basın notu burada",
   "image_prompt": "Kurumsal görsel promptu burada",
   "daily_summary": "Günlük AI özeti burada",
+  "sensitive_warnings": ["Uyarı 1", "Uyarı 2"],
+  "revised_text": "Varsa düzeltilmiş metin burada",
   "chatbot": "Chatbot yanıtı burada",
   "term_notes": ["Terim uyarısı 1", "Terim uyarısı 2"]
 }}
@@ -210,8 +229,17 @@ def safe_json_parse(text: str) -> dict[str, Any]:
         "social_media": "",
         "title_suggestions": [],
         "spot_text": "",
+        "web_news": text,
+        "linkedin_post": "",
+        "x_post": "",
+        "instagram_post": "",
+        "bulletin_text": "",
+        "english_news": "",
+        "press_note": "",
         "image_prompt": "",
         "daily_summary": text,
+        "sensitive_warnings": [text],
+        "revised_text": "",
         "chatbot": text,
         "term_notes": ["Model yanıtı JSON formatında alınamadı; ham metin gösterildi."],
     }
