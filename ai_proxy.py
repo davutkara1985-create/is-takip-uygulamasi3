@@ -23,9 +23,21 @@ TERMS_PDF_URL = (
     "terimler-sozlugu-2022-09-22.pdf"
 )
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "30"))
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "45"))
 AI_MAX_RETRIES = int(os.getenv("AI_MAX_RETRIES", "2"))
+
+
+def selected_model() -> str:
+    """Return a safe model name. Keeps current config unless it is a known typo."""
+    model = (os.getenv("OPENAI_MODEL") or OPENAI_MODEL or DEFAULT_OPENAI_MODEL).strip()
+
+    # Current secrets may contain this typo/non-existent model name; falling back avoids model-not-found errors.
+    if model.lower() in {"gpt-5.4-mini", "gpt5.4-mini"}:
+        return DEFAULT_OPENAI_MODEL
+
+    return model or DEFAULT_OPENAI_MODEL
 
 
 def load_local_secrets() -> None:
@@ -81,12 +93,21 @@ class ContentRequest(BaseModel):
     rawText: str
     outputs: list[str]
     provider: str = "general"
+    promptKey: str = "contentAssistant"
+    customPrompt: str = ""
 
 
 class ResetEmailRequest(BaseModel):
     to: EmailStr
     fullName: str = ""
     resetLink: str
+
+
+class NotificationEmailRequest(BaseModel):
+    to: EmailStr
+    subject: str
+    message: str
+    fullName: str = ""
 
 
 @lru_cache(maxsize=1)
@@ -112,7 +133,7 @@ def load_terms_text() -> str:
         return ""
 
 
-def build_prompt(raw_text: str, outputs: list[str], terms_text: str) -> str:
+def build_prompt(raw_text: str, outputs: list[str], terms_text: str, custom_prompt: str = "") -> str:
     """Build a JSON-only corporate content prompt."""
     output_labels = {
         "corporate_news": "Kurumsal haber metni oluştur",
@@ -125,8 +146,13 @@ def build_prompt(raw_text: str, outputs: list[str], terms_text: str) -> str:
     }
     selected_outputs = [output_labels.get(x, x) for x in outputs]
 
+    admin_prompt_block = custom_prompt.strip() or "Bu alan için admin tarafından özel prompt tanımlanmamış; varsayılan TÜRKAK kurumsal iletişim kurallarını uygula."
+
     return f"""
 Sen TÜRKAK Kurumsal İletişim Müdürlüğü için çalışan kurumsal içerik ve iş yönetimi asistanısın.
+
+Admin tarafından bu AI alanı için tanımlanan özel talimat:
+{admin_prompt_block}
 
 Kullanıcının istediği çıktı türleri:
 {json.dumps(selected_outputs, ensure_ascii=False, indent=2)}
@@ -199,7 +225,7 @@ def call_openai_with_retry(prompt: str) -> str:
     for attempt in range(AI_MAX_RETRIES + 1):
         try:
             response = client.responses.create(
-                model=os.getenv("OPENAI_MODEL", OPENAI_MODEL),
+                model=selected_model(),
                 input=prompt,
             )
             return response.output_text
@@ -225,14 +251,14 @@ def ai_content(req: ContentRequest):
     if not req.outputs:
         raise HTTPException(status_code=400, detail="En az bir çıktı türü seçilmelidir.")
 
-    prompt = build_prompt(req.rawText, req.outputs, load_terms_text())
+    prompt = build_prompt(req.rawText, req.outputs, load_terms_text(), req.customPrompt)
     result_text = call_openai_with_retry(prompt)
     result_json = safe_json_parse(result_text)
 
     return {
         "ok": True,
         "provider": "general",
-        "model": os.getenv("OPENAI_MODEL", OPENAI_MODEL),
+        "model": selected_model(),
         "result": result_json,
     }
 
@@ -275,6 +301,42 @@ def send_reset_email(req: ResetEmailRequest):
         raise HTTPException(status_code=500, detail=f"E-posta gönderilemedi: {exc}") from exc
 
 
+@app.post("/send-notification-email")
+def send_notification_email(req: NotificationEmailRequest):
+    """Send an admin notification email via SMTP if SMTP settings are defined."""
+    host = os.getenv("SMTP_HOST")
+    user = os.getenv("SMTP_USER")
+    password = os.getenv("SMTP_PASSWORD")
+    sender = os.getenv("SMTP_FROM") or user
+    port = int(os.getenv("SMTP_PORT", "587"))
+    use_tls = os.getenv("SMTP_TLS", "true").lower() != "false"
+
+    if not host or not sender:
+        raise HTTPException(status_code=503, detail="SMTP ayarları tanımlı değil.")
+
+    msg = EmailMessage()
+    msg["Subject"] = req.subject or "TÜRKAK İş Yönetim Sistemi Bildirimi"
+    msg["From"] = sender
+    msg["To"] = str(req.to)
+    greeting = f"Sayın {req.fullName}," if req.fullName else "Merhaba,"
+    msg.set_content(
+        f"{greeting}\n\n"
+        f"{req.message}\n\n"
+        "Bu bildirim TÜRKAK İş Yönetim Sistemi üzerinden gönderilmiştir."
+    )
+
+    try:
+        with smtplib.SMTP(host, port, timeout=20) as smtp:
+            if use_tls:
+                smtp.starttls()
+            if user and password:
+                smtp.login(user, password)
+            smtp.send_message(msg)
+        return {"ok": True}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"E-posta gönderilemedi: {exc}") from exc
+
+
 @app.get("/health")
 def health():
-    return {"ok": True, "model": os.getenv("OPENAI_MODEL", OPENAI_MODEL)}
+    return {"ok": True, "model": selected_model()}
