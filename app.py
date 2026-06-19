@@ -64,6 +64,8 @@ iframe {
 with open("index.html", "r", encoding="utf-8") as f:
     html_kodu = f.read()
 
+DEFAULT_AI_PROXY_URL = "https://is-takip-uygulamasi-792348862371.europe-west1.run.app/ai-content"
+
 def get_secret_or_env(name: str, default: str = "") -> str:
     """Read a value from Streamlit secrets first, then environment variables."""
     try:
@@ -79,8 +81,8 @@ def normalize_ai_proxy_url(value: str) -> str:
     value = (value or "").strip()
 
     if not value:
-        # Local development default. On Streamlit Cloud, set AI_PROXY_URL in Secrets.
-        return "http://127.0.0.1:8000/ai-content"
+        # Streamlit Secrets okunamazsa uzak yayında 127.0.0.1'e düşme.
+        return DEFAULT_AI_PROXY_URL
 
     value = value.rstrip("/")
 
