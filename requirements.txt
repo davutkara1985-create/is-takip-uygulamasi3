@@ -1,6 +1,6 @@
-streamlit
-fastapi
-uvicorn
-openai
-requests
-pypdf
+streamlit>=1.38
+sqlalchemy>=2.0
+bcrypt>=4.1
+openai>=1.40
+pandas>=2.0
+python-dotenv>=1.0
