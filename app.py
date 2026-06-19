@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -62,7 +64,35 @@ iframe {
 with open("index.html", "r", encoding="utf-8") as f:
     html_kodu = f.read()
 
-ai_proxy_url = st.secrets.get("AI_PROXY_URL", "http://127.0.0.1:8000/ai-content")
+def get_secret_or_env(name: str, default: str = "") -> str:
+    """Read a value from Streamlit secrets first, then environment variables."""
+    try:
+        value = st.secrets.get(name, "")
+    except Exception:
+        value = ""
+
+    return str(value or os.getenv(name, default) or "").strip()
+
+
+def normalize_ai_proxy_url(value: str) -> str:
+    """Return a usable /ai-content endpoint URL for the browser-side app."""
+    value = (value or "").strip()
+
+    if not value:
+        # Local development default. On Streamlit Cloud, set AI_PROXY_URL in Secrets.
+        return "http://127.0.0.1:8000/ai-content"
+
+    value = value.rstrip("/")
+
+    if value.endswith("/ai-content"):
+        return value
+
+    return f"{value}/ai-content"
+
+
+ai_proxy_url = normalize_ai_proxy_url(
+    get_secret_or_env("AI_PROXY_URL") or get_secret_or_env("AI_PROXY_BASE_URL")
+)
 html_kodu = html_kodu.replace("__AI_PROXY_URL__", ai_proxy_url)
 
 # HTML'i Streamlit bileşeni olarak tam ekrana yakın göster
