@@ -24,13 +24,32 @@ TERMS_PDF_URL = (
 )
 
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").strip().lower()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
 AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "45"))
 AI_MAX_RETRIES = int(os.getenv("AI_MAX_RETRIES", "2"))
 
 
+def selected_provider() -> str:
+    """Return the configured AI provider: openai, gemini or demo."""
+    provider = (os.getenv("AI_PROVIDER") or AI_PROVIDER or "openai").strip().lower()
+    if provider in {"openai", "gemini", "demo"}:
+        return provider
+    return "openai"
+
+
 def selected_model() -> str:
-    """Return a safe model name. Keeps current config unless it is a known typo."""
+    """Return a safe model name according to the selected provider."""
+    provider = selected_provider()
+
+    if provider == "gemini":
+        return (os.getenv("GEMINI_MODEL") or GEMINI_MODEL or DEFAULT_GEMINI_MODEL).strip()
+
+    if provider == "demo":
+        return "demo-local-template"
+
     model = (os.getenv("OPENAI_MODEL") or OPENAI_MODEL or DEFAULT_OPENAI_MODEL).strip()
 
     # Current secrets may contain this typo/non-existent model name; falling back avoids model-not-found errors.
@@ -53,8 +72,13 @@ def load_local_secrets() -> None:
 
         data = tomllib.loads(path.read_text(encoding="utf-8"))
         for key in [
+            "AI_PROVIDER",
             "OPENAI_API_KEY",
             "OPENAI_MODEL",
+            "OPENAI_BASE_URL",
+            "GEMINI_API_KEY",
+            "GOOGLE_API_KEY",
+            "GEMINI_MODEL",
             "SMTP_HOST",
             "SMTP_PORT",
             "SMTP_USER",
@@ -86,7 +110,9 @@ def get_openai_client() -> OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY tanımlı değil.")
-    return OpenAI(api_key=api_key, timeout=AI_TIMEOUT_SECONDS, max_retries=0)
+
+    base_url = os.getenv("OPENAI_BASE_URL") or None
+    return OpenAI(api_key=api_key, base_url=base_url, timeout=AI_TIMEOUT_SECONDS, max_retries=0)
 
 
 class ContentRequest(BaseModel):
@@ -268,7 +294,96 @@ def call_openai_with_retry(prompt: str) -> str:
             last_error = exc
             break
 
-    raise HTTPException(status_code=503, detail=f"AI servisi geçici olarak kullanılamıyor: {last_error}")
+    raise HTTPException(status_code=503, detail=f"OpenAI servisi geçici olarak kullanılamıyor: {last_error}")
+
+
+def call_gemini_with_retry(prompt: str) -> str:
+    """Call Gemini Developer API via REST without adding a new dependency."""
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY veya GOOGLE_API_KEY tanımlı değil.")
+
+    model = selected_model()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": prompt}],
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+        },
+    }
+    last_error: Exception | None = None
+
+    for attempt in range(AI_MAX_RETRIES + 1):
+        try:
+            response = requests.post(
+                url,
+                params={"key": api_key},
+                json=payload,
+                timeout=AI_TIMEOUT_SECONDS,
+            )
+            if response.status_code in {408, 429, 500, 502, 503, 504} and attempt < AI_MAX_RETRIES:
+                last_error = RuntimeError(response.text[:500])
+                time.sleep(min(2**attempt, 4))
+                continue
+            if response.status_code == 401:
+                raise HTTPException(status_code=401, detail="Gemini API anahtarı geçersiz veya yetkisiz.")
+            response.raise_for_status()
+            data = response.json()
+            candidates = data.get("candidates") or []
+            parts = (((candidates[0] or {}).get("content") or {}).get("parts") or []) if candidates else []
+            text = "".join(part.get("text", "") for part in parts)
+            if not text.strip():
+                raise RuntimeError("Gemini boş yanıt döndürdü.")
+            return text
+        except HTTPException:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            if attempt >= AI_MAX_RETRIES:
+                break
+            time.sleep(min(2**attempt, 4))
+
+    raise HTTPException(status_code=503, detail=f"Gemini servisi geçici olarak kullanılamıyor: {last_error}")
+
+
+def demo_response(outputs: list[str], raw_text: str) -> dict[str, Any]:
+    """Return a deterministic template response for testing without an external AI account."""
+    text = raw_text.strip()[:700]
+    result: dict[str, Any] = {
+        "corporate_news": "Demo mod: Kurumsal haber taslağı oluşturmak için gerçek AI sağlayıcısı bağlayın. Girdi özeti: " + text,
+        "social_media": "Demo mod: Sosyal medya metni için gerçek AI sağlayıcısı bağlayın.",
+        "title_suggestions": ["Demo Başlık Önerisi 1", "Demo Başlık Önerisi 2", "Demo Başlık Önerisi 3"],
+        "spot_text": "Demo mod: Bu alan gerçek AI bağlantısı kurulduğunda otomatik üretilecektir.",
+        "web_news": "Demo mod: Web sitesi haberi için gerçek AI sağlayıcısı bağlayın. Girdi özeti: " + text,
+        "linkedin_post": "Demo mod: LinkedIn paylaşımı gerçek AI sağlayıcısı bağlandığında üretilecektir.",
+        "x_post": "Demo mod: X paylaşımı gerçek AI sağlayıcısı bağlandığında üretilecektir.",
+        "instagram_post": "Demo mod: Instagram paylaşımı gerçek AI sağlayıcısı bağlandığında üretilecektir.",
+        "bulletin_text": "Demo mod: Bülten metni gerçek AI sağlayıcısı bağlandığında üretilecektir.",
+        "english_news": "Demo mode: English version will be generated after a real AI provider is connected.",
+        "press_note": "Demo mod: Basın notu gerçek AI sağlayıcısı bağlandığında üretilecektir.",
+        "image_prompt": "Demo mod: Kurumsal kırmızı-beyaz sade görsel yaklaşım.",
+        "daily_summary": "Demo mod: Bugünün öncelikleri gerçek AI bağlantısı kurulduğunda verilerden özetlenecektir.",
+        "sensitive_warnings": ["Demo mod: Hassas içerik kontrolü için gerçek AI sağlayıcısı bağlayın."],
+        "revised_text": text,
+        "chatbot": "Demo mod açık. Gerçek cevaplar için AI_PROVIDER=openai veya AI_PROVIDER=gemini olarak ayarlayın.",
+        "term_notes": ["Demo mod gerçek terminoloji analizi yapmaz."],
+    }
+    return result
+
+
+def call_ai_with_retry(prompt: str) -> str | dict[str, Any]:
+    provider = selected_provider()
+    if provider == "gemini":
+        return call_gemini_with_retry(prompt)
+    if provider == "demo":
+        # The caller has the output list and raw text, so demo is handled in /ai-content.
+        return "{}"
+    return call_openai_with_retry(prompt)
 
 
 @app.post("/ai-content")
@@ -279,13 +394,16 @@ def ai_content(req: ContentRequest):
     if not req.outputs:
         raise HTTPException(status_code=400, detail="En az bir çıktı türü seçilmelidir.")
 
-    prompt = build_prompt(req.rawText, req.outputs, load_terms_text(), req.customPrompt)
-    result_text = call_openai_with_retry(prompt)
-    result_json = safe_json_parse(result_text)
+    if selected_provider() == "demo":
+        result_json = demo_response(req.outputs, req.rawText)
+    else:
+        prompt = build_prompt(req.rawText, req.outputs, load_terms_text(), req.customPrompt)
+        result_text = call_ai_with_retry(prompt)
+        result_json = safe_json_parse(str(result_text))
 
     return {
         "ok": True,
-        "provider": "general",
+        "provider": selected_provider(),
         "model": selected_model(),
         "result": result_json,
     }
@@ -367,5 +485,4 @@ def send_notification_email(req: NotificationEmailRequest):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "model": selected_model()}
-    
+    return {"ok": True, "provider": selected_provider(), "model": selected_model()}
