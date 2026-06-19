@@ -1,15 +1,19 @@
-import os
 import json
+import os
 import re
+import smtplib
 import tempfile
+import time
+from email.message import EmailMessage
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from openai import OpenAI
+from openai import APIConnectionError, APITimeoutError, AuthenticationError, OpenAI, RateLimitError
+from pydantic import BaseModel, EmailStr
 from pypdf import PdfReader
 
 
@@ -20,30 +24,35 @@ TERMS_PDF_URL = (
 )
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "30"))
+AI_MAX_RETRIES = int(os.getenv("AI_MAX_RETRIES", "2"))
 
 
-def load_local_secrets():
+def load_local_secrets() -> None:
+    """Load local Streamlit secrets without committing secrets to git."""
     try:
         import tomllib
     except ModuleNotFoundError:
         return
 
-    possible_paths = [
-        Path(".streamlit/secrets.toml"),
-        Path("secrets.toml")
-    ]
-
-    for path in possible_paths:
+    for path in [Path(".streamlit/secrets.toml"), Path("secrets.toml")]:
         if not path.exists():
             continue
 
         data = tomllib.loads(path.read_text(encoding="utf-8"))
-
-        for key in ["OPENAI_API_KEY", "OPENAI_MODEL"]:
+        for key in [
+            "OPENAI_API_KEY",
+            "OPENAI_MODEL",
+            "SMTP_HOST",
+            "SMTP_PORT",
+            "SMTP_USER",
+            "SMTP_PASSWORD",
+            "SMTP_FROM",
+            "SMTP_TLS",
+        ]:
             value = data.get(key)
             if value and not os.getenv(key):
                 os.environ[key] = str(value)
-
         break
 
 
@@ -59,7 +68,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def get_openai_client() -> OpenAI:
+    """Create an OpenAI client with explicit timeout and no implicit retries."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY tanımlı değil.")
+    return OpenAI(api_key=api_key, timeout=AI_TIMEOUT_SECONDS, max_retries=0)
 
 
 class ContentRequest(BaseModel):
@@ -68,8 +83,15 @@ class ContentRequest(BaseModel):
     provider: str = "general"
 
 
+class ResetEmailRequest(BaseModel):
+    to: EmailStr
+    fullName: str = ""
+    resetLink: str
+
+
 @lru_cache(maxsize=1)
 def load_terms_text() -> str:
+    """Read TÜRKAK terms PDF and cache the extracted text."""
     try:
         response = requests.get(TERMS_PDF_URL, timeout=30)
         response.raise_for_status()
@@ -80,33 +102,31 @@ def load_terms_text() -> str:
 
         reader = PdfReader(tmp_path)
         pages = []
-
         for page in reader.pages[:30]:
-            text = page.extract_text() or ""
-            pages.append(text)
+            pages.append(page.extract_text() or "")
 
-        text = "\n".join(pages)
-        text = re.sub(r"\s+", " ", text).strip()
-
+        text = re.sub(r"\s+", " ", "\n".join(pages)).strip()
         return text[:18000]
-
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - proxy must never fail because the PDF is unavailable
         print("Terimler sözlüğü okunamadı:", exc)
         return ""
 
 
 def build_prompt(raw_text: str, outputs: list[str], terms_text: str) -> str:
+    """Build a JSON-only corporate content prompt."""
     output_labels = {
         "corporate_news": "Kurumsal haber metni oluştur",
         "social_media": "Sosyal medya metni oluştur",
         "title": "Başlık öner",
         "spot": "Spot metin öner",
+        "image_prompt": "Kurumsal görsel üretim promptu oluştur",
+        "daily_summary": "Günlük iş ve iletişim öncelikleri özeti oluştur",
+        "chatbot": "Uygulama bağlamına göre kısa danışman cevabı üret",
     }
-
     selected_outputs = [output_labels.get(x, x) for x in outputs]
 
     return f"""
-Sen TÜRKAK Kurumsal İletişim Müdürlüğü için çalışan bir kurumsal içerik asistanısın.
+Sen TÜRKAK Kurumsal İletişim Müdürlüğü için çalışan kurumsal içerik ve iş yönetimi asistanısın.
 
 Kullanıcının istediği çıktı türleri:
 {json.dumps(selected_outputs, ensure_ascii=False, indent=2)}
@@ -121,13 +141,14 @@ Kurumsal dil kuralları:
 - “Local Accreditation, Global Acceptance” yerine “Accredited once, accepted everywhere” tercih edilmeli.
 - Kurumsal haber metninde ziyaretin/toplantının amacı, teknik bilgi paylaşımı, iş birliği ve kurumsal katkı vurgusu bulunmalı.
 - Sosyal medya metni kısa, etkili, kurumsal ve paylaşılabilir olmalı.
-- Başlıklar haber diliyle uyumlu olmalı.
-- Spot metin kısa ve tek paragraf olmalı.
+- Günlük özet üretiliyorsa öncelik, risk ve önerilen aksiyonlara odaklan.
+- Chatbot cevabı üretiliyorsa kısa, uygulanabilir ve bağlama duyarlı cevap ver.
+- Görsel prompt üretiliyorsa TÜRKAK kurumsal kimliği, kırmızı-beyaz tonlar, sade ve resmî görsel dil vurgulansın.
 
 Terimler sözlüğünden çıkarılan referans metin:
 {terms_text}
 
-Ham metin:
+Ham metin / uygulama bağlamı:
 {raw_text}
 
 Cevabı sadece geçerli JSON olarak ver. Markdown kullanma.
@@ -138,17 +159,20 @@ JSON şeması:
   "social_media": "Sosyal medya metni burada",
   "title_suggestions": ["Başlık 1", "Başlık 2", "Başlık 3"],
   "spot_text": "Spot metin burada",
+  "image_prompt": "Kurumsal görsel promptu burada",
+  "daily_summary": "Günlük AI özeti burada",
+  "chatbot": "Chatbot yanıtı burada",
   "term_notes": ["Terim uyarısı 1", "Terim uyarısı 2"]
 }}
 """
 
 
-def safe_json_parse(text: str) -> dict:
+def safe_json_parse(text: str) -> dict[str, Any]:
+    """Parse model output as JSON with a safe fallback."""
     try:
         return json.loads(text)
     except Exception:
         match = re.search(r"\{.*\}", text, re.DOTALL)
-
         if match:
             try:
                 return json.loads(match.group(0))
@@ -160,43 +184,97 @@ def safe_json_parse(text: str) -> dict:
         "social_media": "",
         "title_suggestions": [],
         "spot_text": "",
+        "image_prompt": "",
+        "daily_summary": text,
+        "chatbot": text,
         "term_notes": ["Model yanıtı JSON formatında alınamadı; ham metin gösterildi."],
     }
 
 
+def call_openai_with_retry(prompt: str) -> str:
+    """Call OpenAI with explicit retry handling for transient failures."""
+    client = get_openai_client()
+    last_error: Exception | None = None
+
+    for attempt in range(AI_MAX_RETRIES + 1):
+        try:
+            response = client.responses.create(
+                model=os.getenv("OPENAI_MODEL", OPENAI_MODEL),
+                input=prompt,
+            )
+            return response.output_text
+        except AuthenticationError as exc:
+            raise HTTPException(status_code=401, detail="OPENAI_API_KEY geçersiz veya yetkisiz.") from exc
+        except (APITimeoutError, APIConnectionError, RateLimitError) as exc:
+            last_error = exc
+            if attempt >= AI_MAX_RETRIES:
+                break
+            time.sleep(min(2**attempt, 4))
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            break
+
+    raise HTTPException(status_code=503, detail=f"AI servisi geçici olarak kullanılamıyor: {last_error}")
+
+
 @app.post("/ai-content")
 def ai_content(req: ContentRequest):
-    if not os.getenv("OPENAI_API_KEY"):
-        raise HTTPException(status_code=500, detail="OPENAI_API_KEY tanımlı değil.")
-
     if not req.rawText.strip():
         raise HTTPException(status_code=400, detail="Ham metin boş olamaz.")
 
     if not req.outputs:
         raise HTTPException(status_code=400, detail="En az bir çıktı türü seçilmelidir.")
 
-    terms_text = load_terms_text()
-    prompt = build_prompt(req.rawText, req.outputs, terms_text)
+    prompt = build_prompt(req.rawText, req.outputs, load_terms_text())
+    result_text = call_openai_with_retry(prompt)
+    result_json = safe_json_parse(result_text)
+
+    return {
+        "ok": True,
+        "provider": "general",
+        "model": os.getenv("OPENAI_MODEL", OPENAI_MODEL),
+        "result": result_json,
+    }
+
+
+@app.post("/send-reset-email")
+def send_reset_email(req: ResetEmailRequest):
+    """Send password reset link via SMTP if SMTP settings are defined."""
+    host = os.getenv("SMTP_HOST")
+    user = os.getenv("SMTP_USER")
+    password = os.getenv("SMTP_PASSWORD")
+    sender = os.getenv("SMTP_FROM") or user
+    port = int(os.getenv("SMTP_PORT", "587"))
+    use_tls = os.getenv("SMTP_TLS", "true").lower() != "false"
+
+    if not host or not sender:
+        raise HTTPException(status_code=503, detail="SMTP ayarları tanımlı değil.")
+
+    msg = EmailMessage()
+    msg["Subject"] = "TÜRKAK İş Yönetim Sistemi Şifre Sıfırlama"
+    msg["From"] = sender
+    msg["To"] = str(req.to)
+    greeting = f"Sayın {req.fullName}," if req.fullName else "Merhaba,"
+    msg.set_content(
+        f"{greeting}\n\n"
+        "TÜRKAK İş Yönetim Sistemi için şifre sıfırlama bağlantınız aşağıdadır. "
+        "Bağlantı 30 dakika geçerlidir.\n\n"
+        f"{req.resetLink}\n\n"
+        "Bu işlemi siz talep etmediyseniz bu e-postayı dikkate almayınız."
+    )
 
     try:
-        response = client.responses.create(
-            model=os.getenv("OPENAI_MODEL", OPENAI_MODEL),
-            input=prompt,
-        )
-
-        result_text = response.output_text
-        result_json = safe_json_parse(result_text)
-
-        return {
-            "ok": True,
-            "provider": "general",
-            "result": result_json,
-        }
-
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        with smtplib.SMTP(host, port, timeout=20) as smtp:
+            if use_tls:
+                smtp.starttls()
+            if user and password:
+                smtp.login(user, password)
+            smtp.send_message(msg)
+        return {"ok": True}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"E-posta gönderilemedi: {exc}") from exc
 
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "model": os.getenv("OPENAI_MODEL", OPENAI_MODEL)}
