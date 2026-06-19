@@ -368,3 +368,4 @@ def send_notification_email(req: NotificationEmailRequest):
 @app.get("/health")
 def health():
     return {"ok": True, "model": selected_model()}
+    
