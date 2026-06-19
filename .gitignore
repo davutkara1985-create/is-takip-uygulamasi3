@@ -1,9 +1,4 @@
-__pycache__/
-*.py[cod]
-.venv/
-.env
 .streamlit/secrets.toml
 secrets.toml
 *secrets*.toml
-data/*.db
-data/uploads/
+.env
